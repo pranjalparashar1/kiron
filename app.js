@@ -1,4 +1,4 @@
-/* Study Buddy quiz player: static, no server. Quizzes are JSON; progress lives in this browser. */
+/* Kiron quiz player: static, no server. Quizzes are JSON; progress lives in this browser. */
 (function () {
 "use strict";
 
@@ -163,6 +163,17 @@ function validateQuiz(d) {
         const need = parseInt(q.need, 10);
         Q.need = Q.keyPoints.length ? (need >= 1 ? Math.min(need, Q.keyPoints.length) : Q.keyPoints.length) : 0;
       }
+      if (q.mcq !== undefined && q.mcq !== null) {
+        const m = q.mcq, mo = m && Array.isArray(m.options) ? m.options.map(o => String(o == null ? "" : o).trim()) : [];
+        if (!m || typeof m !== "object" || mo.length < 2 || mo.some(o => !o)) errs.push(where + ": the tap-to-answer form (“mcq”) needs “options” with at least two non-empty choices.");
+        else {
+          let c = m.correct, i = NaN;
+          if (typeof c === "number" && Number.isInteger(c)) i = c;
+          else if (typeof c === "string") { const t = c.trim(); i = /^\d+$/.test(t) ? +t : /^[A-Za-z]$/.test(t) ? t.toUpperCase().charCodeAt(0) - 65 : mo.findIndex(o => o.toLowerCase() === t.toLowerCase()); }
+          if (!(i >= 0 && i < mo.length)) errs.push(where + ": in “mcq”, “correct” must be the number of the right option, counting from 0 (there are " + mo.length + " options, so 0 to " + (mo.length - 1) + ").");
+          else Q.mcq = { prompt: isStr(m.prompt) ? m.prompt.trim() : "", options: mo, correct: i, why: isStr(m.why) ? m.why.trim() : "" };
+        }
+      }
       S.questions.push(Q); total++;
     });
     out.sections.push(S);
@@ -193,389 +204,391 @@ async function loadSamples() {
   samplesLoaded = true;
 }
 
+/* ---------------- settings: revision mode and view ---------------- */
+const K_SET = "kiron:settings", K_LOG = "kiron:log";
+const SET = Object.assign({ mode: null, view: null }, LS.get(K_SET, {}));
+const saveSet = () => LS.set(K_SET, SET);
+const MODES = {
+  early: { name: "Early revision", line: "Tap to answer. No typing or calculating." },
+  deep: { name: "In-depth revision", line: "Type your answers to test yourself." }
+};
+const mode = () => SET.mode === "deep" ? "deep" : "early";
+function applyView() { document.documentElement.dataset.view = SET.view || (window.innerWidth >= 900 ? "laptop" : "phone"); }
+const curView = () => document.documentElement.dataset.view;
+window.addEventListener("resize", () => { if (!SET.view) applyView(); });
+
+/* ---------------- activity log (stays on this device; lets you see if you get past 3 questions) ---------------- */
+const SESSION_GAP = 30 * 60 * 1000;
+function logEvent(kind, quizId) {
+  const log = LS.get(K_LOG, []);
+  const now = Date.now();
+  let s = log[log.length - 1];
+  if (!s || now - s.t1 > SESSION_GAP) { s = { t0: now, t1: now, n: 0, right: 0, skip: 0, mode: mode(), quiz: quizId }; log.push(s); }
+  s.t1 = now; s.mode = mode(); s.quiz = quizId;
+  if (kind === "skip") s.skip++; else { s.n++; if (kind === "right") s.right++; }
+  LS.set(K_LOG, log.slice(-80));
+}
+function logSummary() {
+  const log = LS.get(K_LOG, []).filter(s => s.n + s.skip > 0);
+  const today = new Date().toDateString();
+  const todayN = log.filter(s => new Date(s.t0).toDateString() === today).reduce((a, s) => a + s.n, 0);
+  const past3 = log.filter(s => s.n > 3).length;
+  const avg = log.length ? log.reduce((a, s) => a + s.n, 0) / log.length : 0;
+  return { log, todayN, past3, avg, best: log.reduce((a, s) => Math.max(a, s.n), 0) };
+}
+
 /* ---------------- progress + grading ---------------- */
-const blankProg = () => ({ a: {}, chk: {}, t: {}, tt: {}, self: {}, o: {}, h: {}, sec: 0, retry: null, seen: Date.now() });
-function getProg(id) { return Object.assign(blankProg(), LS.get(progKey(id), {})); }
-function saveProg(id, P) { P.seen = Date.now(); LS.set(progKey(id), P); }
+const ROUND = 7;
+const progKey2 = (id, m) => "sb:p2:" + id + ":" + m;
+const blankProg = () => ({ st: {}, a: {}, h: {}, n: {}, round: null, cur: null, seen: 0 });
+function getProg(id, m) { return Object.assign(blankProg(), LS.get(progKey2(id, m || mode()), {})); }
+function saveProg() { if (!current) return; current.P.seen = Date.now(); LS.set(progKey2(current.quiz.id, current.mode), current.P); }
 const qid = (si, qi) => "s" + si + "q" + qi;
 function eachQ(quiz, fn) { quiz.sections.forEach((s, si) => s.questions.forEach((q, qi) => fn(q, qid(si, qi), si, qi))); }
+function getQ(quiz, id) { const m = id.match(/^s(\d+)q(\d+)$/); const si = +m[1], qi = +m[2]; return { q: quiz.sections[si].questions[qi], id, si, qi }; }
 
-function shuffledOrder(id, n) {
+function shuffledOrder(seedStr, n) {
   const idx = [...Array(n).keys()];
-  let seed = 0; for (const ch of id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0; seed = seed || 7;
-  for (let i = n - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) >>> 0; const j = seed % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; }
-  if (idx.every((v, i) => v === i)) idx.reverse();
+  let seed = 0; for (const ch of seedStr) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0; seed = seed || 7;
+  for (let i = n - 1; i > 0; i--) { seed = (seed * 1103515245 + 12345) >>> 0; const j = (seed >>> 8) % (i + 1); [idx[i], idx[j]] = [idx[j], idx[i]]; }
   return idx;
 }
+function orderStart(id, n) { const o = shuffledOrder(id, n); if (o.every((v, i) => v === i)) o.reverse(); return o; }
 function parseNum(v) { const s = String(v == null ? "" : v).replace(/,/g, "").replace(/[−–—]/g, "-"); const m = s.match(/-?\d*\.?\d+/); return m ? parseFloat(m[0]) : null; }
-function isBlank(q, v) {
-  if (q.type === "text" || q.type === "number") return !v || !String(v).trim();
-  if (q.type === "single") return v === undefined || v === null;
-  if (q.type === "multi") return !v || !v.length;
-  return false;
-}
-// returns "right" | "partial" | "miss" | "pending" | null (not checked)
-function verdict(q, id, P) {
-  if (!P.chk[id]) return null;
-  if (P.o[id]) return P.o[id];
-  const v = P.a[id];
-  if (q.type === "text") {
-    if (!q.keyPoints.length) return P.self[id] || "pending";
-    const hasMatch = q.keyPoints.some(k => k.match.length);
-    if (!hasMatch && !P.tt[id]) return isBlank(q, v) ? "miss" : "pending";
-    const n = (P.t[id] || []).length, need = q.need || q.keyPoints.length;
-    return n >= need ? "right" : (n > 0 && n >= need / 2 ? "partial" : "miss");
-  }
-  if (q.type === "single") return v === q.correct ? "right" : "miss";
-  if (q.type === "multi") {
-    const sel = new Set(v || []), cor = new Set(q.correct); let g = 0, b = 0;
-    sel.forEach(i => cor.has(i) ? g++ : b++);
-    if (g === cor.size && !b) return "right";
-    return (g - b) / cor.size >= 0.5 ? "partial" : "miss";
-  }
-  if (q.type === "number") {
-    const x = parseNum(v); if (x === null) return "miss";
-    let ok = Math.abs(x - q.correct) <= q.tolerance + 1e-9;
-    if (!ok && q.acceptSign) ok = Math.abs(Math.abs(x) - Math.abs(q.correct)) <= q.tolerance + 1e-9;
-    return ok ? "right" : "miss";
-  }
-  if (q.type === "order") {
-    const ord = v || shuffledOrder(id, q.items.length); let k = 0; ord.forEach((it, i) => { if (it === i) k++; });
-    return k === q.items.length ? "right" : (k / q.items.length >= 0.5 ? "partial" : "miss");
-  }
-  return null;
-}
-const PTS = { right: 1, partial: 0.5, miss: 0 };
-function stats(quiz, P, si) {
-  let got = 0, done = 0, total = 0, right = 0;
-  eachQ(quiz, (q, id, s) => {
-    if (si !== undefined && s !== si) return;
-    total++;
-    const v = verdict(q, id, P);
-    if (v && v in PTS) { done++; got += PTS[v]; if (v === "right") right++; }
-  });
-  return { got, done, total, right };
-}
 function autoTicks(q, text) {
-  const toks = norm(text).split(" ").filter(Boolean);
-  const out = [];
+  const toks = norm(text).split(" ").filter(Boolean); const out = [];
   if (toks.length) q.keyPoints.forEach((k, i) => { if (kpHit(k, toks)) out.push(i); });
   return out;
 }
+// How a question is shown in the current mode.
+function formOf(q, m) {
+  if (q.type === "single") return { kind: "pick", prompt: q.prompt, options: q.options, correct: q.correct, why: q.answer, more: "" };
+  if (m === "early") {
+    if (q.mcq) return { kind: "pick", prompt: q.mcq.prompt || q.prompt, options: q.mcq.options, correct: q.mcq.correct, why: q.mcq.why || q.answer, more: q.mcq.why ? q.answer : "", setup: q.type === "number" && !q.mcq.prompt };
+    if (q.type === "multi" || q.type === "order") return { kind: q.type, prompt: q.prompt };
+    return { kind: "flip", prompt: q.prompt };
+  }
+  return { kind: q.type, prompt: q.prompt };
+}
+const lacksTap = q => (q.type === "text" || q.type === "number") && !q.mcq;
+function gradeMulti(q, v) { const sel = new Set(v || []), cor = new Set(q.correct); let g = 0, b = 0; sel.forEach(i => cor.has(i) ? g++ : b++); if (g === cor.size && !b) return "right"; return (g - b) / cor.size >= 0.5 ? "partial" : "miss"; }
+function gradeOrder(q, ord) { let k = 0; ord.forEach((it, i) => { if (it === i) k++; }); return k === q.items.length ? "right" : (k / q.items.length >= 0.5 ? "partial" : "miss"); }
+function gradeNumber(q, v) { const x = parseNum(v); if (x === null) return "miss"; let ok = Math.abs(x - q.correct) <= q.tolerance + 1e-9; if (!ok && q.acceptSign) ok = Math.abs(Math.abs(x) - Math.abs(q.correct)) <= q.tolerance + 1e-9; return ok ? "right" : "miss"; }
+function gradeTicks(q, ticks) { const n = ticks.length, need = q.need || q.keyPoints.length; return n >= need ? "right" : (n > 0 && n >= need / 2 ? "partial" : "miss"); }
+function counts(quiz, P, si) {
+  const c = { right: 0, revisit: 0, skip: 0, left: 0, total: 0 };
+  eachQ(quiz, (q, id, s) => { if (si !== undefined && s !== si) return; c.total++; const v = P.st[id]; if (v === "right") c.right++; else if (v === "partial" || v === "miss") c.revisit++; else if (v === "skip") c.skip++; else c.left++; });
+  return c;
+}
+function buildRound(quiz, P, opt) {
+  opt = opt || {};
+  const all = []; eachQ(quiz, (q, id, si) => all.push({ id, si }));
+  const pick = (test, from) => { let list = all.filter(x => test(P.st[x.id])); if (from !== undefined) { const a = list.filter(x => x.si >= from), b = list.filter(x => x.si < from); list = a.concat(b); } return list.slice(0, ROUND).map(x => x.id); };
+  let ids = [], kind = "new";
+  if (opt.kind === "revisit") { ids = pick(v => v === "miss" || v === "partial", opt.from); kind = "revisit"; }
+  else {
+    ids = pick(v => !v, opt.from);
+    if (!ids.length) { ids = pick(v => v === "skip"); kind = "skipped"; }
+    if (!ids.length) { ids = pick(v => v === "miss" || v === "partial"); kind = "revisit"; }
+  }
+  if (!ids.length) return null;
+  ids.forEach(id => { delete P.a[id]; delete P.h[id]; });
+  return { ids, i: 0, res: {}, kind, streak: 0, ended: false };
+}
 
 /* ---------------- routing ---------------- */
-let current = null; // {quiz, mine, P}
+let current = null; // { quiz, mine, P, mode }
+const app = () => $("#app");
+function openQuiz(id) {
+  const found = findQuiz(id); if (!found) return null;
+  current = { quiz: found.quiz, mine: found.mine, mode: mode(), P: getProg(found.quiz.id) };
+  return current;
+}
 function route() {
+  applyView();
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+  if (!SET.mode) return renderChooser();
   if (h === "import") return renderImport();
   if (h === "make") return renderMake();
-  if (h.startsWith("quiz-")) {
-    const id = h.slice(5);
-    const found = findQuiz(id);
-    if (found) return renderQuiz(found);
-    if (!samplesLoaded) return; // wait for samples, route() runs again
+  if (h === "activity") return renderActivity();
+  const m = h.match(/^(quiz|play)-(.+)$/);
+  if (m) {
+    if (openQuiz(m[2])) return m[1] === "play" ? renderPlay() : renderHome();
+    if (!samplesLoaded) return;
     toast("That quiz isn't on this device. Import it first.");
   }
   renderLibrary();
 }
-function go(h) { if (location.hash === "#" + h || (!h && !location.hash)) route(); else location.hash = h; }
+function go(h) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); } else location.hash = h; }
 window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
+const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
+const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
+const seg = (name, cur, opts) => `<div class="seg" role="group" aria-label="${name}">${opts.map(o => `<button type="button" class="${o[0] === cur ? "on" : ""}" aria-pressed="${o[0] === cur}" data-set-${name}="${o[0]}">${o[1]}</button>`).join("")}</div>`;
+const modeCards = () => `<div class="modes">${Object.keys(MODES).map(k => `<button type="button" class="mode${SET.mode === k ? " on" : ""}" aria-pressed="${SET.mode === k}" data-set-mode="${k}"><b>${MODES[k].name}</b><span>${MODES[k].line}</span></button>`).join("")}</div>`;
 
-const app = () => $("#app");
-const topBar = (left, title, right, extra) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div>${extra || ""}</header>`;
-const backBtn = `<button class="icon-btn" data-go="" aria-label="Back to library" type="button">←</button>`;
-
-/* ---------------- library ---------------- */
-function renderLibrary() {
-  current = null;
-  document.title = "Study Buddy";
-  const list = allQuizzes().map(x => ({ ...x, P: getProg(x.quiz.id) }))
-    .sort((a, b) => (b.P.seen && Object.keys(b.P.chk).length ? b.P.seen : 0) - (a.P.seen && Object.keys(a.P.chk).length ? a.P.seen : 0));
-  const card = x => {
-    const s = stats(x.quiz, x.P);
-    const pct = s.total ? Math.round(100 * s.right / s.total) : 0;
-    return `<button class="card qcard" data-open="${esc(x.quiz.id)}" type="button">
-      <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:nowrap"><h3>${esc(x.quiz.title)}</h3>${x.mine ? `<span class="badge mine">Yours</span>` : `<span class="badge">Sample</span>`}</div>
-      ${x.quiz.source ? `<div class="meta">${esc(x.quiz.source)}</div>` : ""}
-      <div class="meta"><span>${s.total} questions · ${x.quiz.sections.length} ${x.quiz.sections.length === 1 ? "part" : "parts"}</span><span>${s.done ? `${s.right} got right · ${s.done}/${s.total} checked` : "Not started"}</span></div>
-      <div class="bar" aria-hidden="true"><i style="width:${pct}%"></i></div>
-    </button>`;
-  };
-  const mine = list.filter(x => x.mine), samples = list.filter(x => !x.mine);
-  app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Study Buddy</div>`) + `
-  <main class="wrap">
-    <div class="hello"><h2>Read it. Then prove you remember it.</h2><p>Answer from memory, check yourself against the key points, and retry only what you missed.</p></div>
-    <div class="actions2">
-      <button class="action main" data-go="make" type="button"><b>Make a quiz</b><span>From your own PDF, slides or Word file, using any AI chat.</span></button>
-      <button class="action" data-go="import" type="button"><b>Import a quiz</b><span>Paste quiz text, or open a quiz file someone sent you.</span></button>
-    </div>
-    ${mine.length ? `<div class="label">Your quizzes</div>${mine.map(card).join("")}` : ""}
-    <div class="label">${mine.length ? "Samples" : "Try a sample"}</div>
-    ${samples.length ? samples.map(card).join("") : `<p class="empty">${samplesLoaded ? "No sample quizzes found." : "Loading…"}</p>`}
-    <p class="note">Your answers and quizzes are saved on this device only. Nothing is sent anywhere.</p>
+/* ---------------- first launch ---------------- */
+function renderChooser() {
+  current = null; document.title = "Kiron";
+  app().innerHTML = `<main class="wrap chooser">
+    <div class="brand big"><img src="icon-192.png" alt="">Kiron</div>
+    <h2 tabindex="-1">How do you want to revise today?</h2>
+    ${modeCards()}
+    <p class="note">Both use the same questions. You can switch whenever you like.</p>
   </main>`;
 }
 
-/* ---------------- quiz ---------------- */
-function renderQuiz(found) {
-  const quiz = found.quiz;
-  const P = getProg(quiz.id);
-  if (P.sec >= quiz.sections.length) P.sec = 0;
-  current = { quiz, mine: found.mine, P };
-  document.title = quiz.title + " · Study Buddy";
-  drawQuiz();
-}
-function visibleQs(si) {
-  const { quiz, P } = current;
-  return quiz.sections[si].questions.map((q, qi) => ({ q, qi, id: qid(si, qi) })).filter(x => !P.retry || P.retry.includes(x.id));
-}
-function drawQuiz(scrollTop) {
-  const { quiz, P } = current;
-  const si = P.sec;
-  const showSummary = si === -1;
-  const chips = quiz.sections.map((s, i) => {
-    const st = stats(quiz, P, i);
-    const hasRetry = !P.retry || visibleQs(i).length;
-    return `<button class="chip${i === si ? " on" : ""}${st.done === st.total && st.total ? " done" : ""}" data-sec="${i}" type="button"${hasRetry ? "" : " disabled style=\"opacity:.4\""}>${quiz.sections.length > 1 ? (i + 1) + ". " : ""}${esc(s.title.length > 28 ? s.title.slice(0, 26) + "…" : s.title)}</button>`;
-  }).join("") + `<button class="chip${showSummary ? " on" : ""}" data-sec="-1" type="button">Results</button>`;
-  const tot = stats(quiz, P);
-  const pct = tot.total ? Math.round(100 * tot.right / tot.total) : 0;
-  const head = topBar(backBtn, `<h1>${esc(quiz.title)}</h1>`, `<button class="icon-btn" data-act="share" type="button" aria-label="Share this quiz">Share</button>`,
-    `<div class="chips" role="tablist" aria-label="Parts">${chips}</div><div class="bar" style="border-radius:0" aria-hidden="true"><i style="width:${pct}%;border-radius:0"></i></div>`);
-  let body = "";
-  if (showSummary) body = summaryHTML();
-  else {
-    const sec = quiz.sections[si];
-    const intro = si === 0 && !P.retry ? `<div class="intro">
-      ${quiz.source ? `<div class="src">${esc(quiz.source)}</div>` : ""}
-      ${quiz.about ? `<p>${fmt(quiz.about)}</p>` : ""}
-      ${quiz.purpose ? `<div class="purpose"><b>Why you're reading this:</b> ${fmt(quiz.purpose)}</div>` : ""}
-      ${quiz.sourceUrl ? `<p><a href="${esc(quiz.sourceUrl)}" target="_blank" rel="noopener">Open the source</a></p>` : ""}
-      <details class="how"${Object.keys(P.chk).length ? "" : " open"}><summary>How this works</summary><ul>
-        <li>Answer from memory. Typing it out is the point, even if it's rough.</li>
-        <li>Stuck? <b>Show hint</b> gives a nudge. The question gets a “Hint used” tag.</li>
-        <li>Press <b>Check this part</b>. For typed answers, tick the key points you actually covered. Some are pre-ticked when your words match; fix any that are wrong.</li>
-        <li><b>Retry misses</b> clears only what you missed, so you can try those again.</li>
-        <li>A <b>Discussion</b> tag means the answer isn't spelled out in the source.</li>
-      </ul></details></div>` : "";
-    const vis = visibleQs(si);
-    const retryNote = P.retry ? `<div class="retry-note"><span>Retrying ${P.retry.length} missed ${P.retry.length === 1 ? "question" : "questions"}.</span><button class="btn small" data-act="showall" type="button">Show all questions</button></div>` : "";
-    const st = stats(quiz, P, si);
-    const anyChecked = vis.some(x => P.chk[x.id]);
-    const anyMiss = vis.some(x => { const v = verdict(x.q, x.id, P); return v === "miss" || v === "partial"; });
-    const last = si === quiz.sections.length - 1;
-    const nextLabel = last ? "See results" : "Next part →";
-    body = `${intro}${retryNote}
-      <div class="sec-head">${quiz.sections.length > 1 ? `<span class="n">Part ${si + 1} of ${quiz.sections.length}${sec.ref ? " · " + esc(sec.ref) : ""}</span>` : (sec.ref ? `<span class="n">${esc(sec.ref)}</span>` : "")}<h2>${esc(sec.title)}</h2>${sec.why ? `<p>${fmt(sec.why)}</p>` : ""}</div>
-      <div class="stack" id="qs">${vis.length ? vis.map(x => qHTML(x.q, x.id, si, x.qi)).join("") : `<p class="empty">Nothing to retry in this part.</p>`}</div>
-      <div class="secfoot">
-        ${anyChecked ? `<div class="score">This part: <b>${fmtPts(st.got)}</b> / ${st.total}${st.done < st.total ? ` · ${st.total - st.done} not marked yet` : ""}</div>` : ""}
-        <div class="row">
-          <button class="btn primary" data-act="check" type="button">${anyChecked ? "Check again" : "Check this part"}</button>
-          ${anyChecked && anyMiss ? `<button class="btn" data-act="retrysec" type="button">Retry misses</button>` : ""}
-          ${anyChecked ? `<button class="btn ghost" data-act="next" type="button">${nextLabel}</button>` : ""}
-        </div>
-      </div>`;
-  }
-  app().innerHTML = head + `<main class="wrap">${body}</main>`;
-  const on = app().querySelector(".chip.on"); if (on) on.scrollIntoView({ block: "nearest", inline: "center" });
-  if (scrollTop) window.scrollTo(0, 0);
-}
-const fmtPts = n => (Math.round(n * 10) / 10).toString();
-const VLABEL = { right: "Got it", partial: "Partly", miss: "Missed", pending: "Mark yourself" };
-
-function qHTML(q, id, si, qi) {
-  const { P } = current;
-  const v = verdict(q, id, P);
-  const checked = !!P.chk[id];
-  const a = P.a[id];
-  const tags = q.tags.map(t => `<span class="tag ${t}">${t === "calc" ? "Calculation" : "Discussion"}</span>`).join("") + (P.h[id] ? `<span class="tag hintused">Hint used</span>` : "") + (q.ref ? `<span class="tag ref">${esc(q.ref)}</span>` : "");
-  let input = "";
-  const dis = checked && q.type !== "text" ? " disabled" : "";
-  if (q.type === "text") {
-    input = `<textarea id="in-${id}" data-in="${id}" placeholder="Type what you remember…" aria-label="Your answer">${esc(a || "")}</textarea>`;
-  } else if (q.type === "number") {
-    input = `<div class="row"><input class="num" type="text" inputmode="decimal" autocomplete="off" id="in-${id}" data-in="${id}" value="${esc(a || "")}" placeholder="Your answer" aria-label="Your answer"${dis}>${q.unit ? `<span class="unit">${esc(q.unit)}</span>` : ""}</div>`;
-  } else if (q.type === "single" || q.type === "multi") {
-    const sel = q.type === "single" ? [a] : (a || []);
-    input = `<div class="opts" role="${q.type === "single" ? "radiogroup" : "group"}">` + q.options.map((o, i) => {
-      let cls = "opt";
-      if (checked) { const right = q.type === "single" ? i === q.correct : q.correct.includes(i); const chosen = sel.includes(i); if (chosen && right) cls += " ok"; else if (chosen) cls += " wrong"; else if (right) cls += " missed"; }
-      return `<label class="${cls}" for="in-${id}-${i}"><input type="${q.type === "single" ? "radio" : "checkbox"}" name="in-${id}" id="in-${id}-${i}" data-opt="${id}" value="${i}"${sel.includes(i) ? " checked" : ""}${dis}><span>${fmt(o)}</span></label>`;
-    }).join("") + `</div>` + (q.type === "multi" && !checked ? `<span class="note">Pick all that apply.</span>` : "");
-  } else if (q.type === "order") {
-    const ord = a || shuffledOrder(id, q.items.length);
-    input = `<ol class="order">` + ord.map((it, pos) => {
-      const cls = checked ? (it === pos ? " ok" : " wrong") : "";
-      return `<li class="${cls.trim()}"><span class="p">${pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${checked ? "" : `<button class="mv" type="button" data-mv="${id}" data-pos="${pos}" data-dir="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>↑</button><button class="mv" type="button" data-mv="${id}" data-pos="${pos}" data-dir="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>↓</button>`}</li>`;
-    }).join("") + `</ol>`;
-  }
-  const hint = q.hint ? (P.h[id] ? `<div class="hint"><b>Hint</b>${fmt(q.hint)}</div>` : (checked ? "" : `<button class="hint-btn" type="button" data-hint="${id}">Show hint</button>`)) : "";
-  let fb = "";
-  if (checked) {
-    let detail = "";
-    if (q.type === "text" && q.keyPoints.length) {
-      const ticks = P.t[id] || [];
-      const need = q.need || q.keyPoints.length;
-      detail = `<p class="kplead">Tick what your answer covered${need < q.keyPoints.length ? ` (you need ${need} of ${q.keyPoints.length})` : ""}:</p><div class="kps">` + q.keyPoints.map((k, i) => `<label class="kp${ticks.includes(i) ? " on" : ""}" for="kp-${id}-${i}"><input type="checkbox" id="kp-${id}-${i}" data-kp="${id}" value="${i}"${ticks.includes(i) ? " checked" : ""}><span>${fmt(k.text)}</span></label>`).join("") + `</div>`;
-    } else if (q.type === "text") {
-      const s = P.self[id];
-      detail = `<p class="kplead">Compare with the model answer, then mark yourself:</p><div class="selfmark">${["right", "partial", "miss"].map(k => `<button class="btn small${s === k ? " on" : ""}" type="button" data-self="${id}" data-v="${k}">${VLABEL[k]}</button>`).join("")}</div>`;
-    } else if (q.type === "number") {
-      const x = parseNum(a);
-      detail = `<div class="yours">You: <b>${x === null ? "no answer" : esc(String(x))}</b> · Answer: <b>${esc(String(q.correct))}${q.unit ? " " + esc(q.unit) : ""}</b></div>`;
-    } else if (q.type === "order" && v !== "right") {
-      detail = `<div class="yours">Correct order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>`;
-    }
-    const canOverride = !(q.type === "text");
-    const ovr = canOverride ? `<button class="btn small ghost ovr" type="button" data-ovr="${id}">${P.o[id] ? "Undo my override" : (v === "right" ? "Count as missed" : "I had this")}</button>` : "";
-    fb = `<div class="fb"><div class="verdict"><span class="pill ${v}">${VLABEL[v]}${P.o[id] ? " · your call" : ""}</span>${ovr}</div>${detail}<div class="model"><span class="k">${q.type === "text" ? "Model answer" : "Why"}</span>${fmt(q.answer)}</div></div>`;
-  }
-  return `<article class="q${v && v !== "pending" ? " v-" + v : ""}" id="card-${id}">
-    <div class="qtop"><span class="qn">${si + 1}.${qi + 1}</span>${tags}</div>
-    <p class="prompt">${fmt(q.prompt)}</p>${hint}${input}${fb}</article>`;
-}
-function redrawQ(id) {
-  const m = id.match(/^s(\d+)q(\d+)$/); const si = +m[1], qi = +m[2];
-  const el = document.getElementById("card-" + id);
-  if (el) el.outerHTML = qHTML(current.quiz.sections[si].questions[qi], id, si, qi);
-  refreshFoot();
-}
-function refreshFoot() {
-  // keep the score line and chips honest after a tick or override, without a full redraw that would jump the page
-  const { quiz, P } = current; const si = P.sec; if (si < 0) return;
-  const st = stats(quiz, P, si);
-  const sc = app().querySelector(".score");
-  if (sc) sc.innerHTML = `This part: <b>${fmtPts(st.got)}</b> / ${st.total}${st.done < st.total ? ` · ${st.total - st.done} not marked yet` : ""}`;
-  const tot = stats(quiz, P); const bar = app().querySelector(".top .bar > i"); if (bar) bar.style.width = (tot.total ? Math.round(100 * tot.right / tot.total) : 0) + "%";
-  const chip = app().querySelector(`.chip[data-sec="${si}"]`); if (chip) chip.classList.toggle("done", st.done === st.total && st.total > 0);
-}
-function summaryHTML() {
-  const { quiz, P } = current;
-  const t = stats(quiz, P);
-  const pct = t.total ? Math.round(100 * t.got / t.total) : 0;
-  let misses = 0, hints = 0;
-  eachQ(quiz, (q, id) => { const v = verdict(q, id, P); if (v === "miss" || v === "partial") misses++; if (P.h[id]) hints++; });
-  const msg = !t.done ? "Nothing checked yet. Start with part 1." : pct >= 85 ? "That stuck. Come back in a few days and see if it still does." : pct >= 60 ? "Solid base. Retry the misses below, then reread those pages." : "A lot slipped. Skim the source once more, then retry the misses.";
-  return `<div class="sum">
-    <h2>Results</h2>
-    <div class="big">${fmtPts(t.got)}<small> / ${t.total} · ${pct}%</small></div>
-    <p style="margin:0">${msg}${hints ? ` You used ${hints} ${hints === 1 ? "hint" : "hints"}.` : ""}${t.done < t.total ? ` ${t.total - t.done} questions aren't marked yet.` : ""}</p>
-    <div class="sumrows">${quiz.sections.map((s, i) => { const st = stats(quiz, P, i); return `<button class="sumrow" type="button" data-sec="${i}"><span>${quiz.sections.length > 1 ? (i + 1) + ". " : ""}${esc(s.title)}</span><span>${st.done ? fmtPts(st.got) + " / " + st.total : "not checked"}</span></button>`; }).join("")}</div>
-    <div class="row">${misses ? `<button class="btn primary" data-act="retryall" type="button">Retry all ${misses} misses</button>` : ""}<button class="btn danger" data-act="reset" type="button">Start over</button>${current.mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
-  </div>`;
-}
-
-/* ---------------- quiz events ---------------- */
-let resetArmed = 0;
-function onQuizClick(e) {
-  if (!current) return;
-  const { quiz, P } = current; const id = quiz.id;
-  const b = e.target.closest("button, input[data-kp]");
-  if (!b) return;
-  if (b.dataset.sec !== undefined) { P.sec = +b.dataset.sec; if (P.retry && P.sec >= 0 && !visibleQs(P.sec).length) P.retry = null; saveProg(id, P); drawQuiz(true); return; }
-  if (b.dataset.hint) { P.h[b.dataset.hint] = true; saveProg(id, P); redrawQ(b.dataset.hint); return; }
-  if (b.dataset.mv) {
-    const qidv = b.dataset.mv, m = qidv.match(/^s(\d+)q(\d+)$/), q = quiz.sections[+m[1]].questions[+m[2]];
-    const ord = (P.a[qidv] || shuffledOrder(qidv, q.items.length)).slice(); const pos = +b.dataset.pos, to = pos + (+b.dataset.dir);
-    if (to < 0 || to >= ord.length) return;
-    [ord[pos], ord[to]] = [ord[to], ord[pos]]; P.a[qidv] = ord; saveProg(id, P); redrawQ(qidv);
-    const again = document.querySelector(`[data-mv="${qidv}"][data-pos="${to}"][data-dir="${b.dataset.dir}"]`) || document.querySelector(`[data-mv="${qidv}"][data-pos="${to}"]`); if (again) again.focus();
-    return;
-  }
-  if (b.dataset.kp) {
-    const q2 = b.dataset.kp; const i = +b.value; const s = new Set(P.t[q2] || []);
-    if (b.checked) s.add(i); else s.delete(i);
-    P.t[q2] = [...s].sort((x, y) => x - y); P.tt[q2] = true; saveProg(id, P);
-    // update in place so the page doesn't jump
-    const card = document.getElementById("card-" + q2); b.closest(".kp").classList.toggle("on", b.checked);
-    const m = q2.match(/^s(\d+)q(\d+)$/); const q = quiz.sections[+m[1]].questions[+m[2]]; const v = verdict(q, q2, P);
-    card.className = "q" + (v && v !== "pending" ? " v-" + v : ""); const pill = card.querySelector(".pill"); pill.className = "pill " + v; pill.textContent = VLABEL[v];
-    refreshFoot(); return;
-  }
-  if (b.dataset.self) { P.self[b.dataset.self] = b.dataset.v; saveProg(id, P); redrawQ(b.dataset.self); return; }
-  if (b.dataset.ovr) {
-    const q2 = b.dataset.ovr;
-    if (P.o[q2]) delete P.o[q2];
-    else { const m = q2.match(/^s(\d+)q(\d+)$/); const q = quiz.sections[+m[1]].questions[+m[2]]; P.o[q2] = verdict(q, q2, P) === "right" ? "miss" : "right"; }
-    saveProg(id, P); redrawQ(q2); return;
-  }
-  const act = b.dataset.act;
-  if (act === "check") {
-    visibleQs(P.sec).forEach(({ q, id: q2 }) => {
-      if (q.type === "text" && q.keyPoints.length && !P.tt[q2]) P.t[q2] = autoTicks(q, P.a[q2]);
-      P.chk[q2] = true;
-    });
-    saveProg(id, P); drawQuiz();
-    const first = app().querySelector(".q .fb"); if (first) first.closest(".q").scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    return;
-  }
-  if (act === "next") { P.sec = P.sec + 1 >= quiz.sections.length ? -1 : P.sec + 1; if (P.retry && P.sec >= 0) { while (P.sec >= 0 && P.sec < quiz.sections.length && !visibleQs(P.sec).length) P.sec = P.sec + 1 >= quiz.sections.length ? -1 : P.sec + 1; } saveProg(id, P); drawQuiz(true); return; }
-  if (act === "retrysec" || act === "retryall") {
-    const ids = [];
-    eachQ(quiz, (q, q2, si) => { if (act === "retrysec" && si !== P.sec) return; const v = verdict(q, q2, P); if (v === "miss" || v === "partial" || (act === "retryall" && v === "pending")) ids.push(q2); });
-    if (!ids.length) return;
-    ids.forEach(q2 => { delete P.a[q2]; delete P.chk[q2]; delete P.t[q2]; delete P.tt[q2]; delete P.self[q2]; delete P.o[q2]; delete P.h[q2]; });
-    P.retry = ids;
-    if (act === "retryall") { P.sec = 0; while (P.sec < quiz.sections.length && !visibleQs(P.sec).length) P.sec++; if (P.sec >= quiz.sections.length) P.sec = 0; }
-    saveProg(id, P); drawQuiz(true); return;
-  }
-  if (act === "showall") { P.retry = null; saveProg(id, P); drawQuiz(true); return; }
-  if (act === "reset") {
-    if (Date.now() - resetArmed > 4000) { resetArmed = Date.now(); b.textContent = "Tap again to clear every answer"; return; }
-    resetArmed = 0; const fresh = blankProg(); current.P = fresh; saveProg(id, fresh); drawQuiz(true); toast("Cleared. Fresh start."); return;
-  }
-  if (act === "share") { shareQuiz(); return; }
-}
-function onQuizInput(e) {
-  if (!current) return;
-  const { quiz, P } = current;
-  const t = e.target;
-  if (t.dataset.in) { P.a[t.dataset.in] = t.value; saveProg(quiz.id, P); return; }
-  if (t.dataset.opt) {
-    const q2 = t.dataset.opt; const m = q2.match(/^s(\d+)q(\d+)$/); const q = quiz.sections[+m[1]].questions[+m[2]];
-    if (q.type === "single") P.a[q2] = +t.value;
-    else P.a[q2] = [...document.querySelectorAll(`input[data-opt="${q2}"]`)].filter(x => x.checked).map(x => +x.value);
-    saveProg(quiz.id, P);
-  }
-}
-function exportQuiz(q) { const o = Object.assign({}, q); return JSON.stringify(o, null, 2); }
-function shareQuiz() {
-  const { quiz } = current;
-  const text = exportQuiz(quiz);
-  const app_ = app();
-  const box = document.createElement("div");
-  box.className = "card"; box.id = "sharebox";
-  box.innerHTML = `<b>Share “${esc(quiz.title)}”</b><p class="note" style="margin:0">Send this quiz text to a friend (WhatsApp, email, anything). They open Study Buddy, tap <b>Import a quiz</b> and paste it. Your answers are not included.</p>
-    <div class="row"><button class="btn primary" type="button" id="share-copy">Copy quiz text</button>${navigator.share ? `<button class="btn" type="button" id="share-native">Send as file…</button>` : ""}<button class="btn ghost" type="button" id="share-close">Close</button></div>
-    <pre class="prompt-text" id="share-text">${esc(text)}</pre>`;
-  const old = $("#sharebox"); if (old) old.remove();
-  app_.querySelector("main").prepend(box);
-  window.scrollTo(0, 0);
-  $("#share-copy").onclick = () => copyText(text, $("#share-text"));
-  $("#share-close").onclick = () => box.remove();
-  const ns = $("#share-native");
-  if (ns) ns.onclick = async () => {
-    try {
-      const file = new File([text], quiz.id + ".json", { type: "application/json" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], title: quiz.title });
-      else await navigator.share({ title: quiz.title, text });
-    } catch (e) { if (e && e.name !== "AbortError") toast("Sharing isn't available here. Use Copy instead."); }
+/* ---------------- library ---------------- */
+function renderLibrary() {
+  current = null; document.title = "Kiron";
+  const list = allQuizzes().map(x => ({ ...x, P: getProg(x.quiz.id) })).sort((a, b) => (b.P.seen || 0) - (a.P.seen || 0));
+  const card = x => {
+    const c = counts(x.quiz, x.P), done = c.total - c.left;
+    return `<button class="card qcard" data-go="quiz-${esc(x.quiz.id)}" type="button">
+      <div class="qc-top"><h3>${esc(x.quiz.title)}</h3>${x.mine ? `<span class="badge mine">Yours</span>` : ""}</div>
+      <div class="meta"><span>${c.total} questions</span><span>${done ? `${c.right} got · ${c.left} to go` : "Not started"}</span></div>
+      ${segBar(c)}
+    </button>`;
   };
+  const s = logSummary();
+  app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`, `<button class="icon-btn" data-go="activity" type="button">${s.todayN ? s.todayN + " today" : "Activity"}</button>`) + `
+  <main class="wrap">
+    <div class="hello"><h2>Read it. Then prove you remember it.</h2></div>
+    ${modeCards()}
+    <div class="label">Pick a quiz</div>
+    <div class="grid">${list.length ? list.map(card).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet. Make or import one below." : "Loading…"}</p>`}</div>
+    <div class="label">Your own material</div>
+    <div class="actions2">
+      <button class="action" data-go="make" type="button"><b>Make a quiz</b><span>From your PDF, slides or Word file, using any AI chat.</span></button>
+      <button class="action" data-go="import" type="button"><b>Import a quiz</b><span>Paste quiz text someone sent you.</span></button>
+    </div>
+    <div class="row between"><span class="note">Layout</span>${seg("view", curView(), [["phone", "Phone view"], ["laptop", "Laptop view"]])}</div>
+    <p class="note">Everything stays on this device. Nothing is sent anywhere.</p>
+  </main>`;
 }
+function segBar(c) {
+  const w = n => (c.total ? 100 * n / c.total : 0) + "%";
+  return `<div class="bar3" role="img" aria-label="${c.right} got, ${c.revisit} to revisit, ${c.skip} skipped, ${c.left} to go"><i class="g" style="width:${w(c.right)}"></i><i class="r" style="width:${w(c.revisit)}"></i><i class="s" style="width:${w(c.skip)}"></i></div>`;
+}
+
+/* ---------------- quiz home ---------------- */
+function renderHome() {
+  const { quiz, P, mine } = current;
+  document.title = quiz.title + " · Kiron";
+  const c = counts(quiz, P), started = c.left < c.total;
+  const inRound = P.round && !P.round.ended && P.round.i < P.round.ids.length;
+  const noTap = []; eachQ(quiz, (q, id) => { if (lacksTap(q)) noTap.push(id); });
+  let primary;
+  if (inRound) primary = `<button class="btn primary xl" data-act="resume" type="button">Continue · question ${P.round.i + 1} of ${P.round.ids.length}</button>`;
+  else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Next " : "Start: "}${Math.min(ROUND, c.left)} questions</button>`;
+  else if (c.skip) primary = `<button class="btn primary xl" data-act="start" type="button">Try the ${c.skip} you skipped</button>`;
+  else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit ${c.revisit}</button>`;
+  else primary = `<div class="donebox"><b>All ${c.total} done in ${MODES[current.mode].name.toLowerCase()}.</b><span>${current.mode === "early" ? "Ready for a harder pass? Switch to In-depth revision below." : "Come back in a few days and see what stuck."}</span></div>`;
+  const parts = quiz.sections.map((s, i) => { const pc = counts(quiz, P, i); return `<button class="part" type="button" data-part="${i}"><span class="pn">${i + 1}</span><span class="pt"><b>${esc(s.title)}</b><small>${s.ref ? esc(s.ref) + " · " : ""}${pc.right} of ${pc.total} got${pc.revisit ? " · " + pc.revisit + " to revisit" : ""}</small>${segBar(pc)}</span><span class="go" aria-hidden="true">›</span></button>`; }).join("");
+  app().innerHTML = topBar(backBtn(), `<h1>${esc(quiz.title)}</h1>`, `<button class="icon-btn" data-act="share" type="button">Share</button>`) + `
+  <main class="wrap home">
+    <div class="intro">
+      ${quiz.source ? `<div class="src">${esc(quiz.source)}</div>` : ""}
+      ${quiz.purpose ? `<p class="purpose"><b>Why you're reading this:</b> ${fmt(quiz.purpose)}</p>` : ""}
+    </div>
+    <div class="status">${segBar(c)}<div class="legend"><span><i class="g"></i>${c.right} got it</span><span><i class="r"></i>${c.revisit} to revisit</span><span><i class="s"></i>${c.skip} skipped</span><span><i class="l"></i>${c.left} to go</span></div></div>
+    <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit ${c.revisit} now</button>` : ""}</div>
+    ${modeCards()}
+    ${current.mode === "early" && noTap.length ? `<div class="notice"><span><b>${noTap.length} ${noTap.length === 1 ? "question has" : "questions have"} no tap options yet.</b> ${noTap.length === 1 ? "It shows as a flip card" : "They show as flip cards"}: see the answer, then mark yourself.</span><button class="btn small" data-act="addtap" type="button">Add tap options with AI</button></div>` : ""}
+    ${quiz.sections.length > 1 ? `<div class="label">Or jump to a part</div><div class="parts">${parts}</div>` : ""}
+    <div class="row">${started ? `<button class="btn small ghost danger" data-act="reset" type="button">Start this quiz over</button>` : ""}${mine ? `<button class="btn small ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}${quiz.sourceUrl ? `<a class="btn small ghost" href="${esc(quiz.sourceUrl)}" target="_blank" rel="noopener">Open the source</a>` : ""}</div>
+    <div class="row between"><span class="note">Layout</span>${seg("view", curView(), [["phone", "Phone view"], ["laptop", "Laptop view"]])}</div>
+  </main>`;
+}
+function startRound(opt) {
+  const { quiz, P } = current;
+  const r = buildRound(quiz, P, opt);
+  if (!r) { toast("Nothing left there. Nice."); return; }
+  P.round = r; P.cur = null; saveProg(); go("play-" + quiz.id);
+}
+
+/* ---------------- player: one question per screen ---------------- */
+const VLABEL = { right: "Got it", partial: "Nearly", miss: "To revisit", skip: "Skipped" };
+const KIND = { new: "", skipped: "Skipped earlier", revisit: "Revisit" };
+function renderPlay(keepScroll) {
+  const { quiz, P } = current;
+  const r = P.round;
+  if (!r) return go("quiz-" + quiz.id);
+  document.title = quiz.title + " · Kiron";
+  if (r.ended || r.i >= r.ids.length) return renderRoundEnd();
+  const { q, id, si } = getQ(quiz, r.ids[r.i]);
+  if (!P.cur || P.cur.id !== id) P.cur = { id, done: false };
+  const cur = P.cur, f = formOf(q, current.mode);
+  const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] || "skip") : i === r.i ? "now" : ""}"></i>`).join("");
+  const tags = (KIND[r.kind] ? `<span class="tag">${KIND[r.kind]}</span>` : "") + q.tags.map(t => `<span class="tag ${t}">${t === "calc" ? "Calculation" : "Discussion"}</span>`).join("") + (P.h[id] ? `<span class="tag hintused">Hint used</span>` : "");
+  const status = cur.done ? cur.status : null;
+  let input = "", primary = "", kbd = "";
+  const a = P.a[id];
+  if (f.kind === "pick") {
+    const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
+    input = `<div class="opts" role="group" aria-label="Options">` + ord.map((oi, pos) => {
+      let cls = "opt";
+      if (cur.done) { if (oi === f.correct) cls += " ok"; else if (a === oi) cls += " wrong"; else cls += " dim"; }
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? " disabled" : ""}><span class="k">${pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
+    }).join("") + `</div>`;
+    kbd = "1–" + f.options.length + " to answer";
+  } else if (f.kind === "multi") {
+    const sel = a || [];
+    input = `<p class="lead">Pick all that apply.</p><div class="opts" role="group" aria-label="Options">` + q.options.map((o, i) => {
+      let cls = "opt" + (sel.includes(i) ? " sel" : "");
+      if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong" : right ? " missed" : " dim"); }
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? " disabled" : ""}><span class="k box">${sel.includes(i) ? "✓" : ""}</span><span>${fmt(o)}</span></button>`;
+    }).join("") + `</div>`;
+    primary = "check";
+  } else if (f.kind === "order") {
+    const ord = a || orderStart(id, q.items.length);
+    input = `<p class="lead">Use the arrows to put these in order.</p><ol class="order">` + ord.map((it, pos) => `<li class="${cur.done ? (it === pos ? "ok" : "wrong") : ""}"><span class="p">${pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv" type="button" data-mv="${pos}" data-dir="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>↑</button><button class="mv" type="button" data-mv="${pos}" data-dir="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>↓</button>`}</li>`).join("") + `</ol>`;
+    primary = "check";
+  } else if (f.kind === "flip") {
+    input = cur.revealed ? "" : `<p class="lead">Say the answer in your head, then flip.</p>`;
+    primary = cur.revealed ? "" : "flip";
+  } else if (f.kind === "text") {
+    input = `<textarea id="ans" data-in="1" placeholder="Type what you remember. Rough is fine." aria-label="Your answer"${cur.done ? " readonly" : ""}>${esc(a || "")}</textarea>`;
+    primary = cur.revealed ? "" : "check";
+  } else if (f.kind === "number") {
+    input = `<div class="row"><input class="num" id="ans" type="text" inputmode="decimal" autocomplete="off" data-in="1" value="${esc(a || "")}" placeholder="Your answer" aria-label="Your answer"${cur.done ? " readonly" : ""}>${q.unit ? `<span class="unit">${esc(q.unit)}</span>` : ""}</div>`;
+    primary = "check";
+  }
+  const hint = q.hint && P.h[id] ? `<div class="hint"><b>Hint</b>${fmt(q.hint)}</div>` : "";
+  // feedback
+  let fb = "";
+  if (cur.done || cur.revealed) {
+    let detail = "", why = f.kind === "pick" ? f.why : q.answer, more = f.kind === "pick" ? f.more : "";
+    if (f.kind === "text" && q.keyPoints.length) {
+      const ticks = cur.ticks || [], need = q.need || q.keyPoints.length;
+      detail = `<p class="lead">Tick what you covered${need < q.keyPoints.length ? ` (${need} of ${q.keyPoints.length} is enough)` : ""}:</p><div class="kps">` + q.keyPoints.map((k, i) => `<button type="button" class="kp${ticks.includes(i) ? " on" : ""}" data-kp="${i}" aria-pressed="${ticks.includes(i)}"><span class="k box">${ticks.includes(i) ? "✓" : ""}</span><span>${fmt(k.text)}</span></button>`).join("") + `</div>`;
+    } else if (f.kind === "number") {
+      const x = parseNum(a);
+      detail = `<div class="yours">You: <b>${x === null ? "no answer" : esc(String(x))}</b> · Answer: <b>${esc(String(q.correct))}${q.unit ? " " + esc(q.unit) : ""}</b></div>${status !== "right" ? `<button class="btn small ghost" type="button" data-act="ihadit">I had this</button>` : ""}`;
+    } else if (f.kind === "order" && status !== "right") {
+      detail = `<div class="yours">In order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>`;
+    }
+    const selfMark = (f.kind === "flip" || (f.kind === "text" && !q.keyPoints.length)) ? `<p class="lead">How did you do?</p><div class="selfmark">${[["right", "Got it"], ["partial", "Nearly"], ["miss", "Not yet"]].map(k => `<button class="btn${status === k[0] ? " on" : ""}" type="button" data-self="${k[0]}">${k[1]}</button>`).join("")}</div>` : "";
+    const head = status ? `<div class="verdict ${status}"><b>${status === "right" ? (r.streak >= 3 ? r.streak + " in a row" : "Got it") : status === "partial" ? "Nearly there" : "Not quite"}</b>${status === "right" ? "" : `<span>Saved to revisit later.</span>`}</div>` : "";
+    fb = `<section class="fb ${status || "open"}" aria-live="polite">${head}${detail}<div class="model"><span class="k">${f.kind === "pick" || f.kind === "multi" || f.kind === "order" ? "Why" : "Answer"}</span>${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}${selfMark}</section>`;
+  }
+  const needsSelf = (cur.revealed && !cur.done);
+  const canNext = cur.done;
+  const bar = canNext
+    ? `<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? "Finish round" : "Next"}</button>`
+    : `<button class="btn ghost" data-act="skip" type="button">Skip</button>${q.hint && !P.h[id] ? `<button class="btn ghost" data-act="hint" type="button">Hint</button>` : ""}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : `<span class="grow note">${needsSelf ? "Mark yourself to continue" : ""}</span>`}`;
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div><span class="count">${r.i + 1}/${r.ids.length}</span></div></header>
+  <main class="wrap play">
+    <div class="stage">
+      <article class="qcardp">
+        <div class="qtop"><span class="tag where">${quiz.sections.length > 1 ? "Part " + (si + 1) + " · " : ""}${esc(quiz.sections[si].title.length > 34 ? quiz.sections[si].title.slice(0, 32) + "…" : quiz.sections[si].title)}</span>${tags}</div>
+        ${f.setup ? `<p class="lead setup">No calculating. Pick the setup that gives the answer.</p>` : ""}
+        <h2 class="prompt" id="qprompt" tabindex="-1">${fmt(f.prompt)}</h2>
+        ${hint}${input}${fb}
+      </article>
+      <aside class="side"><b>${MODES[current.mode].name}</b><span>${counts(quiz, P).left} new questions left in this quiz.</span><span class="keys">Keys: ${kbd ? kbd + ", " : ""}Enter = ${canNext ? "next" : primary ? "check" : "next"}, S = skip, H = hint</span></aside>
+    </div>
+  </main>
+  <div class="actionbar"><div class="actionbar-in">${bar}</div></div>`;
+  if (!keepScroll) { window.scrollTo(0, 0); }
+  else if (cur.done || cur.revealed) { const el = app().querySelector(".fb"); if (el && keepScroll === "fb") el.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+}
+function finalize(status) {
+  const { quiz, P } = current, r = P.round, id = P.cur.id;
+  const first = !P.cur.done;
+  P.cur.done = true; P.cur.status = status;
+  P.st[id] = status; r.res[id] = status;
+  if (first) { P.n[id] = (P.n[id] || 0) + 1; r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id); }
+  else if (status !== "right") r.streak = 0;
+  saveProg();
+}
+function playAct(act, el) {
+  const { quiz, P } = current, r = P.round; if (!r) return;
+  if (r.ended || r.i >= r.ids.length) return;
+  const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q, current.mode);
+  if (act === "pick") { if (cur.done) return; P.a[id] = +el.dataset.pick; finalize(P.a[id] === f.correct ? "right" : "miss"); return renderPlay("fb"); }
+  if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
+  if (act === "mv") { if (cur.done) return; const ord = (P.a[id] || orderStart(id, q.items.length)).slice(), pos = +el.dataset.mv, to = pos + (+el.dataset.dir); if (to < 0 || to >= ord.length) return; [ord[pos], ord[to]] = [ord[to], ord[pos]]; P.a[id] = ord; saveProg(); renderPlay(true); const b = app().querySelector(`[data-mv="${to}"][data-dir="${el.dataset.dir}"]:not([disabled])`) || app().querySelector(`[data-mv="${to}"]:not([disabled])`); if (b) b.focus(); return; }
+  if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.scrollIntoView({ block: "nearest" }); return; }
+  if (act === "skip") { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); r.i++; P.cur = null; saveProg(); return renderPlay(); }
+  if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
+  if (act === "self") { finalize(el.dataset.self); return renderPlay(true); }
+  if (act === "check") {
+    if (cur.done) return;
+    if (f.kind === "multi") finalize(gradeMulti(q, P.a[id]));
+    else if (f.kind === "order") { if (!P.a[id]) P.a[id] = orderStart(id, q.items.length); finalize(gradeOrder(q, P.a[id])); }
+    else if (f.kind === "number") finalize(gradeNumber(q, P.a[id]));
+    else if (f.kind === "text") {
+      if (q.keyPoints.length) { cur.ticks = autoTicks(q, P.a[id]); finalize(gradeTicks(q, cur.ticks)); }
+      else { cur.revealed = true; saveProg(); }
+    }
+    return renderPlay("fb");
+  }
+  if (act === "kp") { const i = +el.dataset.kp, s = new Set(cur.ticks || []); s.has(i) ? s.delete(i) : s.add(i); cur.ticks = [...s].sort((x, y) => x - y); finalize(gradeTicks(q, cur.ticks)); renderPlay(true); const b = app().querySelector(`[data-kp="${i}"]`); if (b) b.focus(); return; }
+  if (act === "ihadit") { finalize("right"); return renderPlay(true); }
+  if (act === "next") { if (!cur.done) return; r.i++; P.cur = null; if (r.i >= r.ids.length) r.ended = true; saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true }); return; }
+}
+function renderRoundEnd() {
+  const { quiz, P } = current, r = P.round;
+  r.ended = true; saveProg();
+  const res = Object.values(r.res), n = k => res.filter(x => x === k).length;
+  const got = n("right"), rev = n("partial") + n("miss"), sk = n("skip"), answered = got + rev;
+  const c = counts(quiz, P);
+  const line = !answered ? "No answers this round. That's fine: the skipped ones will come back." : got === answered ? "Clean round." : got >= answered / 2 ? "Good round. The rest are saved to revisit." : "That's what revision is for. They're saved to revisit.";
+  const allDone = !c.left && !c.skip && !c.revisit;
+  let next;
+  if (c.left) next = `<button class="btn primary xl" data-act="start" type="button">Keep going: next ${Math.min(ROUND, c.left)}</button>`;
+  else if (c.skip) next = `<button class="btn primary xl" data-act="start" type="button">Try the ${c.skip} you skipped</button>`;
+  else if (c.revisit) next = `<button class="btn primary xl" data-act="revisit" type="button">Revisit ${c.revisit}</button>`;
+  else next = "";
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Back to quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(x => `<i class="${r.res[x] || "skip"}"></i>`).join("")}</div><span class="count">Done</span></div></header>
+  <main class="wrap play"><div class="endcard">
+    <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
+    <div class="big3"><div><b>${got}</b><span>got it</span></div><div><b>${rev}</b><span>to revisit</span></div><div><b>${sk}</b><span>skipped</span></div></div>
+    <p>${allDone ? `All ${c.total} questions done in ${MODES[current.mode].name.toLowerCase()}. ${current.mode === "early" ? "When you're ready, In-depth revision asks the same questions with typing." : "Come back in a few days and see what stuck."}` : line}</p>
+    <div class="status">${segBar(c)}<div class="legend"><span><i class="g"></i>${c.right} got it</span><span><i class="r"></i>${c.revisit} to revisit</span><span><i class="l"></i>${c.left + c.skip} to go</span></div></div>
+    <div class="cta">${next}${rev && c.left ? `<button class="btn" data-act="revisitround" type="button">Revisit this round's ${rev} first</button>` : ""}<button class="btn ghost" data-go="quiz-${esc(quiz.id)}" type="button">${allDone ? "Back to the quiz" : "Take a break"}</button></div>
+  </div></main>`;
+}
+
+/* ---------------- activity ---------------- */
+function renderActivity() {
+  current = null; document.title = "Activity · Kiron";
+  const s = logSummary(), rows = s.log.slice(-12).reverse();
+  const fmtD = t => new Date(t).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  const text = "Kiron activity\nSessions: " + s.log.length + "\nSessions past 3 questions: " + s.past3 + "\nAverage questions per session: " + s.avg.toFixed(1) + "\nBest session: " + s.best + "\n" + rows.map(r => `${fmtD(r.t0)} | ${r.n} answered, ${r.right} got, ${r.skip} skipped | ${Math.max(1, Math.round((r.t1 - r.t0) / 60000))} min | ${MODES[r.mode] ? MODES[r.mode].name : r.mode}`).join("\n");
+  app().innerHTML = topBar(backBtn(), `<h1>Activity</h1>`) + `<main class="wrap">
+    <div class="page-h"><h2 tabindex="-1">Did it hold your attention?</h2><p>A session is one sitting (a 30-minute gap starts a new one). This log never leaves your device.</p></div>
+    <div class="big3 card"><div><b>${s.past3}<small>/${s.log.length}</small></b><span>sessions past 3 questions</span></div><div><b>${s.avg.toFixed(1)}</b><span>questions per session</span></div><div><b>${s.best}</b><span>best session</span></div></div>
+    ${rows.length ? `<div class="card"><table class="log"><thead><tr><th>When</th><th>Answered</th><th>Got</th><th>Skipped</th><th>Min</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(fmtD(r.t0))}</td><td>${r.n}</td><td>${r.right}</td><td>${r.skip}</td><td>${Math.max(1, Math.round((r.t1 - r.t0) / 60000))}</td></tr>`).join("")}</tbody></table></div>
+    <div class="row"><button class="btn" id="act-copy" type="button">Copy my activity</button></div><pre class="prompt-text" id="act-text" hidden>${esc(text)}</pre>` : `<p class="empty">Nothing yet. Answer a few questions and come back.</p>`}
+  </main>`;
+  const b = $("#act-copy"); if (b) b.onclick = () => { $("#act-text").hidden = false; copyText(text, $("#act-text")); };
+}
+
+/* ---------------- share / add tap options ---------------- */
+function exportQuiz(q) { return JSON.stringify(q, null, 1); }
+function sheet(title, bodyHTML, text, copyLabel) {
+  const old = $("#sheet"); if (old) old.remove();
+  const box = document.createElement("div"); box.className = "card sheet"; box.id = "sheet";
+  box.innerHTML = `<b>${esc(title)}</b>${bodyHTML}<div class="row"><button class="btn primary" type="button" id="sheet-copy">${copyLabel}</button><button class="btn ghost" type="button" id="sheet-close">Close</button></div><pre class="prompt-text" id="sheet-text">${esc(text.length > 6000 ? text.slice(0, 6000) + "\n… (the Copy button copies all of it)" : text)}</pre>`;
+  app().querySelector("main").prepend(box); window.scrollTo(0, 0);
+  $("#sheet-copy").onclick = () => copyText(text, $("#sheet-text"));
+  $("#sheet-close").onclick = () => box.remove();
+}
+function shareQuiz() { const { quiz } = current; sheet("Share “" + quiz.title + "”", `<p class="note">Send this quiz text to a friend. They open Kiron, tap <b>Import a quiz</b> and paste it. Your answers aren't included.</p>`, exportQuiz(quiz), "Copy quiz text"); }
+function addTapPrompt(quiz) { return (window.SB_PROMPT_ADD || "") + "\n\n" + exportQuiz(quiz); }
 
 /* ---------------- import ---------------- */
-let pending = null;
 function renderImport() {
-  current = null; document.title = "Import a quiz · Study Buddy";
-  app().innerHTML = topBar(backBtn, `<h1>Import a quiz</h1>`) + `<main class="wrap">
-    <div class="page-h"><h2>Add a quiz</h2><p>Paste the quiz text an AI made for you (see <a href="#make">Make a quiz</a>), or one a friend sent you. You can also open a <b>.json</b> quiz file.</p></div>
-    <textarea id="imp-text" style="min-height:180px;font-family:var(--mono);font-size:14px" placeholder='Paste here. It starts with {"format": "study-buddy-quiz", …' aria-label="Quiz text"></textarea>
+  current = null; document.title = "Import a quiz · Kiron";
+  app().innerHTML = topBar(backBtn(), `<h1>Import a quiz</h1>`) + `<main class="wrap">
+    <div class="page-h"><h2 tabindex="-1">Add a quiz</h2><p>Paste the quiz text an AI made for you (see <a href="#make">Make a quiz</a>), or one a friend sent you. You can also open a <b>.json</b> quiz file.</p></div>
+    <textarea id="imp-text" class="mono" placeholder='Paste here. It starts with {"format": "study-buddy-quiz", …' aria-label="Quiz text"></textarea>
     <div class="row">
       <button class="btn primary" id="imp-go" type="button">Import</button>
       <label class="btn file-btn" for="imp-file">Open a file…<input type="file" id="imp-file" accept=".json,.txt,application/json,text/plain"></label>
     </div>
-    <div id="imp-out"></div>
+    <div id="imp-out" aria-live="polite"></div>
     <p class="note">The quiz is stored on this device only. To use it on another phone, share it from the quiz screen.</p>
   </main>`;
   $("#imp-go").onclick = () => doImport($("#imp-text").value);
@@ -599,13 +612,12 @@ function doImport(raw) {
   const v = validateQuiz(p.data);
   if (v.errors) return showImportErrors(v.errors);
   const quiz = v.quiz;
-  const imp = getImported();
-  const clash = imp.find(q => q.id === quiz.id) || SAMPLES.find(s => s.quiz.id === quiz.id);
-  pending = quiz;
-  let n = 0; quiz.sections.forEach(s => n += s.questions.length);
+  const clash = getImported().find(q => q.id === quiz.id) || SAMPLES.find(s => s.quiz.id === quiz.id);
+  let n = 0, noTap = 0; eachQ(quiz, q => { n++; if (lacksTap(q)) noTap++; });
   $("#imp-out").innerHTML = `<div class="ok-box"><b>Looks good: “${esc(quiz.title)}”</b><span>${n} questions in ${quiz.sections.length} ${quiz.sections.length === 1 ? "part" : "parts"}.</span>
-    ${clash ? `<span>You already have a quiz with this name. Replacing it keeps your answers to questions that didn't change position.</span><div class="row"><button class="btn primary" id="imp-replace" type="button">Replace it</button><button class="btn" id="imp-both" type="button">Keep both</button></div>` : `<div class="row"><button class="btn primary" id="imp-save" type="button">Save and open</button></div>`}</div>`;
-  const save = (asNew) => {
+    ${noTap ? `<span><b>${noTap} ${noTap === 1 ? "question has" : "questions have"} no tap options</b>, so in Early revision ${noTap === 1 ? "it will show as a flip card" : "they will show as flip cards"}. You can save it as it is, or ask an AI to add them first.</span><div><button class="btn small" id="imp-addtap" type="button">Copy a prompt to add tap options</button></div>` : ""}
+    ${clash ? `<span>You already have a quiz with this name.</span><div class="row"><button class="btn primary" id="imp-replace" type="button">Replace it</button><button class="btn" id="imp-both" type="button">Keep both</button></div>` : `<div class="row"><button class="btn primary" id="imp-save" type="button">Save and open</button></div>`}</div>`;
+  const save = asNew => {
     let list = getImported();
     if (asNew) { let k = 2; while (allQuizzes().some(x => x.quiz.id === quiz.id + "-" + k)) k++; quiz.id = quiz.id + "-" + k; quiz.title = quiz.title + " (" + k + ")"; }
     list = list.filter(q => q.id !== quiz.id); list.unshift(quiz);
@@ -615,47 +627,75 @@ function doImport(raw) {
   if ($("#imp-save")) $("#imp-save").onclick = () => save(false);
   if ($("#imp-replace")) $("#imp-replace").onclick = () => save(false);
   if ($("#imp-both")) $("#imp-both").onclick = () => save(true);
+  if ($("#imp-addtap")) $("#imp-addtap").onclick = () => copyText(addTapPrompt(quiz));
 }
 
 /* ---------------- make a quiz (prompt) ---------------- */
 function renderMake() {
-  current = null; document.title = "Make a quiz · Study Buddy";
+  current = null; document.title = "Make a quiz · Kiron";
   const prompt = window.SB_PROMPT || "";
-  app().innerHTML = topBar(backBtn, `<h1>Make a quiz</h1>`) + `<main class="wrap">
-    <div class="page-h"><h2>Turn your notes into a quiz</h2><p>Study Buddy has no AI of its own. Any AI chat can write the quiz for you; this prompt tells it exactly how. It takes about two minutes.</p></div>
+  app().innerHTML = topBar(backBtn(), `<h1>Make a quiz</h1>`) + `<main class="wrap">
+    <div class="page-h"><h2 tabindex="-1">Turn your notes into a quiz</h2><p>Kiron has no AI of its own. Any AI chat can write the quiz for you, and this prompt tells it exactly how. About two minutes.</p></div>
     <ol class="steps">
       <li><div><b>Copy the prompt</b><span>The button below copies it.</span></div></li>
-      <li><div><b>Open ChatGPT, Claude or Gemini</b><span>The free version is fine. Start a new chat, paste the prompt and attach your PDF, slides or Word file.</span></div></li>
-      <li><div><b>Answer its two questions</b><span>What you're reading it for, and how long a quiz you want. The purpose is what keeps the questions useful.</span></div></li>
-      <li><div><b>Copy the code block it gives back</b><span>Most chats have a copy button on the block. Get all of it, from the first { to the last }.</span></div></li>
-      <li><div><b>Import it here</b><span>Tap <b>Import a quiz</b> and paste. If something's off, the app tells you what to ask the AI to fix.</span></div></li>
+      <li><div><b>Open ChatGPT, Claude or Gemini</b><span>The free version is fine. Paste the prompt and attach your PDF, slides or Word file.</span></div></li>
+      <li><div><b>Answer its two questions</b><span>What you're reading it for, and how long a quiz you want.</span></div></li>
+      <li><div><b>Copy the code block it gives back</b><span>All of it, from the first { to the last }.</span></div></li>
+      <li><div><b>Import it here</b><span>Tap <b>Import a quiz</b> and paste. If something's off, Kiron tells you what to ask the AI to fix.</span></div></li>
     </ol>
     <div class="row"><button class="btn primary" id="mk-copy" type="button">Copy the prompt</button><button class="btn" data-go="import" type="button">Import a quiz</button></div>
     <details class="how"><summary>Read the prompt</summary><pre class="prompt-text" id="mk-text">${esc(prompt)}</pre></details>
-    <p class="note">Big file? Free AI plans limit file size. Split it, or upload a chapter or section at a time and make one quiz per part.</p>
+    <p class="note">Each question comes in two forms, tap-to-answer and typed, so the quiz works in both revision modes. Big file? Upload a chapter at a time and make one quiz per part.</p>
   </main>`;
-  $("#mk-copy").onclick = () => { const d = document.querySelector("details.how"); d.open = true; copyText(prompt, $("#mk-text")); };
+  $("#mk-copy").onclick = () => { document.querySelector("details.how").open = true; copyText(prompt, $("#mk-text")); };
 }
 
-/* ---------------- library events ---------------- */
+/* ---------------- events ---------------- */
+let armed = { el: null, t: 0 };
+function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000) { armed = { el: null, t: 0 }; return true; } armed = { el, t: Date.now() }; el.dataset.label = el.textContent; el.textContent = label; setTimeout(() => { if (el.isConnected && armed.el === el) { el.textContent = el.dataset.label; armed = { el: null, t: 0 }; } }, 4000); return false; }
 document.addEventListener("click", e => {
-  const g = e.target.closest("[data-go]");
-  if (g) { go(g.dataset.go); return; }
-  const o = e.target.closest("[data-open]");
-  if (o) { go("quiz-" + o.dataset.open); return; }
-  if (current && app().contains(e.target)) onQuizClick(e);
+  const t = e.target.closest("button, a, [data-go]"); if (!t) return;
+  const d = t.dataset;
+  if (d.setMode) { const first = !SET.mode; SET.mode = d.setMode; saveSet(); if (current) { current.mode = mode(); current.P = getProg(current.quiz.id); } route(); if (first) window.scrollTo(0, 0); else toast(MODES[SET.mode].name + " is on"); return; }
+  if (d.setView) { SET.view = d.setView; saveSet(); route(); return; }
+  if (d.go !== undefined) { go(d.go); return; }
+  if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); ["early", "deep"].forEach(m => LS.del(progKey2(d.del, m))); toast("Deleted"); go(""); return; }
+  if (!current) return;
+  if (d.pick !== undefined) return playAct("pick", t);
+  if (d.toggle !== undefined) return playAct("toggle", t);
+  if (d.mv !== undefined) return playAct("mv", t);
+  if (d.kp !== undefined) return playAct("kp", t);
+  if (d.self) return playAct("self", t);
+  if (d.part !== undefined) return startRound({ from: +d.part });
+  const act = d.act; if (!act) return;
+  if (act === "start") return startRound();
+  if (act === "revisit") return startRound({ kind: "revisit" });
+  if (act === "revisitround") { const { P } = current; const ids = P.round.ids.filter(x => P.round.res[x] === "miss" || P.round.res[x] === "partial"); ids.forEach(x => { delete P.a[x]; delete P.h[x]; }); P.round = { ids, i: 0, res: {}, kind: "revisit", streak: 0, ended: false }; P.cur = null; saveProg(); return renderPlay(); }
+  if (act === "resume") return go("play-" + current.quiz.id);
+  if (act === "share") return shareQuiz();
+  if (act === "addtap") return sheet("Add tap options", `<p class="note">Paste this into any AI chat. It returns the same quiz with tap-to-answer options added. Import the result and choose <b>Replace it</b>.</p>`, addTapPrompt(current.quiz), "Copy prompt and quiz");
+  if (act === "reset") { if (!twoTap(t, "Tap again to clear your answers")) return; current.P = blankProg(); saveProg(); toast("Cleared. Fresh start."); return renderHome(); }
+  playAct(act, t);
 });
-document.addEventListener("input", onQuizInput);
-document.addEventListener("change", e => { if (e.target.dataset && e.target.dataset.opt) onQuizInput(e); });
+document.addEventListener("input", e => { if (current && e.target.dataset && e.target.dataset.in && current.P.cur) { current.P.a[current.P.cur.id] = e.target.value; saveProg(); } });
+document.addEventListener("keydown", e => {
+  if (!current || !/^#play-/.test(location.hash) || e.metaKey || e.altKey) return;
+  const tag = (e.target.tagName || "").toLowerCase(), typing = tag === "textarea" || (tag === "input" && e.target.type === "text");
+  const click = sel => { const b = app().querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); return true; } return false; };
+  if (e.key === "Enter") {
+    if (tag === "textarea" && !e.ctrlKey) return;
+    if (tag === "button" || tag === "a" || tag === "summary") return;
+    click('[data-act="next"]') || click('[data-act="check"]') || click('[data-act="flip"]') || click('.endcard .btn.primary'); return;
+  }
+  if (typing || e.ctrlKey) return;
+  if (/^[1-9]$/.test(e.key)) { const opts = app().querySelectorAll(".opts .opt"); const b = opts[+e.key - 1]; if (b && !b.disabled) { e.preventDefault(); b.click(); } return; }
+  const k = e.key.toLowerCase();
+  if (k === "s") click('[data-act="skip"]'); else if (k === "h") click('[data-act="hint"]');
+});
 
-/* delete an imported quiz: long-press alternative = button on the quiz's results screen */
-document.addEventListener("click", e => {
-  const d = e.target.closest("[data-del]"); if (!d) return;
-  if (d.dataset.armed !== "1") { d.dataset.armed = "1"; d.textContent = "Tap again to delete"; setTimeout(() => { if (d.isConnected) { d.dataset.armed = ""; d.textContent = "Delete this quiz"; } }, 4000); return; }
-  LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.dataset.del)); LS.del(progKey(d.dataset.del)); toast("Deleted"); go("");
-});
 /* ---------------- boot ---------------- */
-window.SB = { validateQuiz, parseQuizText, verdict, autoTicks };
+window.SB = { validateQuiz, parseQuizText, formOf, buildRound, logSummary };
+applyView();
 route();
 loadSamples().then(route);
 if ("serviceWorker" in navigator && location.protocol === "https:") {

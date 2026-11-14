@@ -41,7 +41,17 @@
       }
      ],
      "answer": "Coupon interest, capital gain (or loss) when the security matures, and reinvestment income from interim cash flows.",
-     "ref": "p. 2"
+     "ref": "p. 2",
+     "mcq": {
+      "prompt": "The three sources of return on a bond are:",
+      "options": [
+       "Coupon interest, capital gain or loss, reinvestment income",
+       "Coupon interest, dividends, capital gain",
+       "Coupon interest, accrued interest, par value",
+       "Capital gain, inflation, reinvestment income"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -67,7 +77,17 @@
       }
      ],
      "answer": "YTM assumes every coupon can be reinvested at a rate equal to the YTM itself, and that the bond is held to maturity. If either fails, the realised return differs from the YTM.",
-     "ref": "p. 5"
+     "ref": "p. 5",
+     "mcq": {
+      "prompt": "Yield to maturity quietly assumes:",
+      "options": [
+       "Coupons are reinvested at the YTM, and the bond is held to maturity",
+       "Coupons are spent, and the bond is sold at par",
+       "Coupons are reinvested at the coupon rate, and rates stay flat",
+       "The issuer may default, and the bond is held to the first call"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "single",
@@ -111,7 +131,18 @@
       }
      ],
      "answer": "Convert to an effective annual rate, which assumes one compounding period a year, or restate on a semi-annual bond basis (a YTM with a periodicity of two; 2% per half-year = 4% on a semi-annual bond basis). The general conversion is (1 + APRm/m)^m = (1 + APRn/n)^n.",
-     "ref": "p. 3–4"
+     "ref": "p. 3–4",
+     "mcq": {
+      "prompt": "How do you compare yields with different periodicities?",
+      "options": [
+       "Convert to an effective annual rate, or to a semi-annual bond basis",
+       "Compare the coupon rates instead",
+       "Divide each yield by its number of periods",
+       "Use the current yield for all of them"
+      ],
+      "correct": 0,
+      "why": "General rule: (1 + APRm/m)^m = (1 + APRn/n)^n."
+     }
     },
     {
      "type": "number",
@@ -123,7 +154,17 @@
       "calc"
      ],
      "answer": "(1.0248)² = (1 + APR₄/4)⁴ → APR₄ = 4 × (1.0248^0.5 − 1) = 4.93%. More frequent compounding needs a lower stated rate for the same effective return.",
-     "ref": "p. 4"
+     "ref": "p. 4",
+     "mcq": {
+      "options": [
+       "4 × (1.0248^0.5 − 1)",
+       "4.96 ÷ 2",
+       "4 × (1.0496^0.25 − 1)",
+       "2 × (1.0248² − 1)"
+      ],
+      "correct": 0,
+      "why": "(1.0248)² = (1 + APR₄/4)⁴ → 4.93%. More frequent compounding needs a lower stated rate."
+     }
     },
     {
      "type": "text",
@@ -148,7 +189,18 @@
       }
      ],
      "answer": "Street convention YTM is the IRR assuming payments are made on the scheduled dates, ignoring weekends and holidays. True YTM is the IRR using the actual calendar of payments, allowing for weekends and bank holidays.",
-     "ref": "p. 6"
+     "ref": "p. 6",
+     "mcq": {
+      "prompt": "The TRUE yield to maturity differs from the street convention because it:",
+      "options": [
+       "Uses the actual payment calendar, with weekends and holidays",
+       "Uses a 30/360 day count",
+       "Includes reinvestment income",
+       "Is stated on an annual basis"
+      ],
+      "correct": 0,
+      "why": "Street convention assumes payments on the scheduled dates."
+     }
     },
     {
      "type": "single",
@@ -190,7 +242,18 @@
       }
      ],
      "answer": "Current yield = annual coupon ÷ flat (market) price. Simple yield = (annual coupon + straight-line amortised share of the gain or loss to par) ÷ flat price. So simple yield adds the pull to par; current yield ignores it.",
-     "ref": "p. 6–7"
+     "ref": "p. 6–7",
+     "mcq": {
+      "prompt": "What does simple yield add to current yield?",
+      "options": [
+       "Straight-line amortisation of the discount or premium",
+       "Reinvestment income on coupons",
+       "Compounding within the year",
+       "Accrued interest"
+      ],
+      "correct": 0,
+      "why": "Current yield = annual coupon ÷ flat price."
+     }
     },
     {
      "type": "single",
@@ -232,7 +295,17 @@
      ],
      "need": 1,
      "answer": "It counts only coupon interest and ignores the other sources of return: capital gain or loss and reinvestment income.",
-     "ref": "p. 8"
+     "ref": "p. 8",
+     "mcq": {
+      "prompt": "The main drawback of current yield is that it:",
+      "options": [
+       "Counts only coupon income, ignoring capital gain/loss and reinvestment",
+       "Ignores the coupon",
+       "Can't be computed for premium bonds",
+       "Assumes reinvestment at the YTM"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -244,7 +317,17 @@
       "discussion"
      ],
      "answer": "7 ÷ 94.17 = 7.43%, above the 7% coupon because the bond is at a discount. (The slide asks this but doesn't show the answer; this is my calculation.)",
-     "ref": "p. 8"
+     "ref": "p. 8",
+     "mcq": {
+      "options": [
+       "7 ÷ 94.17",
+       "7 ÷ 100",
+       "(7 + (100 − 94.17)/8) ÷ 94.17",
+       "94.17 ÷ 7"
+      ],
+      "correct": 0,
+      "why": "Annual coupon ÷ price = 7.43%. The third option is simple yield."
+     }
     },
     {
      "type": "number",
@@ -256,7 +339,17 @@
       "calc"
      ],
      "answer": "Annual coupon = 6% × 1,000 = $60. Current yield = 60 ÷ 802.07 = 7.48%.",
-     "ref": "p. 9–10"
+     "ref": "p. 9–10",
+     "mcq": {
+      "options": [
+       "60 ÷ 802.07",
+       "30 ÷ 802.07",
+       "60 ÷ 1,000",
+       "(60 + (1,000 − 802.07)/20) ÷ 802.07"
+      ],
+      "correct": 0,
+      "why": "Use the full annual coupon ($60): 7.48%."
+     }
     },
     {
      "type": "number",
@@ -268,7 +361,17 @@
       "calc"
      ],
      "answer": "Discount = 100 − 90.165 = 9.835; straight-line per year = 9.835 ÷ 3 = 3.278. Simple yield = (8 + 3.278) ÷ 90.165 = 12.51%.",
-     "ref": "p. 9–10"
+     "ref": "p. 9–10",
+     "mcq": {
+      "options": [
+       "(8 + (100 − 90.165)/3) ÷ 90.165",
+       "8 ÷ 90.165",
+       "(8 + (100 − 90.165)/3) ÷ 100",
+       "(4 + (100 − 90.165)/6) ÷ 90.165"
+      ],
+      "correct": 0,
+      "why": "Coupon plus straight-line amortisation, over price: 12.51%."
+     }
     }
    ]
   },
@@ -319,7 +422,18 @@
      ],
      "need": 4,
      "answer": "It assumes the issuer calls the bond on an assumed call date at the price in the call schedule. Investors compute yield to first (or next) call, yield to second call (often the first par call) and yield to worst.",
-     "ref": "p. 12"
+     "ref": "p. 12",
+     "mcq": {
+      "prompt": "Yield to call assumes the bond is:",
+      "options": [
+       "Called on an assumed call date at the scheduled call price",
+       "Held to maturity and redeemed at par",
+       "Called at par on the next coupon date",
+       "Put back to the issuer at the put price"
+      ],
+      "correct": 0,
+      "why": "Investors compute yield to first call, to first par call, and yield to worst."
+     }
     },
     {
      "type": "number",
@@ -331,7 +445,17 @@
       "calc"
      ],
      "answer": "N = 10, PMT = 30, FV = 1020, PV = −1020 → I/Y = 2.941% per half-year, so yield to first call = 5.882%. (Bought at the call price, so the yield is just coupon ÷ price.)",
-     "ref": "p. 13–14"
+     "ref": "p. 13–14",
+     "mcq": {
+      "options": [
+       "N = 10, PMT = 30, FV = 1,020, PV = −1,020; I/Y × 2",
+       "N = 20, PMT = 30, FV = 1,000, PV = −1,020; I/Y × 2",
+       "N = 5, PMT = 60, FV = 1,020, PV = −1,020; I/Y × 2",
+       "N = 10, PMT = 30, FV = 1,000, PV = −1,020; I/Y × 2"
+      ],
+      "correct": 0,
+      "why": "First call is at 102 after 5 years (10 half-years): 5.88%."
+     }
     },
     {
      "type": "number",
@@ -343,7 +467,17 @@
       "calc"
      ],
      "answer": "Yield to first par call: N = 16, PMT = 30, FV = 1000, PV = −1020 → 2.843% × 2 = 5.686%. Lowest of 5.734%, 5.882% and 5.686% → yield to worst = 5.686%.",
-     "ref": "p. 13–14"
+     "ref": "p. 13–14",
+     "mcq": {
+      "options": [
+       "Find the yield to first par call (N = 16, FV = 1,000), then take the lowest of all three",
+       "Take the lower of 5.734% and 5.882%",
+       "Average the three yields",
+       "Take the highest of the three yields"
+      ],
+      "correct": 0,
+      "why": "Yield to par call = 5.686%, the lowest, so yield to worst = 5.69%."
+     }
     },
     {
      "type": "number",
@@ -355,7 +489,17 @@
       "discussion"
      ],
      "answer": "YTM ≈ 9.08%, yield to first call ≈ 8.54%, yield to first par call ≈ 8.79%. Yield to worst = 8.54%, the first call. (The slide sets this without a solution or frequency; I assumed semi-annual. Annual coupons give 9.06%, 8.51% and 8.77%, same ranking.)",
-     "ref": "p. 15"
+     "ref": "p. 15",
+     "mcq": {
+      "options": [
+       "Compute YTM, yield to first call and yield to par call; take the lowest",
+       "Compute YTM only: N = 36, PMT = 55, FV = 1,000",
+       "Compute yield to first call only: N = 16, FV = 1,055",
+       "Take the coupon ÷ price: 110 ÷ 1,169"
+      ],
+      "correct": 0,
+      "why": "9.08%, 8.54% and 8.79%: worst is 8.54%, the first call."
+     }
     },
     {
      "type": "text",
@@ -378,7 +522,18 @@
       }
      ],
      "answer": "Yield to put is the rate that makes the present value of the cash flows to the first put date equal to price plus accrued interest. It assumes interim coupons are reinvested at that yield.",
-     "ref": "p. 16"
+     "ref": "p. 16",
+     "mcq": {
+      "prompt": "Yield to put is the rate that:",
+      "options": [
+       "Sets the PV of cash flows to the first put date equal to the full price",
+       "Sets the PV of cash flows to maturity equal to par",
+       "Equals the coupon ÷ the put price",
+       "Is the highest of all possible yields"
+      ],
+      "correct": 0,
+      "why": "It assumes coupons are reinvested at that yield."
+     }
     },
     {
      "type": "number",
@@ -390,7 +545,17 @@
       "discussion"
      ],
      "answer": "N = 6, PMT = 3.1, FV = 100, PV = −102.19 → I/Y ≈ 2.70%, so yield to put ≈ 5.40%. (Not solved in the slides; this is my calculation. Annual coupons give 5.39%.)",
-     "ref": "p. 17"
+     "ref": "p. 17",
+     "mcq": {
+      "options": [
+       "N = 6, PMT = 3.1, FV = 100, PV = −102.19; I/Y × 2",
+       "N = 16, PMT = 3.1, FV = 100, PV = −102.19; I/Y × 2",
+       "N = 3, PMT = 6.2, FV = 102.19, PV = −100; I/Y",
+       "N = 6, PMT = 6.2, FV = 100, PV = −102.19; I/Y × 2"
+      ],
+      "correct": 0,
+      "why": "Cash flows stop at the put date, 3 years = 6 half-years: about 5.40%."
+     }
     },
     {
      "type": "single",
@@ -447,7 +612,18 @@
       }
      ],
      "answer": "The coupon varies with a reference rate. The rate is fixed at the start of each period and paid at the end, which is called “in arrears”. Principal is typically non-amortising and redeemed in full at maturity.",
-     "ref": "p. 19"
+     "ref": "p. 19",
+     "mcq": {
+      "prompt": "How does a floating-rate note pay?",
+      "options": [
+       "Coupon set off a reference rate at the start of the period and paid at the end; principal at maturity",
+       "Coupon set and paid at the start of each period; principal amortises",
+       "Fixed coupon paid in arrears; principal at maturity",
+       "Coupon set at the end of the period; principal repaid on each reset"
+      ],
+      "correct": 0,
+      "why": "Set at the start, paid at the end: “in arrears”."
+     }
     },
     {
      "type": "single",
@@ -491,7 +667,18 @@
       }
      ],
      "answer": "The quoted margin is the specified spread over the reference rate that sets the coupon. The discount (required) margin is the spread the market requires, such that the FRN is priced at par on a rate reset date.",
-     "ref": "p. 20"
+     "ref": "p. 20",
+     "mcq": {
+      "prompt": "The discount (required) margin on an FRN is:",
+      "options": [
+       "The spread investors require, which prices the FRN at par on a reset date",
+       "The spread written into the coupon formula",
+       "The gap between Libor and the T-bill rate",
+       "The discount to par at issue"
+      ],
+      "correct": 0,
+      "why": "The spread in the coupon formula is the quoted margin."
+     }
     },
     {
      "type": "single",
@@ -517,7 +704,17 @@
       "calc"
      ],
      "answer": "Coupon = (1.25% + 0.50%) × 100 ÷ 2 = 0.875. Discount rate = (1.25% + 0.40%) ÷ 2 = 0.825%. Price = 0.875/1.00825 + 0.875/1.00825² + 0.875/1.00825³ + 100.875/1.00825⁴ = 100.196.",
-     "ref": "p. 21–22"
+     "ref": "p. 21–22",
+     "mcq": {
+      "options": [
+       "Coupon = (1.25% + 0.50%)/2 × 100; discount each at (1.25% + 0.40%)/2 per period, 4 periods",
+       "Coupon = (1.25% + 0.40%)/2 × 100; discount each at (1.25% + 0.50%)/2 per period, 4 periods",
+       "Coupon = (1.25% + 0.50%) × 100; discount each at (1.25% + 0.40%) per period, 2 periods",
+       "Coupon = 0.50%/2 × 100; discount each at 0.40%/2 per period, 4 periods"
+      ],
+      "correct": 0,
+      "why": "Quoted margin sets the coupon; discount margin sets the discount rate. Price 100.196."
+     }
     },
     {
      "type": "single",
@@ -543,7 +740,17 @@
       "calc"
      ],
      "answer": "I/Y ≈ 0.9478% per quarter × 4 = 3.791% = Index + DM, so DM = 3.791 − 2 = 1.791% (179.1 bps). Above the 1.25% quoted margin, consistent with a price below par.",
-     "ref": "p. 25–26"
+     "ref": "p. 25–26",
+     "mcq": {
+      "options": [
+       "N = 16, PMT = 0.8125, FV = 100, PV = −98; I/Y × 4 − 2%",
+       "N = 4, PMT = 3.25, FV = 100, PV = −98; I/Y − 1.25%",
+       "N = 16, PMT = 0.8125, FV = 100, PV = −98; I/Y × 4",
+       "N = 16, PMT = 0.5, FV = 98, PV = −100; I/Y × 4 − 2%"
+      ],
+      "correct": 0,
+      "why": "I/Y × 4 = index + DM = 3.791%, so DM = 1.79%, above the quoted margin because the price is below par."
+     }
     }
    ]
   },
@@ -580,7 +787,17 @@
       }
      ],
      "answer": "Money market returns are stated on a simple interest basis; they are often quoted with non-standard rates (like discount rates) that need different pricing equations; and instruments with different times to maturity have different periodicities for the annual rate.",
-     "ref": "p. 27"
+     "ref": "p. 27",
+     "mcq": {
+      "prompt": "Money market yields differ from bond yields because they:",
+      "options": [
+       "Use simple interest, non-standard quote bases and differing periodicities",
+       "Are compounded semi-annually",
+       "Always use a 365-day year",
+       "Are quoted as prices, never rates"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "multi",
@@ -632,7 +849,18 @@
       }
      ],
      "answer": "DR = (Year/Days) × (FV − PV)/FV. AOR = (Year/Days) × (FV − PV)/PV. Year/Days is the periodicity. The AOR divides interest by the amount invested (PV); the DR divides by FV, which is larger, so by design it understates the return.",
-     "ref": "p. 29–30"
+     "ref": "p. 29–30",
+     "mcq": {
+      "prompt": "Why does the discount rate understate the investor's return?",
+      "options": [
+       "It divides the interest by FV instead of the amount invested (PV)",
+       "It uses a 365-day year",
+       "It ignores the days to maturity",
+       "It divides by PV instead of FV"
+      ],
+      "correct": 0,
+      "why": "DR = (Year/Days) × (FV − PV)/FV. AOR = (Year/Days) × (FV − PV)/PV."
+     }
     },
     {
      "type": "number",
@@ -644,7 +872,17 @@
       "calc"
      ],
      "answer": "10,000,000 × (1 − 91/360 × 0.0225) = USD 9,943,125.",
-     "ref": "p. 31–32"
+     "ref": "p. 31–32",
+     "mcq": {
+      "options": [
+       "10,000,000 × (1 − 91/360 × 0.0225)",
+       "10,000,000 ÷ (1 + 91/360 × 0.0225)",
+       "10,000,000 × (1 − 0.0225)",
+       "10,000,000 × (1 − 91/365 × 0.0225)"
+      ],
+      "correct": 0,
+      "why": "Discount basis: PV = FV × (1 − Days/Year × DR) = USD 9,943,125."
+     }
     },
     {
      "type": "number",
@@ -656,7 +894,17 @@
       "calc"
      ],
      "answer": "10,000,000 × (1 + 180/365 × 0.0438) = CAD 10,216,000.",
-     "ref": "p. 31–32"
+     "ref": "p. 31–32",
+     "mcq": {
+      "options": [
+       "10,000,000 × (1 + 180/365 × 0.0438)",
+       "10,000,000 ÷ (1 − 180/365 × 0.0438)",
+       "10,000,000 × (1 + 0.0438)",
+       "10,000,000 × (1 + 180/360 × 0.0438)"
+      ],
+      "correct": 0,
+      "why": "Add-on: FV = PV × (1 + Days/Year × AOR) = CAD 10,216,000."
+     }
     },
     {
      "type": "number",
@@ -668,7 +916,17 @@
       "calc"
      ],
      "answer": "10,216,000 ÷ (1 + 135/365 × 0.0417) = CAD 10,060,829.",
-     "ref": "p. 31–32"
+     "ref": "p. 31–32",
+     "mcq": {
+      "options": [
+       "10,216,000 ÷ (1 + 135/365 × 0.0417)",
+       "10,216,000 × (1 − 135/365 × 0.0417)",
+       "10,000,000 × (1 + 45/365 × 0.0417)",
+       "10,216,000 ÷ (1 + 45/365 × 0.0417)"
+      ],
+      "correct": 0,
+      "why": "Discount the maturity amount over the 135 days left: CAD 10,060,829."
+     }
     },
     {
      "type": "single",
@@ -704,7 +962,17 @@
       }
      ],
      "answer": "A money market rate stated on a 365-day add-on rate basis.",
-     "ref": "p. 34"
+     "ref": "p. 34",
+     "mcq": {
+      "prompt": "A money market “bond equivalent yield” is:",
+      "options": [
+       "An add-on rate on a 365-day year",
+       "A discount rate on a 360-day year",
+       "An add-on rate on a 360-day year",
+       "A semi-annually compounded YTM"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -716,7 +984,17 @@
       "calc"
      ],
      "answer": "PV = 100 × (1 − 180/360 × 0.0425) = 97.875. BEY = (365/180) × (2.125/97.875) = 4.40%.",
-     "ref": "p. 35–36"
+     "ref": "p. 35–36",
+     "mcq": {
+      "options": [
+       "PV = 100 × (1 − 180/360 × 0.0425); BEY = (365/180) × (100 − PV)/PV",
+       "BEY = 4.25% × 365/360",
+       "PV = 100 × (1 − 180/360 × 0.0425); BEY = (360/180) × (100 − PV)/100",
+       "PV = 100 ÷ (1 + 180/365 × 0.0425); BEY = (365/180) × (100 − PV)/PV"
+      ],
+      "correct": 0,
+      "why": "Price off the discount rate (360), then convert to an add-on rate on 365 days: 4.40%."
+     }
     }
    ]
   },
@@ -756,7 +1034,17 @@
      ],
      "need": 2,
      "answer": "On-the-run Treasuries are the most recently issued bonds or notes of a given maturity (off-the-run are earlier issues still outstanding). They are the most actively traded and have coupons close to the current market rate, so they price near par. Higher demand means a slightly lower YTM than off-the-run bonds of similar maturity.",
-     "ref": "p. 37"
+     "ref": "p. 37",
+     "mcq": {
+      "prompt": "Why do on-the-run Treasuries yield slightly less than off-the-run ones?",
+      "options": [
+       "They're the newest issues and trade most actively, so demand is higher",
+       "They carry a government guarantee the others lack",
+       "They have longer maturities",
+       "They pay higher coupons"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -795,7 +1083,18 @@
      ],
      "need": 2,
      "answer": "Most bonds pay multiple cash flows at different times, so each should be discounted at the spot rate for its own date rather than one rate. Treasuries exist at only a few maturities, especially beyond 2 and 5 years; linear interpolation gives misleading results, so bootstrapping is used.",
-     "ref": "p. 38–39"
+     "ref": "p. 38–39",
+     "mcq": {
+      "prompt": "Why price a bond off the spot curve?",
+      "options": [
+       "Each cash flow should be discounted at the rate for its own date",
+       "Spot rates are always lower than yields",
+       "It avoids needing the bond's coupon",
+       "A single yield can't be observed in the market"
+      ],
+      "correct": 0,
+      "why": "Bootstrapping is used because Treasuries exist at few maturities and interpolation misleads."
+     }
     },
     {
      "type": "text",
@@ -833,7 +1132,18 @@
      ],
      "need": 2,
      "answer": "Starting from the shortest maturity, one repeatedly applies a no-arbitrage equation to yields on the Treasury par yield curve: price each coupon bond off the spot rates already found, solve for the one unknown spot rate, and use that result in the next step.",
-     "ref": "p. 39"
+     "ref": "p. 39",
+     "mcq": {
+      "prompt": "Bootstrapping works by:",
+      "options": [
+       "Solving for one spot rate at a time, using the ones already found",
+       "Averaging par yields across maturities",
+       "Interpolating between the shortest and longest yields",
+       "Stripping coupons from the newest bond only"
+      ],
+      "correct": 0,
+      "why": "Start at the shortest maturity and work outward along the par curve."
+     }
     },
     {
      "type": "text",
@@ -870,7 +1180,17 @@
      ],
      "need": 3,
      "answer": "No credit risk, no liquidity risk, no embedded options and no pricing anomalies. They can be on-the-run Treasuries, off-the-run Treasuries, a mix, or Treasury coupon strips.",
-     "ref": "p. 40"
+     "ref": "p. 40",
+     "mcq": {
+      "prompt": "Instruments used to build a spot curve should have NO:",
+      "options": [
+       "Credit risk, liquidity risk, embedded options or pricing anomalies",
+       "Coupons, maturity dates or par values",
+       "Government backing or active trading",
+       "Interest-rate risk or reinvestment risk"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -882,7 +1202,17 @@
       "calc"
      ],
      "answer": "PV of first two coupons = 1.7241 + 1.6936. 100 − 3.4178 = 96.5822 = 101.75/(1+z₃)³ → z₃ = 1.7527% per half-year, BEY = 3.5053%.",
-     "ref": "p. 41–43"
+     "ref": "p. 41–43",
+     "mcq": {
+      "options": [
+       "100 = 1.75/1.015 + 1.75/1.0165² + 101.75/(1+z₃)³; BEY = 2 × z₃",
+       "100 = 3.5/1.03 + 3.5/1.033² + 103.5/(1+z₃)³; BEY = z₃",
+       "z₃ = (3.00 + 3.30 + 3.50) ÷ 3",
+       "100 = 1.75/(1+z₃) + 1.75/(1+z₃)² + 101.75/(1+z₃)³; BEY = 2 × z₃"
+      ],
+      "correct": 0,
+      "why": "Discount the first two coupons at the known half-year spot rates, solve for the third: 3.51%."
+     }
     },
     {
      "type": "number",
@@ -894,7 +1224,17 @@
       "calc"
      ],
      "answer": "100 − (1.95/1.015 + 1.95/1.0165² + 1.95/1.0175³) = 94.3407 = 101.95/(1+z₄)⁴ → z₄ = 1.9582%, BEY = 3.9164%.",
-     "ref": "p. 44"
+     "ref": "p. 44",
+     "mcq": {
+      "options": [
+       "100 = 1.95/1.015 + 1.95/1.0165² + 1.95/1.0175³ + 101.95/(1+z₄)⁴; BEY = 2 × z₄",
+       "100 = 1.95/(1+z₄) + … + 101.95/(1+z₄)⁴; BEY = 2 × z₄",
+       "z₄ = 3.90% because the bond is at par",
+       "100 = 3.9/1.03 + 3.9/1.033² + 3.9/1.0351³ + 103.9/(1+z₄)⁴"
+      ],
+      "correct": 0,
+      "why": "Same move with three known rates: 3.92%."
+     }
     },
     {
      "type": "single",
@@ -964,7 +1304,17 @@
      ],
      "need": 2,
      "answer": "A forward rate can be seen as the market consensus of future interest rates. It is implied (extrapolated) from the default-free spot curve, and it is a break-even reinvestment rate: the rate that makes an investor indifferent between a longer bond and rolling a shorter one.",
-     "ref": "p. 48"
+     "ref": "p. 48",
+     "mcq": {
+      "prompt": "An implied forward rate can be read as:",
+      "options": [
+       "The market's consensus of future rates, and a break-even reinvestment rate",
+       "The guaranteed future spot rate",
+       "The average of today's spot rates",
+       "The central bank's target rate"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -997,7 +1347,18 @@
       }
      ],
      "answer": "The five-year yield two years into the future: the first number is the time from today to the start of the forward period, the second is the maturity of the underlying bond.",
-     "ref": "p. 48"
+     "ref": "p. 48",
+     "mcq": {
+      "prompt": "“2y5y” is:",
+      "options": [
+       "The five-year rate starting two years from now",
+       "The two-year rate starting five years from now",
+       "The spread between 2-year and 5-year yields",
+       "A two-year bond with a 5% coupon"
+      ],
+      "correct": 0,
+      "why": "First number: when it starts. Second: the tenor."
+     }
     },
     {
      "type": "single",
@@ -1039,7 +1400,17 @@
       }
      ],
      "answer": "ₜfₘ = [(1 + z_(m+t))^(m+t) / (1 + z_m)^m]^(1/t) − 1, with rates per period (e.g. per half-year). Double the result to state it on a semi-annual bond basis.",
-     "ref": "p. 50"
+     "ref": "p. 50",
+     "mcq": {
+      "options": [
+       "[(1 + z_(m+t))^(m+t) ÷ (1 + z_m)^m]^(1/t) − 1",
+       "[(1 + z_m)^m ÷ (1 + z_(m+t))^(m+t)]^(1/t) − 1",
+       "(z_(m+t) − z_m) ÷ t",
+       "[(1 + z_(m+t)) ÷ (1 + z_m)]^t − 1"
+      ],
+      "correct": 0,
+      "why": "Growth to the far date, divided by growth to the near date, then the t-th root."
+     }
     },
     {
      "type": "number",
@@ -1051,7 +1422,17 @@
       "calc"
      ],
      "answer": "(1.03)¹⁰ = 1.3439, (1.02)⁴ = 1.0824. (1.3439/1.0824)^(1/6) − 1 = 3.672% per half-year → 7.34% (the slide rounds to 7.35%).",
-     "ref": "p. 53–54"
+     "ref": "p. 53–54",
+     "mcq": {
+      "options": [
+       "2 × ([(1.03)¹⁰ ÷ (1.02)⁴]^(1/6) − 1)",
+       "2 × ([(1.06)⁵ ÷ (1.04)²]^(1/3) − 1)",
+       "2 × ([(1.03)⁵ ÷ (1.02)²]^(1/3) − 1)",
+       "2 × ([(1.03)¹⁰ ÷ (1.02)⁴]^(1/10) − 1)"
+      ],
+      "correct": 0,
+      "why": "Half-year periods: m = 4, t = 6. Result 7.34%."
+     }
     },
     {
      "type": "number",
@@ -1063,7 +1444,17 @@
       "discussion"
      ],
      "answer": "[(1.0209)⁸ / (1.01825)⁶]^(1/2) − 1 = 2.889% per half-year → 5.78%. (The slide sets this without a solution; this is my calculation.)",
-     "ref": "p. 52"
+     "ref": "p. 52",
+     "mcq": {
+      "options": [
+       "2 × ([(1.0209)⁸ ÷ (1.01825)⁶]^(1/2) − 1)",
+       "2 × ([(1.0418)⁴ ÷ (1.0365)³] − 1)",
+       "4.18 − 3.65",
+       "2 × ([(1.01825)⁶ ÷ (1.0209)⁸]^(1/2) − 1)"
+      ],
+      "correct": 0,
+      "why": "Grow to period 8, divide by growth to period 6, square root: 5.78%."
+     }
     },
     {
      "type": "number",
@@ -1075,7 +1466,17 @@
       "calc"
      ],
      "answer": "(1.025)³/(1.022)² = 1.031029 → 3.103% per half-year → 6.21%.",
-     "ref": "p. 55–56"
+     "ref": "p. 55–56",
+     "mcq": {
+      "options": [
+       "2 × [(1.025)³ ÷ (1.022)² − 1]",
+       "2 × [(1.027)⁴ ÷ (1.025)³ − 1]",
+       "2 × [(1.022)² ÷ (1.02) − 1]",
+       "5.0 − 4.4"
+      ],
+      "correct": 0,
+      "why": "One period starting after two periods (1f2): 6.21%."
+     }
     },
     {
      "type": "number",
@@ -1087,7 +1488,17 @@
       "calc"
      ],
      "answer": "[(1.027)⁴/(1.022)²]^(1/2) − 1 = 3.202% per half-year → 6.40%.",
-     "ref": "p. 57"
+     "ref": "p. 57",
+     "mcq": {
+      "options": [
+       "2 × ([(1.027)⁴ ÷ (1.022)²]^(1/2) − 1)",
+       "2 × [(1.027)⁴ ÷ (1.022)² − 1]",
+       "2 × ([(1.025)³ ÷ (1.022)²]^(1/2) − 1)",
+       "5.4 − 4.4"
+      ],
+      "correct": 0,
+      "why": "Two periods starting after two periods: 6.40%."
+     }
     },
     {
      "type": "number",
@@ -1099,7 +1510,17 @@
       "calc"
      ],
      "answer": "2.25/1.02 + 2.25/1.022² + 2.25/1.025³ + 102.25/1.027⁴ = 98.36.",
-     "ref": "p. 58"
+     "ref": "p. 58",
+     "mcq": {
+      "options": [
+       "2.25/1.02 + 2.25/1.022² + 2.25/1.025³ + 102.25/1.027⁴",
+       "2.25/1.027 + 2.25/1.027² + 2.25/1.027³ + 102.25/1.027⁴",
+       "4.5/1.04 + 4.5/1.044² + 4.5/1.05³ + 104.5/1.054⁴",
+       "2.25/1.02 + 2.25/1.022 + 2.25/1.025 + 102.25/1.027"
+      ],
+      "correct": 0,
+      "why": "Each coupon at its own half-year spot rate: 98.36."
+     }
     },
     {
      "type": "number",
@@ -1111,7 +1532,17 @@
       "discussion"
      ],
      "answer": "(97.50/94.25)^(1/2) − 1 = 1.7095% per half-year → 3.42%. Similarly 2y1y = 2 × [(94.25/91.75)^(1/2) − 1] = 2.71%. (Not solved in the slides; my calculation.)",
-     "ref": "p. 59"
+     "ref": "p. 59",
+     "mcq": {
+      "options": [
+       "2 × [(97.50 ÷ 94.25)^(1/2) − 1]",
+       "2 × [(94.25 ÷ 97.50)^(1/2) − 1]",
+       "(97.50 − 94.25) ÷ 94.25",
+       "2 × [(100 ÷ 94.25)^(1/2) − 1]"
+      ],
+      "correct": 0,
+      "why": "The price ratio is the growth over that year (two half-years): 3.42%."
+     }
     },
     {
      "type": "text",
@@ -1139,7 +1570,18 @@
       }
      ],
      "answer": "(1 + z_T)^T = (1 + z₁)(1 + ₁f₁)(1 + ₁f₂)…: the spot rate is the geometric average of the current short rate and the successive forward rates. So discounting cash flows with forward rates gives the same present value as discounting with spot rates.",
-     "ref": "p. 60–61"
+     "ref": "p. 60–61",
+     "mcq": {
+      "prompt": "How are spot and forward rates related?",
+      "options": [
+       "A spot rate is the geometric average of the short rate and the forward rates",
+       "A forward rate is the simple average of two spot rates",
+       "Spot rates are always above forward rates",
+       "They are unrelated; forwards come from futures prices"
+      ],
+      "correct": 0,
+      "why": "So discounting with forwards gives the same bond value as discounting with spots."
+     }
     },
     {
      "type": "number",
@@ -1151,7 +1593,17 @@
       "calc"
      ],
      "answer": "(1.0188 × 1.0277 × 1.0354 × 1.0412)^(1/4) − 1 = 3.074%. Along the way z₂ = 2.324% and z₃ = 2.727%.",
-     "ref": "p. 62–63"
+     "ref": "p. 62–63",
+     "mcq": {
+      "options": [
+       "(1.0188 × 1.0277 × 1.0354 × 1.0412)^(1/4) − 1",
+       "(1.0188 + 1.0277 + 1.0354 + 1.0412)^(1/4) − 1",
+       "1.0188 × 1.0277 × 1.0354 × 1.0412 − 1",
+       "(1.0412)⁴ − 1"
+      ],
+      "correct": 0,
+      "why": "Geometric average of the forwards: 3.07%."
+     }
     },
     {
      "type": "number",
@@ -1163,7 +1615,17 @@
       "calc"
      ],
      "answer": "3.75/1.0188 + 3.75/1.0234² + 3.75/1.02727³ + 103.75/1.03074⁴ = 102.637, and discounting by cumulative forward products gives the same 102.637.",
-     "ref": "p. 64"
+     "ref": "p. 64",
+     "mcq": {
+      "options": [
+       "Discount each year's cash flow by the product of (1 + forward) terms up to that year",
+       "Discount every cash flow at the last forward rate, 4.12%",
+       "Discount every cash flow at the average forward rate",
+       "Add the four forwards and discount once"
+      ],
+      "correct": 0,
+      "why": "Same as using the implied spot rates: 102.637."
+     }
     }
    ]
   },
@@ -1219,7 +1681,18 @@
      ],
      "need": 4,
      "answer": "Currency denomination, liquidity, periodicity, credit risk, tax status and time to maturity. The term structure of interest rates (yield curves) explains differences due to maturity.",
-     "ref": "p. 65"
+     "ref": "p. 65",
+     "mcq": {
+      "prompt": "Which is NOT a reason two bonds' yields differ, per the slides?",
+      "options": [
+       "The issuer's share price",
+       "Currency denomination",
+       "Tax status",
+       "Periodicity"
+      ],
+      "correct": 0,
+      "why": "The six: currency, liquidity, periodicity, credit risk, tax status, time to maturity."
+     }
     },
     {
      "type": "text",
@@ -1242,7 +1715,18 @@
       }
      ],
      "answer": "The spot curve is a sequence of YTMs on zero-coupon government bonds. The coupon yield curve is a sequence of YTMs on coupon-paying government bonds.",
-     "ref": "p. 65"
+     "ref": "p. 65",
+     "mcq": {
+      "prompt": "The government spot curve is built from yields on:",
+      "options": [
+       "Zero-coupon government bonds",
+       "Coupon-paying government bonds",
+       "Swap rates",
+       "Corporate bonds less a spread"
+      ],
+      "correct": 0,
+      "why": "The coupon yield curve uses coupon-paying government bonds."
+     }
     },
     {
      "type": "text",
@@ -1284,7 +1768,17 @@
      ],
      "need": 4,
      "answer": "YTM = benchmark “risk-free” rate (expected real rate + expected inflation rate) + spread, a risk premium for credit risk, liquidity and taxation.",
-     "ref": "p. 67"
+     "ref": "p. 67",
+     "mcq": {
+      "prompt": "A bond's YTM breaks down into:",
+      "options": [
+       "Benchmark rate (real rate + expected inflation) + spread (credit, liquidity, tax)",
+       "Coupon rate + capital gain + reinvestment income",
+       "Real rate + credit spread only",
+       "Benchmark rate − inflation + liquidity"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "single",
@@ -1337,7 +1831,18 @@
       }
      ],
      "answer": "Nominal spread = yield of the non-Treasury bond − YTM of a Treasury of the same maturity. It compensates for the extra credit risk, option risk (embedded options) and liquidity risk. Example: 7.40% − 6.00% = 140 bps.",
-     "ref": "p. 68–69"
+     "ref": "p. 68–69",
+     "mcq": {
+      "prompt": "The nominal spread is:",
+      "options": [
+       "A bond's yield minus the same-maturity Treasury yield",
+       "The spread added to every spot rate",
+       "A bond's yield minus the swap rate",
+       "The option cost in basis points"
+      ],
+      "correct": 0,
+      "why": "It pays for credit, option and liquidity risk."
+     }
     },
     {
      "type": "text",
@@ -1366,7 +1871,18 @@
       }
      ],
      "answer": "It ignores the term structure of spot rates (one yield for every cash flow), and for callable or putable bonds, expected interest rate volatility can alter the cash flows. The alternatives are the Z-spread and the OAS.",
-     "ref": "p. 70"
+     "ref": "p. 70",
+     "mcq": {
+      "prompt": "A drawback of the nominal spread is that it:",
+      "options": [
+       "Ignores the term structure of spot rates",
+       "Can't be computed for corporate bonds",
+       "Requires an option model",
+       "Uses swap rates instead of Treasuries"
+      ],
+      "correct": 0,
+      "why": "Also: for callable or putable bonds, rate volatility can change the cash flows."
+     }
     },
     {
      "type": "text",
@@ -1406,7 +1922,18 @@
      ],
      "need": 3,
      "answer": "The Z-spread (zero-volatility or static spread) is the constant spread that, added to each Treasury spot rate, makes the PV of the bond's cash flows equal its price. It is a spread over the entire spot curve, while the nominal spread is off one point on the yield curve. It is found by trial and error.",
-     "ref": "p. 71"
+     "ref": "p. 71",
+     "mcq": {
+      "prompt": "The Z-spread is:",
+      "options": [
+       "The constant spread added to every spot rate that reprices the bond",
+       "The yield minus one point on the Treasury curve",
+       "The spread over the swap rate",
+       "The spread after removing option cost"
+      ],
+      "correct": 0,
+      "why": "It's over the whole spot curve; the nominal spread is off a single point."
+     }
     },
     {
      "type": "single",
@@ -1443,7 +1970,18 @@
       }
      ],
      "answer": "The G-spread is the yield spread over an actual or interpolated government bond. The I-spread (interpolated spread) is the spread over the standard swap rate of the same tenor in that currency.",
-     "ref": "p. 73"
+     "ref": "p. 73",
+     "mcq": {
+      "prompt": "The I-spread is measured over:",
+      "options": [
+       "The swap rate of the same tenor",
+       "An actual or interpolated government bond yield",
+       "The Treasury spot curve",
+       "The issuer's own shorter bonds"
+      ],
+      "correct": 0,
+      "why": "Over a government bond yield it's the G-spread."
+     }
     },
     {
      "type": "single",
@@ -1485,7 +2023,17 @@
       "calc"
      ],
      "answer": "Corporate YTM = 2.6588% × 2 = 5.32%. Treasury at par yields 4%. G-spread = 5.32 − 4 = 1.32% (132 bps).",
-     "ref": "p. 74–75"
+     "ref": "p. 74–75",
+     "mcq": {
+      "options": [
+       "Corporate YTM (N = 3, PMT = 3.5, FV = 100, PV = −102.395; × 2) − 4%",
+       "7% − 4%",
+       "Corporate YTM (N = 3, PMT = 7, FV = 100, PV = −102.395) − 4%",
+       "(102.395 − 100) ÷ 1.5"
+      ],
+      "correct": 0,
+      "why": "5.32% − 4% = 1.32%. A Treasury at par yields its coupon."
+     }
     },
     {
      "type": "single",
@@ -1553,7 +2101,18 @@
      ],
      "need": 3,
      "answer": "Also called rolling down the yield curve. In an upward-sloping curve, buy bonds with maturities longer than your horizon. If the curve stays unchanged, the bond's yield falls as it ages toward shorter maturities, so its price rises, and total return beats a simple maturity-matching strategy.",
-     "ref": "p. 78"
+     "ref": "p. 78",
+     "mcq": {
+      "prompt": "Riding the yield curve works when:",
+      "options": [
+       "The curve slopes up and stays unchanged while you hold a longer bond",
+       "The curve is flat and you hold a shorter bond",
+       "The curve is inverted and rates then fall",
+       "Rates rise after you buy a longer bond"
+      ],
+      "correct": 0,
+      "why": "The bond rolls down to a lower yield, so its price rises."
+     }
     },
     {
      "type": "text",
@@ -1575,7 +2134,17 @@
       }
      ],
      "answer": "The greater the difference between the forward rate and the spot rate, and the longer the maturity of the bond, the higher the total return.",
-     "ref": "p. 78"
+     "ref": "p. 78",
+     "mcq": {
+      "prompt": "Total return from riding the curve is higher when:",
+      "options": [
+       "The forward rate is further above the spot rate, and the bond is longer",
+       "The coupon is higher and the bond is shorter",
+       "The curve is flatter",
+       "The spot rate is above the forward rate"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -1587,7 +2156,17 @@
       "discussion"
      ],
      "answer": "(71.81 − 63.67) ÷ 63.67 = 12.8%, on top of the 3% coupon, versus no capital gain on a 5-year par bond yielding 3%. (The slide gives the prices; the percentage is my calculation.)",
-     "ref": "p. 79"
+     "ref": "p. 79",
+     "mcq": {
+      "options": [
+       "(71.81 − 63.67) ÷ 63.67",
+       "(71.81 − 63.67) ÷ 71.81",
+       "(5.5 − 5.0) × 5",
+       "71.81 ÷ 63.67"
+      ],
+      "correct": 0,
+      "why": "12.8%, on top of the 3% coupon."
+     }
     }
    ]
   }

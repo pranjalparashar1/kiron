@@ -37,7 +37,17 @@
        ]
       }
      ],
-     "answer": "(1) **Acute → preventive:** vitamins, supplements, diagnostics and chronic-care management became year-round habits rather than things bought when sick. (2) **Metro → Tier-2/3:** smaller cities drove a growing share of the growth.\n\nThe report's own one-liner: a move \"from reactive panic to proactive wellness\"."
+     "answer": "(1) **Acute → preventive:** vitamins, supplements, diagnostics and chronic-care management became year-round habits rather than things bought when sick. (2) **Metro → Tier-2/3:** smaller cities drove a growing share of the growth.\n\nThe report's own one-liner: a move \"from reactive panic to proactive wellness\".",
+     "mcq": {
+      "prompt": "What two shifts did Indian health buying make in 2025?",
+      "options": [
+       "From acute to preventive care, and from metros to Tier-2/3 cities",
+       "From preventive to acute care, and from online to offline",
+       "From generics to branded drugs, and from young to old buyers",
+       "From supplements to prescriptions, and from Tier-2 to metros"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -68,7 +78,18 @@
        ]
       }
      ],
-     "answer": "**Vitamins & supplements** had the highest order volumes of any category; multivitamins top the monthly chart. The single most-purchased product was **Vitamin B supplements, up 33% vs 2024**, across cities and age groups. Calcium came a close second; Vitamin D was also among the top national purchases."
+     "answer": "**Vitamins & supplements** had the highest order volumes of any category; multivitamins top the monthly chart. The single most-purchased product was **Vitamin B supplements, up 33% vs 2024**, across cities and age groups. Calcium came a close second; Vitamin D was also among the top national purchases.",
+     "mcq": {
+      "prompt": "What was the most-bought single product, and its growth?",
+      "options": [
+       "Vitamin B supplements, up 33%",
+       "Vitamin D supplements, up 71%",
+       "Calcium, up 12%",
+       "Protein powder, up 93%"
+      ],
+      "correct": 0,
+      "why": "Vitamins & supplements was the top category overall."
+     }
     },
     {
      "type": "text",
@@ -108,7 +129,18 @@
        ]
       }
      ],
-     "answer": "**Vitamin D tests** were the most-booked. **Thyroid panels and HbA1c** rose, especially in Tier-2 cities. **CBC and lipid profiles** moved from \"test when ill\" to regular tracking.\n\nThis is the diagnostics side of the same preventive shift: people testing to monitor, not to diagnose."
+     "answer": "**Vitamin D tests** were the most-booked. **Thyroid panels and HbA1c** rose, especially in Tier-2 cities. **CBC and lipid profiles** moved from \"test when ill\" to regular tracking.\n\nThis is the diagnostics side of the same preventive shift: people testing to monitor, not to diagnose.",
+     "mcq": {
+      "prompt": "Which diagnostic test was booked most?",
+      "options": [
+       "Vitamin D",
+       "HbA1c",
+       "Thyroid panel",
+       "Lipid profile"
+      ],
+      "correct": 0,
+      "why": "Thyroid panels and HbA1c rose in Tier-2 cities; CBC and lipid profiles became routine tracking."
+     }
     },
     {
      "type": "single",
@@ -151,7 +183,18 @@
        ]
       }
      ],
-     "answer": "**~12% average month-on-month growth**, consistent through the year, with uptake varying by city. **Nearly half of GLP-1 users are aged 25–45**, with a notable share aged 25–35.\n\nThe report reads this as early engagement by young adults, not only older diabetic patients."
+     "answer": "**~12% average month-on-month growth**, consistent through the year, with uptake varying by city. **Nearly half of GLP-1 users are aged 25–45**, with a notable share aged 25–35.\n\nThe report reads this as early engagement by young adults, not only older diabetic patients.",
+     "mcq": {
+      "prompt": "How fast did GLP-1 medicines grow, and who uses them?",
+      "options": [
+       "About 12% month on month; nearly half of users are 25–45",
+       "About 12% year on year; mostly over-60s",
+       "About 33% month on month; mostly teenagers",
+       "About 93% year on year; nearly half are 45–65"
+      ],
+      "correct": 0,
+      "why": "Month on month, not year on year."
+     }
     },
     {
      "type": "text",
@@ -180,7 +223,18 @@
        ]
       }
      ],
-     "answer": "Tier-2/3 grew faster in **vitamins, sexual wellness, diagnostics and fitness**. First-time buyers came in mainly through **multivitamins, speciality supplements, glucometer strips, sunscreens and moisturisers**, so wellness and self-care products, not prescriptions, are the entry point.\n\nAlso: Tier-2 cities placed 22% more \"SOS-style\" orders. The article doesn't say what that's compared with, so don't lean on it without the original report."
+     "answer": "Tier-2/3 grew faster in **vitamins, sexual wellness, diagnostics and fitness**. First-time buyers came in mainly through **multivitamins, speciality supplements, glucometer strips, sunscreens and moisturisers**, so wellness and self-care products, not prescriptions, are the entry point.\n\nAlso: Tier-2 cities placed 22% more \"SOS-style\" orders. The article doesn't say what that's compared with, so don't lean on it without the original report.",
+     "mcq": {
+      "prompt": "What do first-time Tier-2/3 buyers start with?",
+      "options": [
+       "Wellness and self-care: multivitamins, glucometer strips, sunscreen",
+       "Prescription medicines for chronic illness",
+       "Lab tests and full-body check-ups",
+       "Homeopathy and Ayurveda only"
+      ],
+      "correct": 0,
+      "why": "Tier-2/3 grew faster in vitamins, sexual wellness, diagnostics and fitness."
+     }
     },
     {
      "type": "text",
@@ -207,7 +261,18 @@
        ]
       }
      ],
-     "answer": "**Weekdays made up 71% of orders.** Mornings (6–9 am) are routine restocking of vitamins, calcium and daily-use medicines. Even late night (10 pm–4 am) is **chronic care, not emergencies**: blood thinners top it. Weekends bring spikes in antacids, skincare, sun care and exploratory OTC buys (Sunday antacids run 14–18% higher).\n\nTakeaway: the channel is used for planned replenishment more than urgent need."
+     "answer": "**Weekdays made up 71% of orders.** Mornings (6–9 am) are routine restocking of vitamins, calcium and daily-use medicines. Even late night (10 pm–4 am) is **chronic care, not emergencies**: blood thinners top it. Weekends bring spikes in antacids, skincare, sun care and exploratory OTC buys (Sunday antacids run 14–18% higher).\n\nTakeaway: the channel is used for planned replenishment more than urgent need.",
+     "mcq": {
+      "prompt": "What does order timing say about how people use an online pharmacy?",
+      "options": [
+       "Mostly planned restocking and chronic care: 71% of orders are on weekdays",
+       "Mostly emergencies: 71% of orders are late at night",
+       "Mostly weekend impulse buys",
+       "Evenly spread, with no pattern"
+      ],
+      "correct": 0,
+      "why": "Even late-night orders are led by chronic-care drugs like blood thinners."
+     }
     },
     {
      "type": "single",
@@ -254,7 +319,18 @@
       }
      ],
      "need": 2,
-     "answer": "**Homeopathy** was one of the fastest-growing categories. **Protein powders and fitness supplements** surged (Gurgaon and Mumbai lead whey protein; Tier-2 is catching up). **Home-monitoring devices** (thermometers, glucometers, oximeters) saw steady demand, peaking at seasonal transitions."
+     "answer": "**Homeopathy** was one of the fastest-growing categories. **Protein powders and fitness supplements** surged (Gurgaon and Mumbai lead whey protein; Tier-2 is catching up). **Home-monitoring devices** (thermometers, glucometers, oximeters) saw steady demand, peaking at seasonal transitions.",
+     "mcq": {
+      "prompt": "Which OTC category was among the fastest-growing?",
+      "options": [
+       "Homeopathy",
+       "Cough syrups",
+       "Antibiotics",
+       "Baby care"
+      ],
+      "correct": 0,
+      "why": "Also rising: protein and fitness supplements, and home-monitoring devices."
+     }
     },
     {
      "type": "single",

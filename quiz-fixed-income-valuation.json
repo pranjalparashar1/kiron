@@ -42,7 +42,18 @@
       }
      ],
      "answer": "Bond pricing is discounted cash flow analysis: the price equals the present value of the promised cash flows (coupons, plus the full principal at maturity for an option-free fixed-rate bond), discounted at the **market discount rate**, which is the rate of return investors require given the bond's risk.",
-     "ref": "pp. 3–4"
+     "ref": "pp. 3–4",
+     "mcq": {
+      "prompt": "What is the price of a bond?",
+      "options": [
+       "The PV of its future cash flows, discounted at the return investors require",
+       "The sum of its coupons plus par",
+       "Par value adjusted by the coupon rate",
+       "The PV of its coupons, discounted at the coupon rate"
+      ],
+      "correct": 0,
+      "why": "The market discount rate is the return investors require for the bond's risk."
+     }
     },
     {
      "type": "number",
@@ -54,7 +65,17 @@
       "calc"
      ],
      "answer": "4/1.06 + 4/1.06² + 4/1.06³ + 4/1.06⁴ + 104/1.06⁵ = 3.774 + 3.560 + 3.358 + 3.168 + 77.715 = **91.575**. Coupon below the discount rate, so it trades at a discount.",
-     "ref": "pp. 5–6"
+     "ref": "pp. 5–6",
+     "mcq": {
+      "options": [
+       "4/1.06 + 4/1.06² + 4/1.06³ + 4/1.06⁴ + 104/1.06⁵",
+       "4/1.04 + 4/1.04² + 4/1.04³ + 4/1.04⁴ + 104/1.04⁵",
+       "6/1.04 + 6/1.04² + 6/1.04³ + 6/1.04⁴ + 106/1.04⁵",
+       "(5 × 4 + 100) ÷ 1.06⁵"
+      ],
+      "correct": 0,
+      "why": "Coupons of 4, discounted at 6%: 91.575, a discount."
+     }
     },
     {
      "type": "number",
@@ -66,7 +87,17 @@
       "calc"
      ],
      "answer": "N = 10, PMT = 4, r = 3%, FV = 100 → **108.530**. Coupon above the discount rate, so it trades at a premium.",
-     "ref": "pp. 5–6"
+     "ref": "pp. 5–6",
+     "mcq": {
+      "options": [
+       "N = 10, PMT = 4, r = 3% per period, FV = 100",
+       "N = 5, PMT = 8, r = 6% per period, FV = 100",
+       "N = 10, PMT = 8, r = 3% per period, FV = 100",
+       "N = 10, PMT = 4, r = 6% per period, FV = 100"
+      ],
+      "correct": 0,
+      "why": "Semiannual: double the periods, halve the coupon and the rate. Price 108.530."
+     }
     },
     {
      "type": "text",
@@ -103,7 +134,18 @@
       }
      ],
      "answer": "It depends on the coupon rate versus the market discount rate. Coupon higher → premium (price above par). Coupon lower → discount. Equal → par. Example from the slides: a 5-year 8% annual bond at a 6% discount rate is worth 108.42; at a 6% coupon it is worth exactly 100.",
-     "ref": "pp. 7–8"
+     "ref": "pp. 7–8",
+     "mcq": {
+      "prompt": "A bond trades at a premium when:",
+      "options": [
+       "Its coupon rate is above the market discount rate",
+       "Its coupon rate is below the market discount rate",
+       "Its maturity is longer than five years",
+       "Its price was above par at issue"
+      ],
+      "correct": 0,
+      "why": "Coupon below the rate → discount. Equal → par."
+     }
     },
     {
      "type": "multi",
@@ -166,7 +208,18 @@
       }
      ],
      "answer": "YTM is the internal rate of return on the bond's cash flows, the implied market discount rate. It is a **promised** yield: you earn it only if you hold to maturity, the issuer doesn't default, and you can reinvest every coupon at that same yield.",
-     "ref": "p. 10"
+     "ref": "p. 10",
+     "mcq": {
+      "prompt": "You earn the YTM only if you:",
+      "options": [
+       "Hold to maturity, the issuer doesn't default, and coupons are reinvested at the YTM",
+       "Hold to maturity and spend the coupons",
+       "Sell before maturity at par",
+       "Hold to the first call date and reinvest at the coupon rate"
+      ],
+      "correct": 0,
+      "why": "YTM is the IRR on the bond's cash flows: a promised yield."
+     }
     },
     {
      "type": "number",
@@ -179,7 +232,17 @@
       "calc"
      ],
      "answer": "Solve 105 = 5/(1+r) + 5/(1+r)² + 5/(1+r)³ + 105/(1+r)⁴ → r = **3.634%**. The bond trades at a premium because its 5% coupon is above the 3.634% investors require.",
-     "ref": "pp. 11–12"
+     "ref": "pp. 11–12",
+     "mcq": {
+      "options": [
+       "Solve 105 = 5/(1+r) + 5/(1+r)² + 5/(1+r)³ + 105/(1+r)⁴ for r",
+       "r = 5 ÷ 105",
+       "Solve 100 = 5/(1+r) + 5/(1+r)² + 5/(1+r)³ + 105/(1+r)⁴ for r",
+       "r = (105 − 100) ÷ 4"
+      ],
+      "correct": 0,
+      "why": "r = 3.634%, below the 5% coupon because the bond is at a premium."
+     }
     }
    ]
   },
@@ -223,7 +286,18 @@
       }
      ],
      "answer": "**Inverse:** price falls when the discount rate rises. **Coupon:** for the same maturity, a lower-coupon bond moves more in % terms. **Maturity:** for the same coupon, a longer bond moves more. **Convexity:** for the same bond, the % gain when rates fall is larger than the % loss when they rise by the same amount.",
-     "ref": "p. 13"
+     "ref": "p. 13",
+     "mcq": {
+      "prompt": "The “convexity effect” says:",
+      "options": [
+       "A bond gains more when rates fall than it loses when they rise by the same amount",
+       "Lower-coupon bonds move more than higher-coupon bonds",
+       "Longer bonds move more than shorter bonds",
+       "Prices move opposite to rates"
+      ],
+      "correct": 0,
+      "why": "Those other three are the coupon, maturity and inverse effects."
+     }
     },
     {
      "type": "single",
@@ -284,7 +358,18 @@
       }
      ],
      "answer": "Spot rates are yields-to-maturity on zero-coupon bonds maturing on the date of each cash flow. Market discount rates are rarely the same at every maturity, so it is fundamentally better to discount each cash flow at the spot rate for its own date. The individual PVs differ from the YTM approach, but the total price is the same.",
-     "ref": "pp. 15–16"
+     "ref": "pp. 15–16",
+     "mcq": {
+      "prompt": "Spot rates are:",
+      "options": [
+       "YTMs on zero-coupon bonds maturing at each cash-flow date",
+       "Coupon rates on newly issued government bonds",
+       "The average YTM across all maturities",
+       "Forward rates for the next coupon period"
+      ],
+      "correct": 0,
+      "why": "Each cash flow is discounted at the rate for its own date. The total price matches the YTM approach."
+     }
     },
     {
      "type": "number",
@@ -296,7 +381,17 @@
       "calc"
      ],
      "answer": "4.902 + 4.713 + 93.345 = **102.960**.",
-     "ref": "p. 16"
+     "ref": "p. 16",
+     "mcq": {
+      "options": [
+       "5/1.02 + 5/1.03² + 105/1.04³",
+       "5/1.04 + 5/1.04² + 105/1.04³",
+       "5/1.02 + 5/1.03 + 105/1.04",
+       "5/1.02³ + 5/1.03² + 105/1.04"
+      ],
+      "correct": 0,
+      "why": "Each cash flow at its own year's spot rate: 102.960."
+     }
     },
     {
      "type": "number",
@@ -309,7 +404,17 @@
       "calc"
      ],
      "answer": "1,000 / 1.03⁵ = 1,000 / 1.15927 = **$862.61**. The investor's interest is the difference between the 1,000 received and the price paid.",
-     "ref": "pp. 17–19"
+     "ref": "pp. 17–19",
+     "mcq": {
+      "options": [
+       "1,000 ÷ 1.03⁵",
+       "1,000 × 1.03⁵",
+       "1,000 ÷ (1 + 5 × 0.03)",
+       "1,000 × (1 − 0.03)⁵"
+      ],
+      "correct": 0,
+      "why": "$862.61."
+     }
     },
     {
      "type": "single",
@@ -367,7 +472,17 @@
       }
      ],
      "answer": "Full (dirty) price = flat (clean) price + accrued interest. Dealers usually quote the flat price; the buyer pays the full price on the settlement date.",
-     "ref": "p. 20"
+     "ref": "p. 20",
+     "mcq": {
+      "prompt": "Which is right about flat and full price?",
+      "options": [
+       "Full = flat + accrued interest; dealers quote flat, buyers pay full",
+       "Flat = full + accrued interest; dealers quote full, buyers pay flat",
+       "Full = flat − accrued interest; dealers quote flat, buyers pay flat",
+       "They differ only on coupon dates"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -408,7 +523,17 @@
      ],
      "need": 2,
      "answer": "The seller held the bond from the last coupon date up to settlement, so they've earned that slice of the next coupon, but the buyer will receive the whole coupon. So the buyer pays it up front: **AI = (t/T) × PMT**, where t is days from the last coupon to settlement and T is days in the coupon period.",
-     "ref": "pp. 21–24"
+     "ref": "pp. 21–24",
+     "mcq": {
+      "options": [
+       "AI = (days since last coupon ÷ days in the period) × coupon",
+       "AI = (days to next coupon ÷ days in the period) × coupon",
+       "AI = (days since last coupon ÷ 365) × price",
+       "AI = coupon ÷ days in the period"
+      ],
+      "correct": 0,
+      "why": "The seller held the bond since the last coupon, so they've earned that slice."
+     }
     },
     {
      "type": "multi",
@@ -453,7 +578,17 @@
       }
      ],
      "answer": "**P_full = PV × (1 + r)^(t/T)**, where PV is the bond's value on the most recent coupon date (standard pricing formula), r is the market discount rate per period, and t/T is the fraction of the period that has passed.",
-     "ref": "p. 25"
+     "ref": "p. 25",
+     "mcq": {
+      "prompt": "The full price between coupon dates is:",
+      "options": [
+       "PV on the last coupon date × (1 + r)^(t/T)",
+       "PV on the last coupon date × (1 + r × t/T)",
+       "PV on the last coupon date + (1 + r)^(t/T)",
+       "PV on the next coupon date × (1 + r)^(t/T)"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -465,7 +600,17 @@
       "calc"
      ],
      "answer": "101.447790 × 1.024^(88/181) = **102.624**. AI = 88/181 × 2.5 = 1.215; flat price = 102.624 − 1.215 = **101.409**. (The slide also says 'EUR101.6616' on p. 27: that number belongs to the next example, a copy slip.)",
-     "ref": "pp. 26–28"
+     "ref": "pp. 26–28",
+     "mcq": {
+      "options": [
+       "101.447790 × 1.024^(88/181)",
+       "101.447790 × 1.048^(88/181)",
+       "101.447790 + 88/181 × 2.5",
+       "101.447790 × 1.024^(88/365)"
+      ],
+      "correct": 0,
+      "why": "2.4% per period, for 88/181 of a period: 102.624."
+     }
     },
     {
      "type": "number",
@@ -477,7 +622,17 @@
       "calc"
      ],
      "answer": "AI = 89/180 × 3 = 1.4833. Flat = 103.1088 − 1.4833 = **EUR 101.6254**.",
-     "ref": "pp. 29–31"
+     "ref": "pp. 29–31",
+     "mcq": {
+      "options": [
+       "103.1088 − (89/180 × 3)",
+       "103.1088 + (89/180 × 3)",
+       "101.6616 − (89/180 × 3)",
+       "103.1088 − (89/360 × 6 × 2)"
+      ],
+      "correct": 0,
+      "why": "Flat = full − accrued interest = 103.1088 − 1.4833 = 101.6254."
+     }
     },
     {
      "type": "number",
@@ -490,7 +645,17 @@
       "discussion"
      ],
      "answer": "Full = 100 × 1.03^(89/180) = 101.4723; flat = 101.4723 − 1.4833 = **99.989**, a hair below par. The full price compounds within the period while accrued interest is linear, so a bond priced at its own coupon rate shows a flat price slightly under 100 between coupon dates. At 6.20% the flat price is 98.385. (The slide sets parts b and c without solutions; these are my calculations.)",
-     "ref": "pp. 29–31"
+     "ref": "pp. 29–31",
+     "mcq": {
+      "options": [
+       "100 × 1.03^(89/180) − (89/180 × 3)",
+       "100 − (89/180 × 3)",
+       "100 × 1.03^(89/180)",
+       "100 × 1.06^(89/180) − (89/180 × 3)"
+      ],
+      "correct": 0,
+      "why": "99.989: just under par, because the full price compounds while accrued interest is linear."
+     }
     }
    ]
   },
@@ -535,7 +700,18 @@
      ],
      "need": 2,
      "answer": "Matrix pricing estimates the market discount rate (and so the price) of a bond that isn't actively traded by taking YTMs from comparable bonds, those with similar time to maturity, coupon rate and credit quality, typically by linear interpolation. It is also used when underwriting new bonds to estimate the required spread.",
-     "ref": "pp. 32, 41"
+     "ref": "pp. 32, 41",
+     "mcq": {
+      "prompt": "Matrix pricing is used to:",
+      "options": [
+       "Estimate the yield of a thinly traded bond from comparable bonds",
+       "Set coupons in a government auction",
+       "Convert a discount rate into an add-on rate",
+       "Price a bond from its own recent trades"
+      ],
+      "correct": 0,
+      "why": "Comparable means similar maturity, coupon and credit quality."
+     }
     },
     {
      "type": "number",
@@ -548,7 +724,17 @@
       "calc"
      ],
      "answer": "3.8035 + (3 − 2)/(5 − 2) × (4.1885 − 3.8035) = **3.9318%**. Priced at that yield, the 3-year 4% semiannual bond is worth about 100.19.",
-     "ref": "pp. 32–34"
+     "ref": "pp. 32–34",
+     "mcq": {
+      "options": [
+       "3.8035 + (3 − 2)/(5 − 2) × (4.1885 − 3.8035)",
+       "(3.8035 + 4.1885) ÷ 2",
+       "3.8035 + (3 − 2)/5 × (4.1885 − 3.8035)",
+       "4.1885 − (3 − 2)/(5 − 2) × (4.1885 − 3.8035)"
+      ],
+      "correct": 0,
+      "why": "One-third of the way from the 2-year to the 5-year yield: 3.9318%."
+     }
     },
     {
      "type": "number",
@@ -561,7 +747,17 @@
       "calc"
      ],
      "answer": "Yield = 4.738 + (1/3) × 0.598 = 4.937%. N = 5, PMT = 50, I/Y = 4.937, FV = 1,000 → PV = **$1,002.73**.",
-     "ref": "pp. 37–38"
+     "ref": "pp. 37–38",
+     "mcq": {
+      "options": [
+       "Yield = 4.738 + (1/3)(5.336 − 4.738); then N = 5, PMT = 50, FV = 1,000",
+       "Yield = (4.738 + 5.336) ÷ 2; then N = 5, PMT = 50, FV = 1,000",
+       "Yield = 4.738 + (1/3)(5.336 − 4.738); then N = 7, PMT = 50, FV = 1,000",
+       "Yield = 5.336 − (1/3)(5.336 − 4.738); then N = 5, PMT = 5, FV = 1,000"
+      ],
+      "correct": 0,
+      "why": "5 is one-third of the way from 4 to 7 years: 4.937%, price $1,002.73."
+     }
     },
     {
      "type": "number",
@@ -574,7 +770,17 @@
       "discussion"
      ],
      "answer": "6-year average = 5.258%; 5-year estimate = (4.378 + 5.258)/2 = 4.818%; N = 5, PMT = 40, FV = 1,000 → **$964.41**. The slide's solution writes 4.738 instead of 4.378 in step 2, which gives 4.998% and $956.79. Check which figure your instructor intends.",
-     "ref": "pp. 35–36"
+     "ref": "pp. 35–36",
+     "mcq": {
+      "options": [
+       "Average the two 6-year yields, average that with 4.378, then N = 5, PMT = 40, FV = 1,000",
+       "Average all three yields equally, then N = 5, PMT = 40, FV = 1,000",
+       "Use the 4-year yield directly, then N = 5, PMT = 40, FV = 1,000",
+       "Average the two 6-year yields, then N = 6, PMT = 40, FV = 1,000"
+      ],
+      "correct": 0,
+      "why": "(4.378 + 5.258)/2 = 4.818%, so $964.41. The slide's step 2 uses 4.738 by mistake."
+     }
     },
     {
      "type": "number",
@@ -587,7 +793,17 @@
       "calc"
      ],
      "answer": "Spreads: 2.64 − 1.48 = 1.16%; 3.55 − 2.15 = 1.40%. Average = 1.28%. Estimated YTM = 1.74 + 1.28 = **3.02%**.",
-     "ref": "pp. 39–40"
+     "ref": "pp. 39–40",
+     "mcq": {
+      "options": [
+       "1.74 + average of (2.64 − 1.48) and (3.55 − 2.15)",
+       "Average of 2.64 and 3.55, minus 1.74",
+       "1.74 + (3.55 − 1.48)",
+       "(1.48 + 2.15) ÷ 2 + 1.74"
+      ],
+      "correct": 0,
+      "why": "Average spread 1.28% + the 6-year Treasury 1.74% = 3.02%."
+     }
     },
     {
      "type": "text",
@@ -627,7 +843,18 @@
      ],
      "need": 3,
      "answer": "The spread is the bond's YTM minus the benchmark rate, usually the YTM of a government bond with the same or nearly the same maturity. It is extra compensation for differences in **credit risk, liquidity risk and tax status** relative to the government bond.",
-     "ref": "p. 41"
+     "ref": "p. 41",
+     "mcq": {
+      "prompt": "The spread over the benchmark pays investors for differences in:",
+      "options": [
+       "Credit risk, liquidity risk and tax status",
+       "Maturity, coupon and currency",
+       "Inflation and the real rate",
+       "Reinvestment and call risk"
+      ],
+      "correct": 0,
+      "why": "Spread = the bond's YTM − the YTM of a government bond of similar maturity."
+     }
     }
    ]
   }

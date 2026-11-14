@@ -63,7 +63,18 @@
       }
      ],
      "answer": "Issuer; maturity (tenor is the time left until it); par value; coupon rate and payment frequency; currency (domestic, foreign or dual-currency); seniority and security (secured or unsecured, senior or subordinated, collateral and credit enhancements).",
-     "ref": "p. 5"
+     "ref": "p. 5",
+     "mcq": {
+      "prompt": "Which list has only basic features of a bond?",
+      "options": [
+       "Issuer, maturity, par value, coupon, currency, seniority",
+       "Issuer, maturity, dividend, voting rights, currency, beta",
+       "Issuer, tenor, strike price, coupon, currency, P/E ratio",
+       "Trustee, maturity, par value, market cap, currency, seniority"
+      ],
+      "correct": 0,
+      "why": "The six: issuer, maturity (tenor), par value, coupon rate and frequency, currency, and seniority/security."
+     }
     },
     {
      "type": "text",
@@ -91,7 +102,18 @@
       }
      ],
      "answer": "Par value is the principal the issuer repays at maturity, also called face, maturity or redemption value. Prices are quoted per 100 of par, so a price of 99.79 means 99.79% of face value.",
-     "ref": "p. 5"
+     "ref": "p. 5",
+     "mcq": {
+      "prompt": "A bond is quoted at 99.79. What does that mean?",
+      "options": [
+       "99.79% of par, the principal repaid at maturity",
+       "₹99.79 of coupon paid per year",
+       "A yield of 99.79 basis points",
+       "99.79% of the price at issue"
+      ],
+      "correct": 0,
+      "why": "Par (face) value is the principal repaid at maturity; prices are quoted per 100 of par."
+     }
     },
     {
      "type": "text",
@@ -133,7 +155,17 @@
       }
      ],
      "answer": "Government of India security; coupon 6.94% a year on face value; interest paid half-yearly; matures in 2036. Sold in multiples of ₹10,000 face value. It was the 10-year benchmark in 2026.",
-     "ref": "p. 5"
+     "ref": "p. 5",
+     "mcq": {
+      "prompt": "What does “6.94% GS 2036” tell you?",
+      "options": [
+       "Government of India bond, 6.94% coupon paid half-yearly, matures 2036",
+       "State government bond, 6.94% yield paid yearly, issued 2036",
+       "Government of India bond, 6.94% yield at issue, callable in 2036",
+       "Corporate bond guaranteed by the state, 6.94% coupon, matures 2036"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -190,7 +222,18 @@
      ],
      "need": 4,
      "answer": "They pay a fixed dividend, but missing it is not a default. They rank above common equity and below debt in liquidation, usually carry no voting rights, and behave like long-duration fixed income. That last point is why they are covered with bonds.",
-     "ref": "p. 6"
+     "ref": "p. 6",
+     "mcq": {
+      "prompt": "Which statement about preference shares is correct?",
+      "options": [
+       "Fixed dividend, but missing it is not a default; ranks above equity and below debt",
+       "Fixed dividend, and missing it is a default; ranks above debt",
+       "Variable dividend with full voting rights; ranks equal to equity",
+       "Fixed coupon with a maturity date; ranks equal to senior debt"
+      ],
+      "correct": 0,
+      "why": "They behave like long-duration fixed income, which is why they're studied with bonds."
+     }
     },
     {
      "type": "multi",
@@ -238,7 +281,18 @@
       "UDAY and special securities"
      ],
      "answer": "Central G-secs ₹105.9 lakh cr, SDLs 59.3, corporate bonds 51.6, T-bills 7.6, UDAY and special securities 1.9. Government paper is about three-quarters of the market.",
-     "ref": "p. 7"
+     "ref": "p. 7",
+     "mcq": {
+      "prompt": "Which is the largest segment of India's bond market (Dec 2024)?",
+      "options": [
+       "Central government securities, about ₹106 lakh crore",
+       "State Development Loans, about ₹59 lakh crore",
+       "Corporate bonds, about ₹52 lakh crore",
+       "Treasury bills, about ₹8 lakh crore"
+      ],
+      "correct": 0,
+      "why": "Order: G-secs 105.9, SDLs 59.3, corporate bonds 51.6, T-bills 7.6, UDAY and special 1.9 (₹ lakh crore). Government paper is about three-quarters."
+     }
     },
     {
      "type": "text",
@@ -282,7 +336,18 @@
      ],
      "need": 3,
      "answer": "Corporate bonds are about 14% of GDP (Korea 79%, Malaysia 54%, China 38%); about 98% of issuance (2023-24) is private placement; annual turnover is only 0.3 (Indonesia 1.17, China 1.16); and government paper dominates. It is growing, though: about ₹61 lakh crore outstanding by Sep 2026, up from about ₹20 lakh crore in FY16.",
-     "ref": "p. 7, 27"
+     "ref": "p. 7, 27",
+     "mcq": {
+      "prompt": "Which fact shows India's corporate bond market is shallow?",
+      "options": [
+       "About 98% of issuance is private placement and turnover is only 0.3",
+       "Corporate bonds are 79% of GDP, the highest in Asia",
+       "Most issuance is public and retail-led",
+       "Corporate bonds are larger than G-secs and SDLs combined"
+      ],
+      "correct": 0,
+      "why": "Also: only about 14% of GDP (Korea 79%, Malaysia 54%, China 38%), and government paper dominates."
+     }
     }
    ]
   },
@@ -315,7 +380,18 @@
       }
      ],
      "answer": "Short term 1–5 years, intermediate 5–12 years, long term over 12 years. Perpetual bonds have no maturity date.",
-     "ref": "p. 10"
+     "ref": "p. 10",
+     "mcq": {
+      "prompt": "In Fabozzi's convention, an 8-year bond is:",
+      "options": [
+       "Intermediate term (5–12 years)",
+       "Short term (1–5 years)",
+       "Long term (over 5 years)",
+       "Medium term (3–7 years)"
+      ],
+      "correct": 0,
+      "why": "Short 1–5 years, intermediate 5–12, long over 12."
+     }
     },
     {
      "type": "text",
@@ -353,7 +429,18 @@
       }
      ],
      "answer": "Maturity sets the horizon of cash flows; the yield depends on maturity (the yield curve, Module V); and longer maturity means greater price volatility (Module IV).",
-     "ref": "p. 10"
+     "ref": "p. 10",
+     "mcq": {
+      "prompt": "Why does maturity matter to a bond investor?",
+      "options": [
+       "It sets the cash-flow horizon, the yield (via the curve) and price volatility",
+       "It sets the coupon rate, the credit rating and the tax rate",
+       "It decides who the trustee is and where the bond is listed",
+       "Only because longer bonds always pay higher coupons"
+      ],
+      "correct": 0,
+      "why": "Longer maturity means greater price volatility; yield depends on maturity through the yield curve."
+     }
     },
     {
      "type": "single",
@@ -415,7 +502,18 @@
       }
      ],
      "answer": "Market yields fell from 6.9686% to 6.8117%, below the bond's 6.94% coupon, so the fixed coupon became more valuable and the price moved from a discount to a premium.",
-     "ref": "p. 11, 39"
+     "ref": "p. 11, 39",
+     "mcq": {
+      "prompt": "The 6.94% GS 2036 sold at ₹99.79 in June and ₹100.89 in July. Why?",
+      "options": [
+       "Market yield fell below the 6.94% coupon, so the price went to a premium",
+       "The coupon was raised above 6.94% at the re-issue",
+       "Market yield rose above the coupon, lifting the price",
+       "A month of accrued interest was added to the price"
+      ],
+      "correct": 0,
+      "why": "Yield fell from 6.9686% to 6.8117%. Yield below coupon means a premium."
+     }
     },
     {
      "type": "text",
@@ -454,7 +552,18 @@
       }
      ],
      "answer": "Coupon = reference rate + quoted margin, reset each period. It may have a cap (a ceiling, which favours the issuer) or a floor (a minimum, which favours the holder). India's version: Floating Rate Bonds (FRBs).",
-     "ref": "p. 12"
+     "ref": "p. 12",
+     "mcq": {
+      "prompt": "How is a floating-rate note's coupon set?",
+      "options": [
+       "Reference rate + quoted margin, possibly limited by a cap or floor",
+       "Fixed at issue, then stepped up on a schedule",
+       "Reference rate − inflation, reset once at maturity",
+       "Set by the trustee each year based on the issuer's profit"
+      ],
+      "correct": 0,
+      "why": "A cap favours the issuer; a floor favours the holder."
+     }
     },
     {
      "type": "single",
@@ -503,7 +612,18 @@
       }
      ],
      "answer": "A deferred-coupon bond pays no coupon for an initial period, then pays normally. A PIK bond pays its interest in more bonds instead of cash.",
-     "ref": "p. 12"
+     "ref": "p. 12",
+     "mcq": {
+      "prompt": "A payment-in-kind (PIK) bond pays its interest:",
+      "options": [
+       "In more bonds instead of cash",
+       "Only after an initial no-coupon period",
+       "In the issuer's shares at a fixed ratio",
+       "As one lump sum at maturity"
+      ],
+      "correct": 0,
+      "why": "Paying nothing for an initial period, then normally, is a deferred-coupon bond."
+     }
     },
     {
      "type": "text",
@@ -536,7 +656,18 @@
       }
      ],
      "answer": "Zero-coupon: Treasury bills and STRIPS carved from G-secs (both issued at a discount). Floating: FRBs. Inflation-indexed: Capital Indexed Bonds (the US equivalent is TIPS).",
-     "ref": "p. 12"
+     "ref": "p. 12",
+     "mcq": {
+      "prompt": "Which is India's government inflation-indexed instrument?",
+      "options": [
+       "Capital Indexed Bonds",
+       "Floating Rate Bonds (FRBs)",
+       "STRIPS",
+       "State Development Loans"
+      ],
+      "correct": 0,
+      "why": "Zero-coupon: T-bills and STRIPS. Floating: FRBs. Inflation-indexed: Capital Indexed Bonds (the US has TIPS)."
+     }
     },
     {
      "type": "text",
@@ -560,7 +691,17 @@
       }
      ],
      "answer": "The indenture (trust deed) is the legal contract between issuer and bondholders. A trustee, in India a SEBI-registered debenture trustee, monitors compliance on the holders' behalf.",
-     "ref": "p. 13"
+     "ref": "p. 13",
+     "mcq": {
+      "prompt": "What is a bond indenture, and who monitors it for holders in India?",
+      "options": [
+       "The legal contract with bondholders; a SEBI-registered debenture trustee",
+       "The auction notice; the RBI",
+       "The rating report; a credit rating agency",
+       "The offer price list; the lead underwriter"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "multi",
@@ -611,7 +752,18 @@
       }
      ],
      "answer": "Negative pledge: the issuer cannot issue new debt that ranks senior to the existing bonds. Cross-default: a default on any other obligation is treated as a default on this bond too.",
-     "ref": "p. 13"
+     "ref": "p. 13",
+     "mcq": {
+      "prompt": "A cross-default clause means:",
+      "options": [
+       "A default on any other debt counts as a default on this bond too",
+       "The issuer can't issue new debt ranking senior to this bond",
+       "All bondholders rank equally in a default",
+       "The issuer may default once without penalty"
+      ],
+      "correct": 0,
+      "why": "No new senior debt is the negative pledge."
+     }
     },
     {
      "type": "text",
@@ -661,7 +813,18 @@
      ],
      "need": 3,
      "answer": "Bullet: all principal at maturity (most G-secs and corporate bonds). Amortising: principal repaid over the life (mortgages, auto loans, MBS, ABS). Sinking fund: a set share retired each year, by calling at par or buying in the open market, with the remainder paid as a balloon at maturity.",
-     "ref": "p. 14"
+     "ref": "p. 14",
+     "mcq": {
+      "prompt": "A bond retires a set share of principal each year and pays the rest as a balloon. That is:",
+      "options": [
+       "A sinking fund",
+       "A bullet",
+       "A fully amortising bond",
+       "A perpetual"
+      ],
+      "correct": 0,
+      "why": "Bullet: all principal at maturity (most G-secs). Amortising: repaid over the life (mortgages, MBS)."
+     }
     }
    ]
   },
@@ -699,7 +862,17 @@
       "calc"
      ],
      "answer": "Callable = straight − call = 102.50 − 1.80 = ₹100.70. The investor has sold the issuer an option, so pays less. The mirror case: putable = straight + put, so with a ₹0.90 put it would be ₹103.40.",
-     "ref": "p. 16, 36"
+     "ref": "p. 16, 36",
+     "mcq": {
+      "options": [
+       "Straight bond − call option: 102.50 − 1.80",
+       "Straight bond + call option: 102.50 + 1.80",
+       "Call option ÷ straight bond: 1.80 ÷ 102.50",
+       "Straight bond × (1 − 1.80%)"
+      ],
+      "correct": 0,
+      "why": "The investor has sold the issuer an option, so pays less: ₹100.70. A putable bond is straight + put."
+     }
     },
     {
      "type": "text",
@@ -728,7 +901,18 @@
       }
      ],
      "answer": "Call price = present value of the remaining cash flows, discounted at a benchmark (e.g. Treasury or G-sec) yield plus a small spread. This makes calling expensive, so investors are largely compensated.",
-     "ref": "p. 17"
+     "ref": "p. 17",
+     "mcq": {
+      "prompt": "How is the call price of a make-whole call set?",
+      "options": [
+       "PV of the remaining cash flows, discounted at a benchmark yield plus a small spread",
+       "Par plus one year's coupon",
+       "A fixed schedule that declines to par",
+       "The market price on the call date"
+      ],
+      "correct": 0,
+      "why": "That makes calling expensive, so investors are largely compensated."
+     }
     },
     {
      "type": "text",
@@ -775,7 +959,18 @@
       }
      ],
      "answer": "Call protection or lockout is the period during which the bond cannot be called (a deferred call). A fixed-price call sets a schedule of call prices above par, with the premium declining toward par as the bond ages. Refunding is calling a bond with money raised from new, cheaper debt. Calls can be American, European or Bermudan in style.",
-     "ref": "p. 17"
+     "ref": "p. 17",
+     "mcq": {
+      "prompt": "“Refunding” means:",
+      "options": [
+       "Calling a bond with money raised from new, cheaper debt",
+       "A period when the bond cannot be called",
+       "Returning coupons to investors after a default",
+       "A schedule of call prices declining toward par"
+      ],
+      "correct": 0,
+      "why": "A no-call period is call protection (lockout); the declining schedule is a fixed-price call."
+     }
     },
     {
      "type": "number",
@@ -786,7 +981,17 @@
       "calc"
      ],
      "answer": "Conversion price = par ÷ conversion ratio = 1,000 ÷ 40 = ₹25 per share.",
-     "ref": "p. 18"
+     "ref": "p. 18",
+     "mcq": {
+      "options": [
+       "Par ÷ conversion ratio: 1,000 ÷ 40",
+       "Par × conversion ratio: 1,000 × 40",
+       "Conversion ratio ÷ par: 40 ÷ 1,000",
+       "Par − conversion ratio: 1,000 − 40"
+      ],
+      "correct": 0,
+      "why": "₹25 per share."
+     }
     },
     {
      "type": "text",
@@ -834,7 +1039,18 @@
      ],
      "need": 3,
      "answer": "A convertible is the holder's option. A CoCo protects the issuer: it is automatically converted or written down when a capital trigger is hit, absorbing losses before taxpayers do, and in return pays a higher coupon.",
-     "ref": "p. 18"
+     "ref": "p. 18",
+     "mcq": {
+      "prompt": "How does a CoCo (AT1) differ from an ordinary convertible?",
+      "options": [
+       "It converts or is written down automatically at a capital trigger, protecting the issuer",
+       "The holder chooses when to convert into equity",
+       "It can never be written down, only converted",
+       "It pays a lower coupon because it is safer"
+      ],
+      "correct": 0,
+      "why": "A convertible is the holder's option. A CoCo absorbs losses and pays a higher coupon in return."
+     }
     },
     {
      "type": "text",
@@ -888,7 +1104,18 @@
      ],
      "need": 3,
      "answer": "Yes Bank: ₹8,415 crore of AT1 written off under the RBI-led reconstruction; the Bombay High Court quashed it (Jan 2023) and the Supreme Court stayed that and reserved judgment (Apr 2026). Credit Suisse: about CHF 16.5 bn written to zero in the UBS rescue while shareholders received UBS shares, flipping the usual hierarchy; a Swiss court ruled it unlawful (Oct 2025) and FINMA said it would appeal.",
-     "ref": "p. 18, 38"
+     "ref": "p. 18, 38",
+     "mcq": {
+      "prompt": "What did Yes Bank (2020) and Credit Suisse (2023) show about AT1 bonds?",
+      "options": [
+       "They can be written off in a rescue, even while shareholders keep something",
+       "They are always repaid before depositors",
+       "They convert into shares at a premium in a rescue",
+       "Regulators cannot touch them without holders' consent"
+      ],
+      "correct": 0,
+      "why": "Yes Bank: ₹8,415 crore written off. Credit Suisse: about CHF 16.5 bn to zero while shareholders got UBS shares. Both were challenged in court."
+     }
     }
    ]
   },
@@ -955,7 +1182,17 @@
      ],
      "need": 4,
      "answer": "Commercial banks, primary dealers, insurers, mutual funds, provident and pension funds, FPIs, and retail investors via RBI Retail Direct and online bond platforms.",
-     "ref": "p. 20"
+     "ref": "p. 20",
+     "mcq": {
+      "prompt": "Which group is NOT one of the module's investor types in India's bond market?",
+      "options": [
+       "Stock exchanges",
+       "Commercial banks and primary dealers",
+       "Insurers, mutual funds, provident and pension funds",
+       "Foreign portfolio investors and retail"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -1002,7 +1239,18 @@
      ],
      "need": 4,
      "answer": "Green, social, sustainability, sustainability-linked and transition bonds. Green bonds dominate, about 63% of Q1 2026 issuance. Global sustainable issuance was about $900 bn in 2025, with a similar level expected for 2026 (Q1 2026: $241 bn, −17% y/y). India issued its first Sovereign Green Bonds, ₹16,000 crore in two tranches, in Jan–Feb 2023.",
-     "ref": "p. 21"
+     "ref": "p. 21",
+     "mcq": {
+      "prompt": "Which type dominates sustainable bond issuance?",
+      "options": [
+       "Green bonds, about 63% of Q1 2026 issuance",
+       "Social bonds, about 63%",
+       "Sustainability-linked bonds, about half",
+       "Transition bonds, about 40%"
+      ],
+      "correct": 0,
+      "why": "The family: green, social, sustainability, sustainability-linked and transition."
+     }
     },
     {
      "type": "text",
@@ -1034,7 +1282,17 @@
      ],
      "need": 2,
      "answer": "A pilot (announced Sep 2026) to tokenise corporate bonds on a permissioned distributed ledger run by the depositories. Abroad, tokenised bonds are already live: Hong Kong's third digital green bond (Nov 2025) settled T+1.",
-     "ref": "p. 21"
+     "ref": "p. 21",
+     "mcq": {
+      "prompt": "SEBI's “Demat 2.0” pilot is about:",
+      "options": [
+       "Tokenising corporate bonds on a permissioned ledger run by the depositories",
+       "Moving G-sec auctions to a blockchain",
+       "A new retail app for buying T-bills",
+       "Replacing credit ratings with on-chain scores"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -1069,7 +1327,18 @@
       }
      ],
      "answer": "Index trackers must buy eligible G-secs, so passive foreign demand rises (economists estimate $20–30 bn over 10 months), pushing yields and the government's borrowing cost down. The cost: India's yields become more sensitive to global yields and the rupee, and money can leave as fast as it came. Only FAR G-secs are eligible.",
-     "ref": "p. 22, 39"
+     "ref": "p. 22, 39",
+     "mcq": {
+      "prompt": "Why would Bloomberg Global Aggregate inclusion lower India's borrowing cost, and what's the catch?",
+      "options": [
+       "Index trackers must buy G-secs; yields become more exposed to global flows and the rupee",
+       "The index guarantees India's debt; India must cut its fiscal deficit",
+       "It removes tax on G-secs; inflation rises",
+       "Domestic banks must buy more; lending falls"
+      ],
+      "correct": 0,
+      "why": "Estimated $20–30 bn of passive inflows over 10 months, but money can leave as fast as it came."
+     }
     },
     {
      "type": "single",
@@ -1149,7 +1418,17 @@
      ],
      "need": 3,
      "answer": "RBI: central and state government securities and T-bills, money and repo markets, primary dealers; it issues and manages government debt and NDS-OM is run by CCIL on its behalf. SEBI: listed corporate debt, rating agencies, debenture trustees, debt mutual funds, online bond platforms and exchange RFQ platforms. The Ministry of Finance sets the borrowing calendar and taxation; IRDAI and PFRDA set investment rules for insurers and pension funds.",
-     "ref": "p. 25"
+     "ref": "p. 25",
+     "mcq": {
+      "prompt": "Who regulates what?",
+      "options": [
+       "RBI: government securities, money and repo markets. SEBI: listed corporate debt, rating agencies, trustees",
+       "RBI: corporate bonds and rating agencies. SEBI: G-secs and T-bills",
+       "SEBI: everything listed. RBI: only bank deposits",
+       "Ministry of Finance: all bond trading. RBI: only currency"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "single",
@@ -1176,7 +1455,18 @@
       "Settlement T+1"
      ],
      "answer": "Calendar → notification → when-issued trading → bidding on E-Kuber (competitive 10:30–11:30, non-competitive 10:30–11:00) → cut-off and allotment (multiple-price) → settlement the next day.",
-     "ref": "p. 26"
+     "ref": "p. 26",
+     "mcq": {
+      "prompt": "What comes right before bidding on E-Kuber in an RBI auction?",
+      "options": [
+       "When-issued trading",
+       "Cut-off and allotment",
+       "Settlement",
+       "The half-yearly calendar"
+      ],
+      "correct": 0,
+      "why": "Calendar → notification → when-issued trading → bidding → cut-off and allotment → settlement T+1."
+     }
     },
     {
      "type": "text",
@@ -1209,7 +1499,18 @@
       }
      ],
      "answer": "New securities are yield-based: bids are in yield, and the cut-off yield becomes the coupon. Re-issues of existing securities are price-based: bids are in price.",
-     "ref": "p. 26"
+     "ref": "p. 26",
+     "mcq": {
+      "prompt": "In an RBI auction of a NEW security, participants bid in:",
+      "options": [
+       "Yield, and the cut-off yield becomes the coupon",
+       "Price, and the cut-off price becomes par",
+       "Yield, and the coupon is set later by the RBI",
+       "Price, as for all securities"
+      ],
+      "correct": 0,
+      "why": "Re-issues of existing securities are price-based."
+     }
     },
     {
      "type": "single",
@@ -1252,7 +1553,17 @@
       }
      ],
      "answer": "Up to 5% of the notified amount is reserved for eligible retail and small investors, who are allotted at the weighted average price of the competitive bids.",
-     "ref": "p. 26"
+     "ref": "p. 26",
+     "mcq": {
+      "prompt": "Non-competitive bidding reserves:",
+      "options": [
+       "Up to 5% for retail and small investors, at the weighted average price",
+       "Up to 5% for primary dealers, at the cut-off price",
+       "Up to 25% for retail investors, at par",
+       "Up to 10% for foreign investors, at the lowest bid"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -1263,7 +1574,17 @@
       "calc"
      ],
      "answer": "5% × 32,000 = ₹1,600 crore.",
-     "ref": "p. 26"
+     "ref": "p. 26",
+     "mcq": {
+      "options": [
+       "5% × 32,000",
+       "10% × 32,000",
+       "32,000 ÷ 5",
+       "0.5% × 32,000"
+      ],
+      "correct": 0,
+      "why": "Up to 5% of the notified amount: ₹1,600 crore."
+     }
     },
     {
      "type": "text",
@@ -1294,7 +1615,17 @@
       }
      ],
      "answer": "Primary dealers underwrite the notified amount; if bids fall short, the unsold part devolves on them, meaning they must buy it.",
-     "ref": "p. 26"
+     "ref": "p. 26",
+     "mcq": {
+      "prompt": "An auction “devolves” on primary dealers when:",
+      "options": [
+       "Bids fall short and the PDs, as underwriters, must buy the unsold part",
+       "PDs win every competitive bid",
+       "The RBI cancels the auction and refunds the PDs",
+       "PDs sell their allotment to retail investors"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "single",
@@ -1350,7 +1681,17 @@
      ],
      "need": 3,
      "answer": "Thin trading means liquidity risk: wide bid-ask spreads and stale prices, because many bonds don't trade for days. That is why matrix pricing exists (Module II). Average daily secondary trading was about ₹5,722 crore in FY24, roughly ₹5,400–6,000 crore since 2018.",
-     "ref": "p. 27"
+     "ref": "p. 27",
+     "mcq": {
+      "prompt": "A turnover ratio of 0.3 means investors face:",
+      "options": [
+       "Liquidity risk: wide bid-ask spreads and stale prices, hence matrix pricing",
+       "Higher default risk, hence lower ratings",
+       "Lower yields because bonds are scarce",
+       "More interest-rate risk because duration is longer"
+      ],
+      "correct": 0
+     }
     }
    ]
   },
@@ -1376,7 +1717,18 @@
       }
      ],
      "answer": "BBB on S&P/Fitch (BBB− is the lowest notch) and Baa on Moody's (Baa3). One step below is BB / Ba, high yield. Modifiers: + / − for S&P, Fitch and Indian agencies; 1, 2, 3 for Moody's.",
-     "ref": "p. 29"
+     "ref": "p. 29",
+     "mcq": {
+      "prompt": "The lowest investment-grade ratings are:",
+      "options": [
+       "BBB− (S&P/Fitch) and Baa3 (Moody's)",
+       "BB+ (S&P/Fitch) and Ba1 (Moody's)",
+       "A− (S&P/Fitch) and A3 (Moody's)",
+       "BBB− (S&P/Fitch) and Ba3 (Moody's)"
+      ],
+      "correct": 0,
+      "why": "One step below, BB/Ba, is high yield."
+     }
     },
     {
      "type": "text",
@@ -1423,7 +1775,18 @@
      ],
      "need": 3,
      "answer": "CRISIL, ICRA, CARE, India Ratings & Research, Acuité and Infomerics. Indian ratings use the same letters with the agency as prefix (CRISIL AAA, [ICRA]AA, CARE A). Ratings are opinions, not guarantees.",
-     "ref": "p. 29"
+     "ref": "p. 29",
+     "mcq": {
+      "prompt": "Which set is all SEBI-registered rating agencies?",
+      "options": [
+       "CRISIL, ICRA, CARE",
+       "CRISIL, CCIL, NSDL",
+       "ICRA, FIMMDA, CDSL",
+       "CARE, NSE, PFRDA"
+      ],
+      "correct": 0,
+      "why": "Also India Ratings, Acuité and Infomerics."
+     }
     },
     {
      "type": "text",
@@ -1448,7 +1811,18 @@
       }
      ],
      "answer": "India is at the bottom of investment grade: S&P BBB (Stable), upgraded from BBB− on 14 Aug 2025, its first upgrade for India in 18 years; Moody's Baa3; Fitch BBB−, affirmed Aug 2025. Fitch flagged government debt of about 81% of GDP vs a BBB median of about 60%.",
-     "ref": "p. 30"
+     "ref": "p. 30",
+     "mcq": {
+      "prompt": "What changed in India's sovereign rating in 2025?",
+      "options": [
+       "S&P upgraded India to BBB, its first upgrade in 18 years",
+       "Moody's cut India to below investment grade",
+       "Fitch upgraded India to A−",
+       "All three agencies moved India to AA"
+      ],
+      "correct": 0,
+      "why": "India still sits at the bottom of investment grade (Moody's Baa3, Fitch BBB−)."
+     }
     },
     {
      "type": "text",
@@ -1475,7 +1849,17 @@
       }
      ],
      "answer": "Credit, liquidity and tax differences.",
-     "ref": "p. 31"
+     "ref": "p. 31",
+     "mcq": {
+      "prompt": "A corporate bond's spread over the G-sec pays for:",
+      "options": [
+       "Credit risk, liquidity and tax differences",
+       "Credit risk, inflation and currency",
+       "Liquidity, maturity and coupon",
+       "Inflation, the real rate and tax"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -1505,7 +1889,18 @@
       }
      ],
      "answer": "Each notch lower adds spread (AAA → AA costs PSUs about 76 bps). At the same rating, sector matters: AAA NBFCs pay about 44 bps more than AAA PSUs. All spreads widened in July 2026 (AAA PSU from 0.68 to 0.91 pp; AA PSU about 1.67 pp).",
-     "ref": "p. 31"
+     "ref": "p. 31",
+     "mcq": {
+      "prompt": "What do Indian corporate spreads show (5-year, Jul 2026)?",
+      "options": [
+       "Lower rating means wider spread, and at the same rating NBFCs pay more than PSUs",
+       "Spreads are the same across sectors at a given rating",
+       "AAA PSUs pay more than AAA NBFCs",
+       "Lower-rated bonds have narrower spreads"
+      ],
+      "correct": 0,
+      "why": "AAA → AA costs PSUs about 76 bps; AAA NBFCs pay about 44 bps more than AAA PSUs."
+     }
     }
    ]
   },
@@ -1595,7 +1990,18 @@
      ],
      "need": 7,
      "answer": "Interest rate, yield curve, call and prepayment, reinvestment, liquidity, exchange rate, inflation, volatility, credit, event and sovereign. The module's recap: interest rate, credit and liquidity risk dominate.",
-     "ref": "p. 33"
+     "ref": "p. 33",
+     "mcq": {
+      "prompt": "Which is NOT on the module's bond risk map?",
+      "options": [
+       "Dividend risk",
+       "Reinvestment risk",
+       "Yield curve risk",
+       "Event risk"
+      ],
+      "correct": 0,
+      "why": "The eleven: interest rate, yield curve, call/prepayment, reinvestment, liquidity, exchange rate, inflation, volatility, credit, event, sovereign."
+     }
     },
     {
      "type": "text",
@@ -1624,7 +2030,17 @@
       }
      ],
      "answer": "Longer maturity, lower coupon, lower starting yield. Measured precisely by duration and convexity (Module IV).",
-     "ref": "p. 34"
+     "ref": "p. 34",
+     "mcq": {
+      "prompt": "A bond's price is MOST sensitive to yield changes when it has:",
+      "options": [
+       "Long maturity, low coupon, low starting yield",
+       "Short maturity, high coupon, high starting yield",
+       "Long maturity, high coupon, high starting yield",
+       "Short maturity, low coupon, low starting yield"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -1636,7 +2052,17 @@
       "calc"
      ],
      "answer": "(97.63 − 100.89) ÷ 100.89 = −3.2%. A 48 bp rise in yield cost about 3.2% of value: interest rate risk, live.",
-     "ref": "p. 34"
+     "ref": "p. 34",
+     "mcq": {
+      "options": [
+       "(97.63 − 100.89) ÷ 100.89",
+       "(97.63 − 100.89) ÷ 97.63",
+       "(7.29 − 6.8117) ÷ 6.8117",
+       "97.63 ÷ 100.89"
+      ],
+      "correct": 0,
+      "why": "−3.2%: a 48 bp rise in yield cost about 3.2% of value."
+     }
     },
     {
      "type": "number",
@@ -1648,7 +2074,17 @@
       "calc"
      ],
      "answer": "Coupon per period = 6.94 ÷ 2 = 3.47; yield per period = 7.29 ÷ 2 = 3.645%. PV of coupons ≈ 47.80 and PV of principal ≈ 49.83, so P ≈ ₹97.63, the figure on the slide.",
-     "ref": "p. 34"
+     "ref": "p. 34",
+     "mcq": {
+      "options": [
+       "Σ 3.47 ÷ 1.03645ᵗ for t = 1…19, plus 100 ÷ 1.03645¹⁹",
+       "Σ 6.94 ÷ 1.0729ᵗ for t = 1…19, plus 100 ÷ 1.0729¹⁹",
+       "Σ 3.47 ÷ 1.0729ᵗ for t = 1…19, plus 100 ÷ 1.0729¹⁹",
+       "19 × 3.47 + 100 ÷ 1.03645"
+      ],
+      "correct": 0,
+      "why": "Halve both the coupon (3.47) and the yield (3.645%) for semi-annual periods. Price ≈ ₹97.63."
+     }
     },
     {
      "type": "number",
@@ -1659,7 +2095,17 @@
       "calc"
      ],
      "answer": "5.24 − 4.80 = 0.44 pp = 44 bps. The curve was upward sloping (1-month 4.13% to 20-year 5.65%) with a hump: the 20-year (5.65%) above the 30-year (5.60%).",
-     "ref": "p. 35"
+     "ref": "p. 35",
+     "mcq": {
+      "options": [
+       "(5.24 − 4.80) × 100",
+       "(5.24 + 4.80) ÷ 2",
+       "5.24 ÷ 4.80",
+       "(4.80 − 5.24) × 10"
+      ],
+      "correct": 0,
+      "why": "0.44 percentage points = 44 bps."
+     }
     },
     {
      "type": "text",
@@ -1691,7 +2137,17 @@
       }
      ],
      "answer": "Yield curve risk is the risk from non-parallel moves: curves twist and bend, so some maturities move more than others. Duration measures a parallel shift, so on its own it mis-states the risk.",
-     "ref": "p. 35"
+     "ref": "p. 35",
+     "mcq": {
+      "prompt": "Why doesn't duration alone capture yield curve risk?",
+      "options": [
+       "Duration assumes a parallel shift, but curves twist and bend",
+       "Duration ignores coupons",
+       "Duration only works for zero-coupon bonds",
+       "Duration measures credit risk, not rate risk"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -1739,7 +2195,17 @@
      ],
      "need": 3,
      "answer": "Issuers call when rates fall, exactly when investors would like to keep the bond, so the investor gets cash back to reinvest at lower rates. Cash flows become uncertain and price upside is capped near the call price (negative convexity, Module VI). Home-loan prepayments do the same to MBS investors.",
-     "ref": "p. 36"
+     "ref": "p. 36",
+     "mcq": {
+      "prompt": "Why is a call bad for the investor?",
+      "options": [
+       "Issuers call when rates fall, so the investor must reinvest at lower rates and upside is capped",
+       "Issuers call when rates rise, so the investor misses higher coupons",
+       "The investor must pay a call premium to the issuer",
+       "The bond's maturity gets extended"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "single",
@@ -1790,7 +2256,18 @@
      ],
      "need": 2,
      "answer": "A fall in rates raises bond prices but lowers the rate at which coupons are reinvested; a rise does the reverse. The two effects offset, which is the basis of immunisation (Module IX).",
-     "ref": "p. 36"
+     "ref": "p. 36",
+     "mcq": {
+      "prompt": "When rates fall, what happens to price risk and reinvestment risk?",
+      "options": [
+       "Bond prices rise, but coupons are reinvested at lower rates",
+       "Bond prices fall, and coupons are reinvested at lower rates",
+       "Bond prices rise, and reinvestment income rises too",
+       "Neither changes for a coupon bond"
+      ],
+      "correct": 0,
+      "why": "The two offset, which is the basis of immunisation."
+     }
     },
     {
      "type": "text",
@@ -1825,7 +2302,18 @@
       "discussion"
      ],
      "answer": "Rises: call risk and reinvestment risk (cash flows are uncertain and may come back early when rates are low). Falls: interest rate risk, because the possibility of early redemption shortens the effective duration, so the price moves less when yields change. (The slide poses this for discussion; the “falls” half is my model answer.)",
-     "ref": "p. 36, 39"
+     "ref": "p. 36, 39",
+     "mcq": {
+      "prompt": "Making a bond callable changes its risks how?",
+      "options": [
+       "Call and reinvestment risk rise; interest-rate sensitivity falls",
+       "Call risk rises; interest-rate sensitivity rises too",
+       "Credit risk rises; liquidity risk falls",
+       "Reinvestment risk falls; duration rises"
+      ],
+      "correct": 0,
+      "why": "Possible early redemption shortens effective duration. (The 'falls' half is a model answer; the slide leaves it for discussion.)"
+     }
     },
     {
      "type": "text",
@@ -1854,7 +2342,17 @@
       }
      ],
      "answer": "Default risk: the issuer fails to pay; loss = 1 − recovery rate. Spread risk: the credit spread widens and the price falls. Downgrade risk: a rating cut lowers the price.",
-     "ref": "p. 37"
+     "ref": "p. 37",
+     "mcq": {
+      "prompt": "Credit risk has three forms:",
+      "options": [
+       "Default, spread and downgrade risk",
+       "Default, liquidity and inflation risk",
+       "Spread, call and event risk",
+       "Downgrade, sovereign and currency risk"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "number",
@@ -1865,7 +2363,17 @@
       "calc"
      ],
      "answer": "Loss = 1 − recovery rate = 1 − 0.35 = 65% of par.",
-     "ref": "p. 37"
+     "ref": "p. 37",
+     "mcq": {
+      "options": [
+       "1 − recovery rate: 1 − 0.35",
+       "Recovery rate ÷ par: 0.35 ÷ 1",
+       "1 ÷ recovery rate: 1 ÷ 0.35",
+       "Recovery rate × coupon"
+      ],
+      "correct": 0,
+      "why": "Loss = 65% of par."
+     }
     },
     {
      "type": "number",
@@ -1876,7 +2384,17 @@
       "calc"
      ],
      "answer": "Real ≈ nominal − inflation = 7.29 − 4.5 = 2.79%. The slide's example: a 7% bond with 6% inflation earns only about 1%.",
-     "ref": "p. 37"
+     "ref": "p. 37",
+     "mcq": {
+      "options": [
+       "Nominal − inflation: 7.29 − 4.5",
+       "Nominal + inflation: 7.29 + 4.5",
+       "Nominal ÷ inflation: 7.29 ÷ 4.5",
+       "Inflation − nominal: 4.5 − 7.29"
+      ],
+      "correct": 0,
+      "why": "About 2.79%."
+     }
     },
     {
      "type": "single",
@@ -1929,7 +2447,17 @@
      ],
      "need": 3,
      "answer": "Measured by the bid-ask spread. It widens when a structure falls out of favour, when rates are volatile, or when key dealers leave the market.",
-     "ref": "p. 37"
+     "ref": "p. 37",
+     "mcq": {
+      "prompt": "How is liquidity risk measured?",
+      "options": [
+       "By the bid-ask spread, which widens when dealers leave or rates are volatile",
+       "By the credit rating, which falls when dealers leave",
+       "By duration, which rises when rates are volatile",
+       "By the coupon rate, which resets when trading is thin"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "single",
@@ -1988,7 +2516,18 @@
      ],
      "need": 3,
      "answer": "IL&FS, an AAA-rated infrastructure lender, defaulted in Sep 2018. That set off an NBFC funding squeeze and rating downgrades across the sector. Lesson: ratings are opinions, not guarantees, and can be late.",
-     "ref": "p. 38"
+     "ref": "p. 38",
+     "mcq": {
+      "prompt": "What is the lesson of IL&FS (2018)?",
+      "options": [
+       "An AAA-rated lender defaulted: ratings are opinions, not guarantees",
+       "Government bonds can default without warning",
+       "AT1 bonds can be written off in a rescue",
+       "Rising rates can cause a bank run"
+      ],
+      "correct": 0,
+      "why": "It set off an NBFC funding squeeze and downgrades across the sector."
+     }
     }
    ]
   }

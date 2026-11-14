@@ -44,7 +44,17 @@
        ]
       }
      ],
-     "answer": "**50% YoY**, driven mainly by **Gen Z** and shoppers from **Tier 2+ towns** (\"Bharat\")."
+     "answer": "**50% YoY**, driven mainly by **Gen Z** and shoppers from **Tier 2+ towns** (\"Bharat\").",
+     "mcq": {
+      "prompt": "What was Flipkart's food & nutrition growth, and who drove it?",
+      "options": [
+       "50% year on year, driven by Gen Z and Tier 2+ towns",
+       "80% year on year, driven by metros and millennials",
+       "25% year on year, driven by Gen Z and metros",
+       "65% year on year, driven by Tier 2+ towns and seniors"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -82,7 +92,18 @@
       }
      ],
      "need": 3,
-     "answer": "Young consumers discover food through **recipes**, **creator recommendations** and **wellness trends**; non-metro shoppers are moving to **healthier kitchen staples** and **modern nutrition products**."
+     "answer": "Young consumers discover food through **recipes**, **creator recommendations** and **wellness trends**; non-metro shoppers are moving to **healthier kitchen staples** and **modern nutrition products**.",
+     "mcq": {
+      "prompt": "How does Gen Z discover food, according to the article?",
+      "options": [
+       "Recipes, creator recommendations and wellness trends",
+       "TV ads, discounts and loyalty points",
+       "Doctor advice and pharmacy displays",
+       "Family habit and local shop owners"
+      ],
+      "correct": 0,
+      "why": "Non-metro shoppers are moving to healthier staples and modern nutrition products."
+     }
     },
     {
      "type": "single",
@@ -125,7 +146,17 @@
        ]
       }
      ],
-     "answer": "**60% y-o-y**."
+     "answer": "**60% y-o-y**.",
+     "mcq": {
+      "options": [
+       "60% y-o-y",
+       "50% y-o-y",
+       "80% y-o-y",
+       "25% y-o-y"
+      ],
+      "correct": 0,
+      "why": "50% is the whole category, 80% is growth in healthy-product searches in Bharat, 25% is the Minutes share."
+     }
     },
     {
      "type": "text",
@@ -161,7 +192,17 @@
        ]
       }
      ],
-     "answer": "**Protein oats**, **high-protein peanut butter**, **gourmet chocolates**, **protein muesli**. (Notice the protein theme.)"
+     "answer": "**Protein oats**, **high-protein peanut butter**, **gourmet chocolates**, **protein muesli**. (Notice the protein theme.)",
+     "mcq": {
+      "prompt": "What theme runs through Gen Z's top four categories?",
+      "options": [
+       "Protein: oats, peanut butter and muesli, plus gourmet chocolate",
+       "Ayurveda: chyawanprash, ghee, honey and herbal tea",
+       "Convenience: instant noodles, frozen snacks, cola and chips",
+       "Weight loss: diet shakes, green tea, sugar-free sweets and salads"
+      ],
+      "correct": 0
+     }
     },
     {
      "type": "text",
@@ -196,7 +237,18 @@
        ]
       }
      ],
-     "answer": "**Korean**-flavoured snacks like **Cuppa Noodles** and **chips**, led by **Bengaluru** and **New Delhi**."
+     "answer": "**Korean**-flavoured snacks like **Cuppa Noodles** and **chips**, led by **Bengaluru** and **New Delhi**.",
+     "mcq": {
+      "prompt": "Which flavoured snacks are a fast-growing trend, and where?",
+      "options": [
+       "Korean, led by Bengaluru and New Delhi",
+       "Japanese, led by Mumbai and Pune",
+       "Korean, led by Hyderabad and Chennai",
+       "Thai, led by Bengaluru and Kolkata"
+      ],
+      "correct": 0,
+      "why": "Examples: Cuppa Noodles and chips."
+     }
     },
     {
      "type": "single",
@@ -238,7 +290,18 @@
        ]
       }
      ],
-     "answer": "**Nuts and dry fruits**, **chocolates**, **jams and spreads**."
+     "answer": "**Nuts and dry fruits**, **chocolates**, **jams and spreads**.",
+     "mcq": {
+      "prompt": "Which basket are MEN driving?",
+      "options": [
+       "Nuts and dry fruits, chocolates, jams and spreads",
+       "Value-added tea, coffee and edible seeds",
+       "Protein oats, peanut butter and muesli",
+       "Cold-pressed oils, ghee and dates"
+      ],
+      "correct": 0,
+      "why": "Women: value-added tea, coffee, edible seeds."
+     }
     }
    ]
   },
@@ -294,7 +357,18 @@
       }
      ],
      "need": 3,
-     "answer": "Any 3 of: **Dhulia, Imphal, Dharwad, Ujjain, Hubli, Mirganj, Laharpur**."
+     "answer": "Any 3 of: **Dhulia, Imphal, Dharwad, Ujjain, Hubli, Mirganj, Laharpur**.",
+     "mcq": {
+      "prompt": "Which set of towns did the article name as Tier 2+ examples?",
+      "options": [
+       "Dhulia, Imphal, Ujjain",
+       "Pune, Jaipur, Lucknow",
+       "Kochi, Indore, Surat",
+       "Nagpur, Patna, Bhopal"
+      ],
+      "correct": 0,
+      "why": "The seven: Dhulia, Imphal, Dharwad, Ujjain, Hubli, Mirganj, Laharpur."
+     }
     },
     {
      "type": "text",
@@ -351,7 +425,18 @@
       }
      ],
      "need": 4,
-     "answer": "**Cold-pressed oils, olive oils, protein oats, protein muesli, premium dry fruits, authentic ghee, dates**."
+     "answer": "**Cold-pressed oils, olive oils, protein oats, protein muesli, premium dry fruits, authentic ghee, dates**.",
+     "mcq": {
+      "prompt": "What kind of products are taking off in Bharat?",
+      "options": [
+       "Healthier premium staples: cold-pressed and olive oils, protein oats, ghee, dates",
+       "Cheaper bulk staples: loose rice, sugar and refined oil",
+       "Ready-to-eat frozen meals and instant mixes",
+       "Imported confectionery and energy drinks"
+      ],
+      "correct": 0,
+      "why": "Searches for these grew 80% over the year."
+     }
     },
     {
      "type": "single",
@@ -399,7 +484,17 @@
        ]
       }
      ],
-     "answer": "An expression of **wellness**, **identity** and **discovery**. That's the article's thesis: food shopping is shifting from routine staples to choices about health and self-image."
+     "answer": "An expression of **wellness**, **identity** and **discovery**. That's the article's thesis: food shopping is shifting from routine staples to choices about health and self-image.",
+     "mcq": {
+      "prompt": "Flipkart says food is becoming an expression of:",
+      "options": [
+       "Wellness, identity and discovery",
+       "Thrift, habit and convenience",
+       "Status, luxury and tradition",
+       "Speed, price and variety"
+      ],
+      "correct": 0
+     }
     }
    ]
   }
