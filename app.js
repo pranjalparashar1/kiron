@@ -19,7 +19,9 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 const SUPM = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "−", "⁺": "+", "ⁿ": "n" };
 const SUBM = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6", "₇": "7", "₈": "8", "₉": "9", "₋": "−", "₊": "+", "ₙ": "n", "ₜ": "t", "ₘ": "m", "ₓ": "x", "ₐ": "a", "ₑ": "e", "ₒ": "o", "ᵢ": "i", "ⱼ": "j", "ₖ": "k", "ₗ": "l", "ₛ": "s", "ₚ": "p", "ₕ": "h" };
 const FTERM = "(?:\\([^()]+\\)|\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?%?|[A-Za-z0-9]+(?:\\.\\d+)*%?)(?:<su[bp]>[^<]*<\\/su[bp]>)*";
-const FRAC_RE = new RegExp("(?<![\\w.)\\]])(" + FTERM + ")\\s*[\\/÷]\\s*(" + FTERM + ")(?![\\w\\[(,]|\\.\\d|<su)", "g");
+// Lookbehind (?<!...) is not supported before iOS 16.4: if it throws, skip fraction/minus typesetting instead of showing a blank app.
+let FRAC_RE = null, LB = true;
+try { FRAC_RE = new RegExp("(?<![\\w.)\\]])(" + FTERM + ")\\s*[\\/÷]\\s*(" + FTERM + ")(?![\\w\\[(,]|\\.\\d|<su)", "g"); new RegExp("(?<=[\\d)])x"); } catch (e) { LB = false; FRAC_RE = null; }
 function mathify(h) {
   const supm = c => SUPM[c] || c, subm = c => SUBM[c] || c;
   h = h.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿ]+/g, m => "<sup>" + [...m].map(supm).join("") + "</sup>")
@@ -28,9 +30,9 @@ function mathify(h) {
        .replace(/\^(-?\d+(?:\.\d+)?|[A-Za-z]\w*)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
        .replace(/_\(([^)]*)\)/g, "<sub>$1</sub>")
        .replace(/_([A-Za-z0-9]+)/g, "<sub>$1</sub>")
-       .replace(/(?<=[\d)])\s[x*]\s(?=[\d(])/g, " × ")
-       .replace(/(?<=[\d)>%])\s-\s(?=[\d(.])/g, " − ")
        .replace(/(^|[\s(=×÷+<>\/])-(?=\.?\d)/g, "$1−");
+  if (LB) h = h.replace(new RegExp("(?<=[\\d)])\\s[x*]\\s(?=[\\d(])", "g"), " × ").replace(new RegExp("(?<=[\\d)>%])\\s-\\s(?=[\\d(.])", "g"), " − ");
+  if (!FRAC_RE) return h;
   const strip = t => { const m = t.match(/^\(([^()]*)\)$/); return m ? m[1] : t; };
   for (let k = 0; k < 3; k++) {
     const before = h;
@@ -137,7 +139,7 @@ function validateQuiz(d) {
       type = TYPE_ALIASES[type] || type;
       if (!type) type = Array.isArray(q.options) ? (Array.isArray(q.correct) ? "multi" : "single") : Array.isArray(q.items) ? "order" : typeof q.correct === "number" ? "number" : "text";
       if (!TYPES.includes(type)) { errs.push(where + ": unknown “type” “" + q.type + "”. Use one of: " + TYPES.join(", ") + "."); return; }
-      const Q = { type, prompt: isStr(q.prompt) ? q.prompt.trim() : (isStr(q.question) ? q.question.trim() : ""), hint: isStr(q.hint) ? q.hint.trim() : "", answer: isStr(q.answer) ? q.answer.trim() : (isStr(q.explanation) ? q.explanation.trim() : ""), ref: isStr(q.ref) ? q.ref.trim() : "" };
+      const Q = { type, prompt: isStr(q.prompt) ? q.prompt.trim() : (isStr(q.question) ? q.question.trim() : ""), hint: isStr(q.hint) ? q.hint.trim() : "", answer: isStr(q.answer) ? q.answer.trim() : isStr(q.why) ? q.why.trim() : (isStr(q.explanation) ? q.explanation.trim() : ""), ref: isStr(q.ref) ? q.ref.trim() : "" };
       Q.tags = (Array.isArray(q.tags) ? q.tags : (isStr(q.tags) ? [q.tags] : [])).map(t => String(t).toLowerCase().trim()).map(t => t === "disc" ? "discussion" : t === "calculation" ? "calc" : t).filter(t => t === "calc" || t === "discussion");
       if (!Q.prompt) errs.push(where + " has no “prompt” (the question text).");
       if (!Q.answer) errs.push(where + " has no “answer” (the model answer or explanation shown after checking).");
@@ -246,9 +248,8 @@ const MODES = {
 // set DEEP_ON / ACTIVITY_ON to true to bring them back (chooser, mode cards, activity screen).
 const DEEP_ON = false, ACTIVITY_ON = false;
 const mode = () => DEEP_ON && SET.mode === "deep" ? "deep" : "early";
-function applyView() { document.documentElement.dataset.view = SET.view || (window.innerWidth >= 900 ? "laptop" : "phone"); }
-const curView = () => document.documentElement.dataset.view;
-window.addEventListener("resize", () => { if (!SET.view) applyView(); });
+// Phone-only now: one layout everywhere (it still runs on a laptop, just at phone width).
+function applyView() { document.documentElement.dataset.view = "phone"; }
 
 /* ---------------- activity log (stays on this device; lets you see if you get past 3 questions) ---------------- */
 const SESSION_GAP = 30 * 60 * 1000;
@@ -361,6 +362,7 @@ function openQuiz(id) {
 }
 function route() {
   clearTimer();
+  if (!/^#play-/.test(location.hash)) { const h = $("#heat"); if (h) h.remove(); }
   applyView();
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (DEEP_ON && !SET.mode) return renderChooser();
@@ -375,7 +377,8 @@ function route() {
   }
   renderLibrary();
 }
-function go(h) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); } else location.hash = h; }
+// rep = replace the history entry instead of adding one, so Back from a round goes to the library, not round -> home -> round -> home.
+function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); } else if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
 window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
 const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
@@ -394,7 +397,7 @@ function renderChooser() {
 }
 
 /* ---------------- library: just the list ---------------- */
-const viewBtn = () => { const to = curView() === "laptop" ? "phone" : "laptop"; return `<button class="icon-btn" data-set-view="${to}" aria-label="Switch to ${to} layout" type="button">${to === "phone" ? "📱" : "💻"}</button>`; };
+const viewBtn = () => soundBtn();
 function renderLibrary() {
   current = null; document.title = "Kiron";
   const list = allQuizzes();
@@ -440,7 +443,7 @@ function startRound(opt) {
   const { quiz, P } = current;
   const r = buildRound(quiz, P, opt);
   if (!r) { toast("Nothing left there. Nice."); return; }
-  P.round = r; P.cur = null; saveProg(); go("play-" + quiz.id);
+  P.round = r; P.cur = null; saveProg(); go("play-" + quiz.id, true);
 }
 
 /* ---------------- player: one question per screen ---------------- */
@@ -476,11 +479,40 @@ document.addEventListener("visibilitychange", () => {
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* ---- sounds: tiny synthesized tones, no audio files. Created only after a tap. Muted by the phone's silent switch on iPhone. ---- */
+const SND = {
+  ctx: null,
+  on() { return !SET.muted; },
+  unlock() {
+    try {
+      if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; this.ctx = new AC(); }
+      if (this.ctx.state === "suspended") this.ctx.resume();
+    } catch (e) {}
+  },
+  tone(freq, t0, dur, vol, type) {
+    const c = this.ctx; if (!c) return;
+    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + t0;
+    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.05);
+  },
+  play(kind, n) {
+    if (!this.on()) return; this.unlock(); if (!this.ctx) return;
+    try {
+      if (kind === "right") { this.tone(587, 0, .16, .09); this.tone(784, .08, .2, .09); }
+      else if (kind === "miss") { this.tone(262, 0, .22, .07); this.tone(220, .1, .26, .06); }
+      else if (kind === "streak") { const base = 660 * Math.pow(1.0595, Math.min(n || 3, 12)); this.tone(base * .75, 0, .14, .08); this.tone(base, .07, .14, .08); this.tone(base * 1.5, .14, .3, .08); }
+      else if (kind === "end") { this.tone(523, 0, .2, .07); this.tone(659, .12, .2, .07); this.tone(784, .24, .35, .07); }
+    } catch (e) {}
+  }
+};
+["pointerup", "touchend", "click", "keydown"].forEach(ev => document.addEventListener(ev, () => { if (!SND.ctx && SND.on()) SND.unlock(); else if (SND.ctx && SND.ctx.state === "suspended") SND.unlock(); }, { capture: true, passive: true }));
+const soundBtn = () => `<button class="icon-btn snd${SET.muted ? " off" : ""}" data-act="sound" type="button" aria-pressed="${!SET.muted}" aria-label="${SET.muted ? "Sound off" : "Sound on"}">${SET.muted ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`}</button>`;
 const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 function renderPlay(keepScroll) {
   const { quiz, P } = current;
   const r = P.round;
-  if (!r) return go("quiz-" + quiz.id);
+  if (!r) return go("quiz-" + quiz.id, true);
   document.title = quiz.title + " · Kiron";
   if (r.ended || r.i >= r.ids.length) return renderRoundEnd();
   const y0 = window.scrollY;
@@ -556,7 +588,7 @@ function renderPlay(keepScroll) {
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : needsSelf ? `<span class="grow note">Mark yourself to continue</span>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div>${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div>${streakBadge(r, fx)}${soundBtn()}${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -580,7 +612,8 @@ function renderPlay(keepScroll) {
       setTimeout(() => { if (el.isConnected) el.scrollIntoView({ block: wrong ? "start" : "nearest", behavior: reduceMotion() ? "auto" : "smooth" }); }, wrong && !reduceMotion() ? 480 : 60);
     }
   }
-  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); if (r.streak >= 3) streakPill(r.streak); }
+  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
+  heat(r.review ? 0 : r.streak || 0);
 }
 function burst(el) {
   if (reduceMotion()) return;
@@ -592,17 +625,31 @@ function burst(el) {
     document.body.append(p); setTimeout(() => p.remove(), 800);
   }
 }
-function streakPill(n) {
-  const old = $("#streak"); if (old) old.remove();
-  const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.textContent = "🔥 " + n + " in a row";
-  document.body.append(el); setTimeout(() => el.remove(), 1700);
+/* Streak: a small flame + number from 3 in a row. Level 1 glows (3+), 2 flickers (5+), 3 shakes gently (10+). A wrong answer just clears it, quietly. */
+const streakLevel = n => n >= 10 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
+function streakBadge(r, fx) {
+  const n = r.review ? 0 : r.streak || 0, lv = streakLevel(n); if (!lv) return "";
+  return `<span class="flame lv${lv}${fx && fx.kind === "right" ? " bump" : ""}" role="img" aria-label="${n} right in a row"><span class="fl" aria-hidden="true">🔥</span><b>${n}</b></span>`;
+}
+// A numberless glow along the bottom edge that warms up as the streak grows (the "round glow").
+function heat(n) {
+  let h = $("#heat");
+  const lv = Math.min(1, Math.max(0, (n - 2) / 12));
+  if (!lv) { if (h) h.remove(); return; }
+  if (!h) { h = document.createElement("div"); h.id = "heat"; h.className = "heat"; h.setAttribute("aria-hidden", "true"); document.body.append(h); }
+  h.style.setProperty("--h", lv.toFixed(2));
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
   const first = !P.cur.done;
   P.cur.done = true; P.cur.status = status;
   P.st[id] = status; r.res[id] = status;
-  if (first) { r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id); }
+  if (first) {
+    r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id);
+    if (status !== "right") SND.play("miss");
+    else if (r.streak === 3 || r.streak === 5 || (r.streak >= 10 && r.streak % 5 === 0)) SND.play("streak", r.streak);
+    else SND.play("right");
+  }
   else if (status !== "right") r.streak = 0;
   saveProg();
 }
@@ -613,8 +660,8 @@ function nav(dir) {
   const id = r.ids[r.i];
   if (dir < 0) { if (r.i === 0) return; r.i--; P.cur = null; DIR = -1; saveProg(); return renderPlay(); }
   if (!r.review && (!P.cur || !P.cur.done)) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); }
-  if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go("quiz-" + quiz.id); }
-  r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) r.ended = true;
+  if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go("quiz-" + quiz.id, true); }
+  r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) { r.ended = true; if (!r.review) SND.play("end"); }
   saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true });
 }
 function playAct(act, el) {
@@ -716,7 +763,7 @@ function renderRoundEnd() {
   const allDone = !c.left && !c.skip;
   const keep = c.left || c.skip ? `<button class="btn primary xl" data-act="${r.only !== undefined && counts(quiz, P, r.only).left ? "keeppart" : "start"}" type="button">Keep going</button>` : "";
   const rev = missed ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisitround" type="button">Revisit</button>` : c.revisit ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisit" type="button">Revisit</button>` : "";
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" type="button">Done</button></div></header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" data-replace="1" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
     <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
     <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="width:${prev.g}%"><b aria-hidden="true">✓</b></i><i class="r" id="rr" style="width:${prev.r}%"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
@@ -798,7 +845,7 @@ function doImport(raw) {
     if (asNew) { let k = 2; while (allQuizzes().some(x => x.quiz.id === quiz.id + "-" + k)) k++; quiz.id = quiz.id + "-" + k; quiz.title = quiz.title + " (" + k + ")"; }
     list = list.filter(q => q.id !== quiz.id); list.unshift(quiz);
     if (!LS.set(K_IMPORTED, list)) { showImportErrors(["This device's storage is full or blocked (private browsing?), so the quiz couldn't be saved."]); return; }
-    toast("Saved"); go("quiz-" + quiz.id);
+    toast("Saved"); go("quiz-" + quiz.id, true);
   };
   if ($("#imp-save")) $("#imp-save").onclick = () => save(false);
   if ($("#imp-replace")) $("#imp-replace").onclick = () => save(false);
@@ -821,7 +868,7 @@ function renderMake() {
     </ol>
     <div class="row"><button class="btn primary" id="mk-copy" type="button">Copy the prompt</button><button class="btn" data-go="import" type="button">Import a quiz</button></div>
     <details class="how"><summary>Read the prompt</summary><pre class="prompt-text" id="mk-text">${esc(prompt)}</pre></details>
-    <p class="note">Each question comes in two forms, tap-to-answer and typed, so the quiz works in both revision modes. Big file? Upload a chapter at a time and make one quiz per part.</p>
+    <p class="note">Big file? Upload a chapter at a time and make one quiz per part.</p>
   </main>`;
   $("#mk-copy").onclick = () => { document.querySelector("details.how").open = true; copyText(prompt, $("#mk-text")); };
 }
@@ -833,8 +880,8 @@ document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
   if (d.setMode && DEEP_ON) { const first = !SET.mode; SET.mode = d.setMode; saveSet(); if (current) { current.mode = mode(); current.P = getProg(current.quiz.id); } route(); if (first) window.scrollTo(0, 0); else toast(MODES[SET.mode].name + " is on"); return; }
-  if (d.setView) { SET.view = d.setView; saveSet(); route(); return; }
-  if (d.go !== undefined) { go(d.go); return; }
+  if (d.act === "sound") { SET.muted = !SET.muted; saveSet(); if (!SET.muted) { SND.unlock(); SND.play("right"); } if (current && /^#play-/.test(location.hash) && current.P.round && !current.P.round.ended) renderPlay(true); else route(); return; }
+  if (d.go !== undefined) { go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); ["early", "deep"].forEach(m => LS.del(progKey2(d.del, m))); toast("Deleted"); go(""); return; }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
@@ -845,14 +892,14 @@ document.addEventListener("click", e => {
   if (d.act === "jump") { const j = t.closest(".jump"); const o = j.classList.toggle("open"); t.setAttribute("aria-expanded", o); return; }
   if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"); app().querySelectorAll(".part.open").forEach(x => { x.classList.remove("open"); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); }); if (o) { p.classList.add("open"); t.setAttribute("aria-expanded", "true"); } return; }
   if (d.act === "partstart") return startRound({ only: +d.pi });
-  if (d.act === "partreview") { const { quiz, P } = current, r = buildReview(quiz, P, +d.pi); if (!r) return toast("Nothing answered here yet."); P.round = r; P.cur = null; saveProg(); return go("play-" + quiz.id); }
+  if (d.act === "partreview") { const { quiz, P } = current, r = buildReview(quiz, P, +d.pi); if (!r) return toast("Nothing answered here yet."); P.round = r; P.cur = null; saveProg(); return go("play-" + quiz.id, true); }
   if (d.act === "partredo") { if (!twoTap(t, "Tap again to redo")) return; const { quiz, P } = current; eachQ(quiz, (q, id, si) => { if (si === +d.pi) { delete P.st[id]; delete P.a[id]; delete P.h[id]; } }); P.round = null; P.cur = null; saveProg(); return startRound({ only: +d.pi }); }
   if (d.act === "keeppart") return startRound({ only: current.P.round.only });
   const act = d.act; if (!act) return;
   if (act === "start") return startRound();
   if (act === "revisit") return startRound({ kind: "revisit" });
   if (act === "revisitround") { const { P } = current; const ids = P.round.ids.filter(x => P.round.res[x] === "miss" || P.round.res[x] === "partial"); ids.forEach(x => { delete P.a[x]; delete P.h[x]; P.n[x] = (P.n[x] || 0) + 1; }); P.round = { ids, i: 0, res: {}, kind: "revisit", streak: 0, ended: false }; P.cur = null; saveProg(); return renderPlay(); }
-  if (act === "resume") return go("play-" + current.quiz.id);
+  if (act === "resume") return go("play-" + current.quiz.id, true);
   if (act === "share") return shareQuiz();
   if (act === "addtap") return sheet("Add tap options", `<p class="note">Paste this into any AI chat. It returns the same quiz with tap-to-answer options added. Import the result and choose <b>Replace it</b>.</p>`, addTapPrompt(current.quiz), "Copy prompt and quiz");
   if (act === "reset") { if (!twoTap(t, "Tap again to reset")) return; current.P = blankProg(); saveProg(); t.classList.add("ticked"); t.innerHTML = `<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg><span class="sr">Reset</span>`; t.disabled = true; return setTimeout(() => { if (current && /^#quiz-/.test(location.hash)) renderHome(); }, 850); }

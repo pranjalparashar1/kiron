@@ -1,6 +1,6 @@
 // Offline support: serve saved copies instantly, refresh them in the background.
 // Bump VERSION when you change app files so phones pick up the new version.
-const VERSION = "kiron-v9";
+const VERSION = "kiron-v10";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "prompt.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "quizzes.json", "nunito-latin.woff2"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
