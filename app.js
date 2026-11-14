@@ -15,7 +15,37 @@ const progKey = id => "sb:progress:" + id;
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // tiny safe formatting: **bold**, *italic*, line breaks
-const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
+/* Maths typesetting over the quiz text (no per-question editing): x^2 -> superscript, z_m -> subscript, a/b and a ÷ b -> stacked fraction, proper − and ×. */
+const SUPM = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "−", "⁺": "+", "ⁿ": "n" };
+const SUBM = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6", "₇": "7", "₈": "8", "₉": "9", "₋": "−", "₊": "+", "ₙ": "n", "ₜ": "t", "ₘ": "m", "ₓ": "x", "ₐ": "a", "ₑ": "e", "ₒ": "o", "ᵢ": "i", "ⱼ": "j", "ₖ": "k", "ₗ": "l", "ₛ": "s", "ₚ": "p", "ₕ": "h" };
+const FTERM = "(?:\\([^()]+\\)|\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?%?|[A-Za-z0-9]+(?:\\.\\d+)*%?)(?:<su[bp]>[^<]*<\\/su[bp]>)*";
+const FRAC_RE = new RegExp("(?<![\\w.)\\]])(" + FTERM + ")\\s*[\\/÷]\\s*(" + FTERM + ")(?![\\w\\[(,]|\\.\\d|<su)", "g");
+function mathify(h) {
+  const supm = c => SUPM[c] || c, subm = c => SUBM[c] || c;
+  h = h.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿ]+/g, m => "<sup>" + [...m].map(supm).join("") + "</sup>")
+       .replace(/[₀₁₂₃₄₅₆₇₈₉₋₊ₙₜₘₓₐₑₒᵢⱼₖₗₛₚₕ]+/g, m => "<sub>" + [...m].map(subm).join("") + "</sub>")
+       .replace(/\^\(([^)]*)\)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
+       .replace(/\^(-?\d+(?:\.\d+)?|[A-Za-z]\w*)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
+       .replace(/_\(([^)]*)\)/g, "<sub>$1</sub>")
+       .replace(/_([A-Za-z0-9]+)/g, "<sub>$1</sub>")
+       .replace(/(?<=[\d)])\s[x*]\s(?=[\d(])/g, " × ")
+       .replace(/(?<=[\d)>%])\s-\s(?=[\d(.])/g, " − ")
+       .replace(/(^|[\s(=×÷+<>\/])-(?=\.?\d)/g, "$1−");
+  const strip = t => { const m = t.match(/^\(([^()]*)\)$/); return m ? m[1] : t; };
+  for (let k = 0; k < 3; k++) {
+    const before = h;
+    h = h.replace(FRAC_RE, (all, a, b) => {
+      const pa = a.replace(/<[^>]*>/g, ""), pb = b.replace(/<[^>]*>/g, "");
+      const word = x => /^[A-Za-z]{3,}$/.test(x) && x !== x.toUpperCase() && !/^[A-Z]{2,}[a-z]$/.test(x);
+      const digits = /\d/.test(pa + pb), shortVars = pa.length <= 4 && pb.length <= 4 && !(pa === pa.toUpperCase() && pb === pb.toUpperCase());
+      if (word(pa) || word(pb) || (!digits && !shortVars)) return all;
+      return `<span class="frac"><span>${strip(a)}</span><span>${strip(b)}</span></span>`;
+    });
+    if (h === before) break;
+  }
+  return h;
+}
+const fmt = s => mathify(esc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
 const slug = s => String(s || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "quiz";
 let toastT;
 function toast(msg) {
@@ -284,10 +314,25 @@ function counts(quiz, P, si) {
   eachQ(quiz, (q, id, s) => { if (si !== undefined && s !== si) return; c.total++; const v = P.st[id]; if (v === "right") c.right++; else if (v === "partial" || v === "miss") c.revisit++; else if (v === "skip") c.skip++; else c.left++; });
   return c;
 }
+const MAXNUM = 3;
+function cushion(quiz, list) {
+  // At most MAXNUM number questions per round, never first, spread out between easier ones.
+  const isNum = id => getQ(quiz, id).q.type === "number";
+  const T = [], N = [], skipped = [];
+  for (const id of list) {
+    if (T.length + N.length >= ROUND) break;
+    if (isNum(id)) { if (N.length < MAXNUM) N.push(id); else skipped.push(id); } else T.push(id);
+  }
+  while (T.length + N.length < ROUND && skipped.length && T.length === 0) N.push(skipped.shift()); // only numbers left
+  const out = []; let ti = 0;
+  N.forEach((n, k) => { const want = Math.max(k + 1, Math.round((k + 1) * T.length / (N.length + 1))); while (ti < want && ti < T.length) out.push(T[ti++]); out.push(n); });
+  while (ti < T.length) out.push(T[ti++]);
+  return out;
+}
 function buildRound(quiz, P, opt) {
   opt = opt || {};
-  const all = []; eachQ(quiz, (q, id, si) => all.push({ id, si }));
-  const pick = (test, from) => { let list = all.filter(x => test(P.st[x.id])); if (from !== undefined) { const a = list.filter(x => x.si >= from), b = list.filter(x => x.si < from); list = a.concat(b); } return list.slice(0, ROUND).map(x => x.id); };
+  const all = []; eachQ(quiz, (q, id, si) => { if (opt.only === undefined || si === opt.only) all.push({ id, si }); });
+  const pick = (test, from) => { let list = all.filter(x => test(P.st[x.id])); if (from !== undefined) { const a = list.filter(x => x.si >= from), b = list.filter(x => x.si < from); list = a.concat(b); } return cushion(quiz, list.map(x => x.id)); };
   let ids = [], kind = "new";
   if (opt.kind === "revisit") { ids = pick(v => v === "miss" || v === "partial", opt.from); kind = "revisit"; }
   else {
@@ -297,7 +342,13 @@ function buildRound(quiz, P, opt) {
   }
   if (!ids.length) return null;
   ids.forEach(id => { delete P.a[id]; delete P.h[id]; P.n[id] = (P.n[id] || 0) + 1; });
-  return { ids, i: 0, res: {}, kind, streak: 0, ended: false };
+  return { ids, i: 0, res: {}, kind, streak: 0, ended: false, only: opt.only };
+}
+function buildReview(quiz, P, si) {
+  const ids = []; eachQ(quiz, (q, id, s) => { if (s === si && (P.st[id] === "right" || P.st[id] === "partial" || P.st[id] === "miss")) ids.push(id); });
+  if (!ids.length) return null;
+  const res = {}; ids.forEach(id => { res[id] = P.st[id]; });
+  return { ids, i: 0, res, kind: "review", streak: 0, ended: false, review: true };
 }
 
 /* ---------------- routing ---------------- */
@@ -369,11 +420,17 @@ function renderHome() {
   else if (c.skip) primary = `<button class="btn primary xl" data-act="start" type="button">Do the ones you left</button>`;
   else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit what you missed</button>`;
   else primary = `<div class="donebox"><b>That's the whole quiz.</b></div>`;
-  const parts = quiz.sections.map((s, i) => { const pc = counts(quiz, P, i); return `<button class="part" type="button" data-part="${i}"><span class="pn">${pc.total && pc.right === pc.total ? "✓" : i + 1}</span><b>${esc(s.title)}</b></button>`; }).join("");
+  const stateOf = pc => !pc.total || pc.left === pc.total ? ["none", "Not started"] : pc.left === 0 && pc.skip === 0 ? ["done", "Done"] : ["some", "In progress"];
+  const parts = quiz.sections.map((s, i) => {
+    const pc = counts(quiz, P, i), st = stateOf(pc), answered = pc.right + pc.revisit > 0;
+    const acts = st[0] === "none" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Start</button>`
+      : `${st[0] === "some" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Continue</button>` : ""}${answered ? `<button class="btn" data-act="partreview" data-pi="${i}" type="button">Review</button>` : ""}<button class="btn ghost" data-act="partredo" data-pi="${i}" type="button">Redo</button>`;
+    return `<div class="part"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button><div class="unfurl"><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div>`;
+  }).join("");
   app().innerHTML = topBar(backBtn(), `<span class="grow"></span>`, viewBtn()) + `
   <main class="wrap home">
     <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
-    ${quiz.sections.length > 1 ? `<details class="jump"><summary>Jump to a part</summary><div class="parts">${parts}</div></details>` : ""}
+    ${quiz.sections.length > 1 ? `<div class="jump"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button><div class="unfurl"><div class="unfurl-in"><div class="parts">${parts}</div></div></div></div>` : ""}
     <div class="foot">${started || inRound ? `<button class="btn ghost danger" data-act="reset" type="button">Reset quiz</button>` : ""}${mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
   </main>`;
 }
@@ -399,7 +456,7 @@ function renderPlay(keepScroll) {
   const { q, id } = getQ(quiz, r.ids[r.i]);
   if (!P.cur || P.cur.id !== id) {
     const was = r.res[id];
-    P.cur = was && was !== "skip" && P.a[id] !== undefined ? { id, done: true, status: was, revealed: true, ticks: [] } : { id, done: false };
+    P.cur = was && was !== "skip" && (P.a[id] !== undefined || r.review) ? { id, done: true, status: was, revealed: true, ticks: [] } : { id, done: false };
   }
   const cur = P.cur, f = formOf(q, current.mode);
   const fx = FX && FX.id === id ? FX : null; FX = null;
@@ -413,14 +470,14 @@ function renderPlay(keepScroll) {
       let cls = "opt", ic = "";
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
-      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? " disabled" : ""}><span class="k${ic ? " ic" : ""}">${ic || pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}><span class="k${ic ? " ic" : ""}">${ic || pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
     const sel = a || [];
     input = `<p class="lead">Pick all that apply.</p><div class="opts" role="group" aria-label="Options">` + q.options.map((o, i) => {
       let cls = "opt" + (sel.includes(i) ? " sel" : ""), ic = sel.includes(i) ? "✓" : "";
       if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong" : right ? " missed" : " dim"); ic = ch && right ? "✓" : ch ? "✕" : right ? "✓" : ""; }
-      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? " disabled" : ""}><span class="k box${cur.done && ic ? " ic" : ""}">${ic}</span><span>${fmt(o)}</span></button>`;
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}><span class="k box${cur.done && ic ? " ic" : ""}">${ic}</span><span>${fmt(o)}</span></button>`;
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
@@ -459,16 +516,18 @@ function renderPlay(keepScroll) {
   }
   const needsSelf = (cur.revealed && !cur.done);
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
-  const hintBtn = q.hint && !P.h[id] && !cur.done ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
+  const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
   const nudge = status && status !== "right" ? " pulse" : "";
   const bar = cur.done
-    ? `${back}<button class="btn primary grow${nudge}" data-act="next" type="button">${r.i + 1 >= r.ids.length ? "Finish" : "Next"}</button>`
+    ? `${back}<button class="btn primary grow${nudge}" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : needsSelf ? `<span class="grow note">Mark yourself to continue</span>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div></div></header>
+  const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div></div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
+        ${isNum ? `<span class="numtag">Numbers</span>` : ""}
         <h2 class="prompt${long}" id="qprompt" tabindex="-1">${fmt(f.prompt)}</h2>
         ${f.setup ? `<p class="lead setup">No calculating. Pick the setup that gives the answer.</p>` : ""}
         ${hint}${input}${fb}
@@ -519,7 +578,8 @@ function nav(dir) {
   const { quiz, P } = current, r = P.round; if (!r || r.ended || r.i >= r.ids.length) return;
   const id = r.ids[r.i];
   if (dir < 0) { if (r.i === 0) return; r.i--; P.cur = null; DIR = -1; saveProg(); return renderPlay(); }
-  if (!P.cur || !P.cur.done) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); }
+  if (!r.review && (!P.cur || !P.cur.done)) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); }
+  if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go("quiz-" + quiz.id); }
   r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) r.ended = true;
   saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true });
 }
@@ -591,42 +651,43 @@ document.addEventListener("pointerdown", e => {
   g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
 });
 
-/* ---- story-style side taps: left = back, right = next (or "do this later" if unanswered) ---- */
-let tapDown = null;
+/* ---- story-style side taps and swipes: left = back, right = next (or "do this later" if unanswered) ---- */
+let tapDown = null, ghostUntil = 0;
 document.addEventListener("pointerdown", e => { tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
 document.addEventListener("pointerup", e => {
   const d = tapDown; tapDown = null;
   if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
-  if (Math.abs(e.clientX - d.x) > 10 || Math.abs(e.clientY - d.y) > 10 || Date.now() - d.t > 450) return;
-  if (e.target.closest && e.target.closest("button, a, summary, details, input, textarea, label, .fb, .hint, .order, .actionbar, .top, .toast")) return;
+  const t = e.target && e.target.closest ? e.target : null; if (!t) return;
+  if (t.closest("a, input, textarea, label, summary, .actionbar, .top, .toast, .kp, .selfmark, .grip, .mv, [data-act], [data-self], [data-kp], [data-go]")) return;
+  const done = !!(current.P.cur && current.P.cur.done);
+  if (!done && t.closest(".opt, .order, .hint")) { /* answering, not navigating */ if (Math.abs(e.clientX - d.x) < 60) return; }
+  const dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Date.now() - d.t;
+  if (Math.abs(dx) >= 60 && Math.abs(dy) < 45 && dt < 700) { ghostUntil = Date.now() + 250; return nav(dx < 0 ? 1 : -1); } // swipe
+  if (Math.abs(dx) > 10 || Math.abs(dy) > 10 || dt > 450) return;
   if (String(getSelection && getSelection())) return;
   ghostUntil = Date.now() + 250; // the browser sends a click after this tap: swallow it so it can't hit the next screen's option
   nav(e.clientX < innerWidth * 0.35 ? -1 : 1);
 });
-let ghostUntil = 0;
 document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 
 function renderRoundEnd() {
   const { quiz, P } = current, r = P.round;
-  r.ended = true; saveProg();
-  const res = Object.values(r.res), n = k => res.filter(x => x === k).length;
-  const got = n("right"), rev = n("partial") + n("miss"), sk = n("skip"), answered = got + rev;
-  const c = counts(quiz, P);
-  const line = !answered ? "No answers this round. That's fine: the skipped ones will come back." : got === answered ? "Clean round." : got >= answered / 2 ? "Good round. The rest are saved to revisit." : "That's what revision is for. They're saved to revisit.";
-  const allDone = !c.left && !c.skip && !c.revisit;
-  let next;
-  if (c.left) next = `<button class="btn primary xl" data-act="start" type="button">Keep going: next ${Math.min(ROUND, c.left)}</button>`;
-  else if (c.skip) next = `<button class="btn primary xl" data-act="start" type="button">Try the ${c.skip} you skipped</button>`;
-  else if (c.revisit) next = `<button class="btn primary xl" data-act="revisit" type="button">Revisit ${c.revisit}</button>`;
-  else next = "";
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Back to quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(x => `<i class="${r.res[x] || "skip"}"></i>`).join("")}</div><span class="count">Done</span></div></header>
+  r.ended = true;
+  const c = counts(quiz, P), total = c.total || 1;
+  const pct = Math.round(100 * (c.right + c.revisit) / total), prev = P.pctPrev || 0;
+  P.pctPrev = pct; saveProg();
+  const res = Object.values(r.res), missed = res.filter(x => x === "miss" || x === "partial").length;
+  const allDone = !c.left && !c.skip;
+  const keep = c.left || c.skip ? `<button class="btn primary xl" data-act="${r.only !== undefined && counts(quiz, P, r.only).left ? "keeppart" : "start"}" type="button">Keep going</button>` : "";
+  const rev = missed ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisitround" type="button">Revisit</button>` : c.revisit ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisit" type="button">Revisit</button>` : "";
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
     <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
-    <div class="big3"><div><b>${got}</b><span>got it</span></div><div><b>${rev}</b><span>to revisit</span></div><div><b>${sk}</b><span>skipped</span></div></div>
-    <p>${allDone ? `All ${c.total} questions done. Come back in a few days and see what stuck.` : line}</p>
-    <div class="status">${segBar(c)}<div class="legend"><span><i class="g"></i>${c.right} got it</span><span><i class="r"></i>${c.revisit} to revisit</span><span><i class="l"></i>${c.left + c.skip} to go</span></div></div>
-    <div class="cta">${next}${rev && c.left ? `<button class="btn" data-act="revisitround" type="button">Revisit this round's ${rev} first</button>` : ""}<button class="btn ghost" data-go="quiz-${esc(quiz.id)}" type="button">${allDone ? "Back to the quiz" : "Take a break"}</button></div>
+    <div class="loadbar" role="img" aria-label="Quiz progress"><i id="lf" style="width:${prev}%"></i></div>
+    ${allDone ? `<p>Come back in a few days and see what stuck.</p>` : ""}
+    <div class="cta">${keep}${rev}</div>
   </div></main>`;
+  const lf = $("#lf"); if (lf) { lf.getBoundingClientRect(); requestAnimationFrame(() => requestAnimationFrame(() => { lf.style.width = pct + "%"; })); }
 }
 
 /* ---------------- activity ---------------- */
@@ -745,7 +806,12 @@ document.addEventListener("click", e => {
   if (d.mv !== undefined) return arrowMove(t);
   if (d.kp !== undefined) return playAct("kp", t);
   if (d.self) return playAct("self", t);
-  if (d.part !== undefined) return startRound({ from: +d.part });
+  if (d.act === "jump") { const j = t.closest(".jump"); const o = j.classList.toggle("open"); t.setAttribute("aria-expanded", o); return; }
+  if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"); app().querySelectorAll(".part.open").forEach(x => { x.classList.remove("open"); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); }); if (o) { p.classList.add("open"); t.setAttribute("aria-expanded", "true"); } return; }
+  if (d.act === "partstart") return startRound({ only: +d.pi });
+  if (d.act === "partreview") { const { quiz, P } = current, r = buildReview(quiz, P, +d.pi); if (!r) return toast("Nothing answered here yet."); P.round = r; P.cur = null; saveProg(); return go("play-" + quiz.id); }
+  if (d.act === "partredo") { if (!twoTap(t, "Tap again to redo")) return; const { quiz, P } = current; eachQ(quiz, (q, id, si) => { if (si === +d.pi) { delete P.st[id]; delete P.a[id]; delete P.h[id]; } }); P.round = null; P.cur = null; saveProg(); return startRound({ only: +d.pi }); }
+  if (d.act === "keeppart") return startRound({ only: current.P.round.only });
   const act = d.act; if (!act) return;
   if (act === "start") return startRound();
   if (act === "revisit") return startRound({ kind: "revisit" });
@@ -775,7 +841,7 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
+window.SB = { fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
 applyView();
 route();
 loadSamples().then(route);
