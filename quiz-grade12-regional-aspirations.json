@@ -1,0 +1,939 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "grade12-regional-aspirations",
+ "title": "Regional aspirations: J&K, Punjab and the North-East (Class 12)",
+ "source": "Class 12 Political Science · Regional Aspirations notes (J&K, Punjab, North-East)",
+ "purpose": "Revising for the Grade 12 Political Science exam: the chain of events, causes and settlements for each region, plus the dates and names that come up in 1-mark and 5-mark questions.",
+ "about": "Built around what exams usually ask: dated timelines, causes and consequences, the settlements and who made them, and the comparison across regions. Wording follows the notes. Assumes the CBSE/NCERT syllabus.",
+ "sections": [
+  {
+   "title": "Jammu and Kashmir: the roots",
+   "ref": "pp. 1–2",
+   "why": "Accession, the UN resolution and Article 370 are the base for every J&K answer, from 1-mark facts to 6-mark essays.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Which description of the three regions of Jammu and Kashmir is correct?",
+     "hint": "One region is mountainous with very few people.",
+     "options": [
+      "Ladakh: mountainous, very small population, roughly equally Buddhist and Muslim",
+      "Jammu: the Kashmir Valley, mostly Kashmiri Muslims",
+      "Kashmir: foothills and plains, mostly Hindus",
+      "Ladakh: Hindu-majority plateau"
+     ],
+     "correct": 0,
+     "answer": "Jammu is foothills and plains with a Hindu majority, Kashmir is the Valley with a Kashmiri Muslim majority, and Ladakh is mountainous with Buddhists and Muslims almost equal. The wrong options swap the regions.",
+     "ref": "p. 1"
+    },
+    {
+     "type": "single",
+     "prompt": "In 1947, what did Maharaja Hari Singh want for his state?",
+     "hint": "He did not pick either neighbour.",
+     "options": [
+      "To stay independent, merging with neither India nor Pakistan",
+      "To merge with Pakistan, as the state had a Muslim majority",
+      "To merge with India at once",
+      "To divide the state between India and Pakistan"
+     ],
+     "correct": 0,
+     "answer": "He wanted to keep an independent status. That is why the accession became a crisis when tribal infiltrators arrived.",
+     "ref": "p. 1"
+    },
+    {
+     "type": "text",
+     "prompt": "What is Kashmiriyat, and why does it matter to the Kashmir dispute?",
+     "hint": "Think about how Kashmiris saw themselves, compared with Pakistan's claim.",
+     "keyPoints": [
+      {
+       "text": "People of the state saw themselves as Kashmiris first, above religion",
+       "match": [
+        "kashmiri",
+        "above all",
+        "first"
+       ]
+      },
+      {
+       "text": "So Pakistan's claim that a Muslim-majority Kashmir 'belonged' to it was not how people saw it",
+       "match": [
+        "pakistan",
+        "muslim",
+        "majority",
+        "belong"
+       ]
+      }
+     ],
+     "answer": "Pakistani leaders argued that Kashmir belonged to Pakistan because most people were Muslim. Many Kashmiris did not see it that way: they considered themselves Kashmiris above all, which is the idea of **Kashmiriyat**.",
+     "ref": "p. 1",
+     "mcq": {
+      "prompt": "Kashmiriyat means:",
+      "options": [
+       "Kashmiris see themselves as Kashmiris first, above religion, so religion alone did not decide the state's future",
+       "The belief that Kashmir should be part of Pakistan because of its Muslim majority",
+       "The demand for Greater State Autonomy under Article 370",
+       "The policy of the National Conference to join India"
+      ],
+      "correct": 0,
+      "why": "Kashmiriyat is a shared regional identity that cuts across religion."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "The popular movement against the Maharaja was led by Sheikh Abdullah. Which statement is correct?",
+     "hint": "It wanted the Maharaja out but not Pakistan.",
+     "options": [
+      "His National Conference was secular, wanted to remove the Maharaja, opposed joining Pakistan, and was close to Nehru",
+      "His National Conference was a religious party that wanted to join Pakistan",
+      "He wanted to keep the Maharaja and merge with India",
+      "He led the tribal infiltrators of October 1947"
+     ],
+     "correct": 0,
+     "answer": "Sheikh Abdullah's National Conference was a secular organisation with a long association with the Congress, and he was a friend of Nehru.",
+     "ref": "p. 1"
+    },
+    {
+     "type": "order",
+     "prompt": "Put the 1947–48 events in order.",
+     "hint": "Raiders first, India's help comes only after the legal step.",
+     "items": [
+      "Pakistan sends tribal infiltrators into Kashmir (October 1947)",
+      "The Maharaja asks India for military help",
+      "The Maharaja signs the Instrument of Accession",
+      "Indian forces drive the infiltrators back from the Valley",
+      "The issue goes to the UN, which passes its resolution (21 April 1948)"
+     ],
+     "answer": "Infiltration, then the request, then **accession**, then the army action. India gave help only after the Instrument of Accession was signed. The UN resolution came later, as Pakistan still held part of the state.",
+     "ref": "p. 1"
+    },
+    {
+     "type": "multi",
+     "prompt": "According to the notes, which were the steps of the UN resolution of 21 April 1948? Pick all that apply.",
+     "hint": "Three steps: Pakistan, India, then the people.",
+     "options": [
+      "Pakistan withdraws all its nationals who had entered Kashmir",
+      "India progressively reduces its forces",
+      "A free and impartial plebiscite is held",
+      "India withdraws all troops at once",
+      "Article 370 is repealed"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "The three-step process was: Pakistan withdraws, India progressively reduces forces, and a free and impartial plebiscite follows. India was not asked to withdraw all troops at once, and Article 370 was not part of it. No progress was made under the resolution.",
+     "ref": "p. 1"
+    },
+    {
+     "type": "single",
+     "prompt": "What did Sheikh Abdullah's becoming Prime Minister in March 1948 lead to?",
+     "hint": "'Provisional' is the key word.",
+     "options": [
+      "India agreed to grant provisional autonomy under Article 370",
+      "Article 370 gave the state full independence",
+      "The state merged completely with India, with no special status",
+      "The UN plebiscite was held"
+     ],
+     "correct": 0,
+     "answer": "India agreed to give the state provisional autonomy under Article 370. At that time the head of the state government was called Prime Minister.",
+     "ref": "p. 2"
+    },
+    {
+     "type": "text",
+     "prompt": "There were two opposite reactions to Article 370. State both, and any one grievance of the Kashmiris.",
+     "hint": "One group outside J&K, one group mostly inside it.",
+     "keyPoints": [
+      {
+       "text": "Many outside J&K: special status blocked full integration, so they wanted it revoked",
+       "match": [
+        "revok",
+        "integrat",
+        "abolish",
+        "any other state"
+       ]
+      },
+      {
+       "text": "Many Kashmiris: autonomy was not enough",
+       "match": [
+        "insufficient",
+        "not enough",
+        "more autonomy",
+        "autonomy"
+       ]
+      },
+      {
+       "text": "Grievance: plebiscite promise unfulfilled, or federal status eroded (Greater State Autonomy), or democracy not institutionalised",
+       "match": [
+        "plebiscite",
+        "erod",
+        "greater",
+        "democra"
+       ]
+      }
+     ],
+     "need": 2,
+     "answer": "Outside J&K, a section felt Article 370 stopped full integration and wanted it revoked. Many Kashmiris felt it was too little, with three grievances: the promised plebiscite never came, the special federal status was eroded (so the demand for **Greater State Autonomy**), and democracy had not been institutionalised as in the rest of India.",
+     "ref": "p. 2",
+     "mcq": {
+      "prompt": "Which of these was NOT a Kashmiri grievance?",
+      "options": [
+       "Not one of the Kashmiri grievances: 'Article 370 gave the state too much autonomy'",
+       "The promise to refer the accession to the people was not fulfilled",
+       "The special federal status was eroded in practice",
+       "Democracy was not institutionalised as in the rest of India"
+      ],
+      "correct": 0,
+      "why": "The grievances were about too little autonomy, not too much."
+     }
+    }
+   ]
+  },
+  {
+   "title": "Jammu and Kashmir: politics to 2019",
+   "ref": "pp. 2–4",
+   "why": "A dependable 5-mark theme: how Centre interference fed resentment and then insurgency.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "What happened to Sheikh Abdullah in 1953, and what followed?",
+     "hint": "His successors had less support.",
+     "options": [
+      "He was dismissed and detained for years; his successors, with less popular support, ruled mainly with the Centre's backing",
+      "He resigned, and the Maharaja returned to power",
+      "He was re-elected unopposed, and the National Conference merged with Pakistan's League",
+      "He was dismissed, and the state came under direct UN administration"
+     ],
+     "correct": 0,
+     "answer": "The leaders after him did not enjoy his popular support and relied on the Centre. From 1953 to 1974 Congress exerted considerable influence, with allegations of malpractice and rigging.",
+     "ref": "p. 2"
+    },
+    {
+     "type": "single",
+     "prompt": "The 1965 constitutional change in J&K was:",
+     "hint": "A change of title.",
+     "options": [
+      "The post of Prime Minister of the state became Chief Minister; G. M. Sadiq (Congress) was the first CM",
+      "The post of Chief Minister was abolished",
+      "Sheikh Abdullah became Chief Minister",
+      "Article 370 was extended to Ladakh"
+     ],
+     "correct": 0,
+     "answer": "The head of the state government became the Chief Minister, as in other states. Sheikh Abdullah returned as CM only after the 1974 accord.",
+     "ref": "p. 2"
+    },
+    {
+     "type": "single",
+     "prompt": "What did the 1974 accord between Indira Gandhi and Sheikh Abdullah lead to?",
+     "hint": "Look at 1977.",
+     "options": [
+      "Sheikh Abdullah became CM, revived the National Conference, and it won a majority in 1977",
+      "Sheikh Abdullah was dismissed again",
+      "A plebiscite was held",
+      "Article 370 was abolished"
+     ],
+     "correct": 0,
+     "answer": "After the accord he became Chief Minister and the revived National Conference won the 1977 Assembly elections. He died in 1982 and his son Farooq Abdullah took over.",
+     "ref": "p. 2"
+    },
+    {
+     "type": "single",
+     "prompt": "What was the effect of the Centre-backed dismissal of Farooq Abdullah's government, and the 1986 NC–Congress alliance?",
+     "hint": "Think about trust in democracy.",
+     "options": [
+      "Resentment grew: the confidence built after the 1974 accord suffered, and the feeling of Centre's interference strengthened",
+      "Kashmiris welcomed the alliance as a sign of stability",
+      "It ended President's Rule in the state",
+      "It led to the immediate abolition of Article 370"
+     ],
+     "correct": 0,
+     "answer": "Farooq Abdullah was dismissed by the Governor and a breakaway faction briefly governed. Kashmiris felt the Centre was interfering, and the 1986 alliance with the Congress, then ruling at the Centre, made this feeling stronger.",
+     "ref": "pp. 2–3"
+    },
+    {
+     "type": "text",
+     "prompt": "Why did the militant movement grow in Kashmir by 1989?",
+     "hint": "Elections, administration, the Centre, and an outside supporter.",
+     "keyPoints": [
+      {
+       "text": "1987 election widely believed to be rigged",
+       "match": [
+        "1987",
+        "rig",
+        "election"
+       ]
+      },
+      {
+       "text": "Resentment against inefficient administration since the early 1980s",
+       "match": [
+        "administration",
+        "inefficien",
+        "resent"
+       ]
+      },
+      {
+       "text": "Belief that democracy was being undermined at the Centre's behest",
+       "match": [
+        "centre",
+        "democra",
+        "interfer"
+       ]
+      },
+      {
+       "text": "Pakistan gave moral, material and military support to insurgents demanding a separate Kashmiri nation",
+       "match": [
+        "pakistan",
+        "support",
+        "separate"
+       ]
+      }
+     ],
+     "need": 3,
+     "answer": "The 1987 election, won officially by the NC–Congress alliance, was widely believed to be rigged. With resentment against poor administration and a belief that the Centre was undermining democracy, a crisis grew. By 1989 a militant movement demanded a separate Kashmiri nation, backed morally, materially and militarily by Pakistan.",
+     "ref": "p. 3",
+     "mcq": {
+      "prompt": "What best explains the rise of the militant movement by 1989?",
+      "options": [
+       "Allegations of a rigged 1987 election, resentment against the administration, belief in the Centre's interference, and Pakistan's support",
+       "Land reforms by Sheikh Abdullah and the abolition of Article 370",
+       "The creation of Ladakh as a Union Territory and the UN plebiscite",
+       "The 1965 change of title from Prime Minister to Chief Minister"
+      ],
+      "correct": 0,
+      "why": "The 1987 election and Pakistan's support are the two details examiners look for."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "From 1990 onwards, and up to the elections of 1996, which description fits J&K?",
+     "hint": "Most of this period was without an elected government.",
+     "options": [
+      "Extraordinary violence from both insurgents and army action; the state was under central rule and controlled by the armed forces",
+      "Peaceful elections every two years",
+      "A stable coalition under the PDP",
+      "Full autonomy under the National Conference"
+     ],
+     "correct": 0,
+     "answer": "The state was gripped by violence from insurgents and through army action. Assembly elections returned only in 1996, when the National Conference under Farooq Abdullah came to power and demanded regional autonomy.",
+     "ref": "p. 3"
+    },
+    {
+     "type": "single",
+     "prompt": "After the 2002 election, which government took charge, and how was the term shared?",
+     "hint": "The coalition agreement split the term.",
+     "options": [
+      "A PDP–Congress coalition: Mufti Mohammed Sayeed for the first three years, then Ghulam Nabi Azad",
+      "A National Conference majority under Farooq Abdullah",
+      "A PDP–BJP coalition under Mehbooba Mufti",
+      "An NC–Congress coalition under Omar Abdullah"
+     ],
+     "correct": 0,
+     "answer": "The NC failed to get a majority in 2002. The NC–Congress coalition under Omar Abdullah came after the 2008 election, and the PDP–BJP government came after 2014.",
+     "ref": "p. 4"
+    },
+    {
+     "type": "single",
+     "prompt": "What was notable about the 2014 election, and who governed afterwards?",
+     "hint": "'Highest in 25 years.'",
+     "options": [
+      "The highest voter turnout in 25 years; a PDP-led coalition with the BJP, headed by Mufti Mohammed Sayeed",
+      "The lowest turnout ever; an NC–Congress government",
+      "A boycott by all parties; President's Rule",
+      "The first election after Article 370 was abolished"
+     ],
+     "correct": 0,
+     "answer": "Mehbooba Mufti, his daughter, became the first woman Chief Minister in April 2016. Her tenure saw major terrorism and rising tensions, and the BJP withdrew support in June 2018.",
+     "ref": "p. 4"
+    },
+    {
+     "type": "single",
+     "prompt": "What happened on 5 August 2019, according to the notes?",
+     "hint": "Two new Union Territories.",
+     "options": [
+      "Article 370 was abolished and the state became two Union Territories: Jammu & Kashmir, and Ladakh",
+      "Article 370 was extended to the whole country",
+      "The plebiscite promised by the UN was held",
+      "Ladakh merged into Jammu & Kashmir"
+     ],
+     "correct": 0,
+     "answer": "The notes link this to the Jammu & Kashmir Reorganisation Act, 2019 and describe the two regions as examples of India's plural society with divergent aspirations, which the Act sought to address.",
+     "ref": "p. 4"
+    }
+   ]
+  },
+  {
+   "title": "Punjab",
+   "ref": "pp. 4–6",
+   "why": "Punjab is a favourite for causes-and-consequences answers and for the timeline. Learn the chain: language state, Anandpur Sahib, Blue Star, assassination, accord.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Why was Punjab special among the states reorganised on linguistic lines?",
+     "hint": "The date is the answer.",
+     "options": [
+      "Its Punjabi-speaking state came only in 1966, though most states were reorganised in the 1950s",
+      "It was never reorganised",
+      "It was reorganised in 1950 before all other states",
+      "It was divided into three states in 1956"
+     ],
+     "correct": 0,
+     "answer": "Punjab had to wait until 1966. After reorganisation Sikhs became the majority in the truncated state, as Haryana and Himachal Pradesh were carved out.",
+     "ref": "p. 4"
+    },
+    {
+     "type": "single",
+     "prompt": "The Akali Dal was:",
+     "hint": "Formed before independence.",
+     "options": [
+      "Formed in 1920 as the political wing of the Sikhs; it led the movement for a Punjabi Suba",
+      "Formed in 1966 to oppose the Congress",
+      "A militant group formed after Operation Blue Star",
+      "A party of Punjab's Hindus"
+     ],
+     "correct": 0,
+     "answer": "The Akali Dal led the Punjabi Suba movement. It came to power in 1967 and 1977, both times in coalition.",
+     "ref": "p. 4"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which were reasons for the Akalis' precarious political position after reorganisation? Pick all that apply.",
+     "hint": "Centre, Hindus, and divisions among Sikhs.",
+     "options": [
+      "The Centre dismissed an Akali government midway through its term",
+      "The Akalis lacked strong support among Punjab's Hindus",
+      "The Sikh community was divided by caste and class, and the Congress was stronger among Dalits",
+      "The Akalis never won any seats",
+      "The Akali Dal was banned by the Supreme Court"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "These three reasons are in the notes. The Akalis did form governments in 1967 and 1977, though in coalitions.",
+     "ref": "p. 5"
+    },
+    {
+     "type": "text",
+     "prompt": "What did the Anandpur Sahib Resolution (1973) demand, and how much support did it have?",
+     "hint": "Autonomy and Centre-State relations, and the word qaum.",
+     "keyPoints": [
+      {
+       "text": "Regional autonomy and a redefinition of Centre–State relations",
+       "match": [
+        "autonomy",
+        "centre",
+        "relations"
+       ]
+      },
+      {
+       "text": "Referred to the aspirations of the Sikh qaum and bolbala (dominance)",
+       "match": [
+        "qaum",
+        "bolbala",
+        "sikh"
+       ]
+      },
+      {
+       "text": "Limited appeal among Sikhs; essentially a plea for stronger federalism",
+       "match": [
+        "limited",
+        "federal"
+       ]
+      }
+     ],
+     "need": 2,
+     "answer": "The 1973 resolution demanded regional autonomy and a redefinition of Centre–State relations, and mentioned the Sikh **qaum** and **bolbala**. It had limited appeal among the Sikh masses and was essentially a plea for strengthening federalism.",
+     "ref": "p. 5",
+     "mcq": {
+      "prompt": "The Anandpur Sahib Resolution of 1973 was:",
+      "options": [
+       "Regional autonomy and redefined Centre–State relations; limited appeal; essentially a plea for stronger federalism",
+       "A separate country called Khalistan, backed by the Sikh masses",
+       "Transfer of Chandigarh to Punjab, and a water tribunal",
+       "Withdrawal of the Armed Forces Special Powers Act from Punjab"
+      ],
+      "correct": 0,
+      "why": "It was about autonomy within India. The last two options come from the 1985 Accord."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "After the Akali government was dismissed in 1980, the Akali Dal launched a movement over:",
+     "hint": "One resource, shared with neighbours.",
+     "options": [
+      "The distribution of river water between Punjab and neighbouring states",
+      "A new Punjabi script",
+      "The location of the High Court",
+      "A demand to join Pakistan"
+     ],
+     "correct": 0,
+     "answer": "At the same time some religious leaders raised the issue of an autonomous Sikh identity. Then leadership shifted from moderate Akalis to extremists and the movement became an armed insurgency.",
+     "ref": "p. 5"
+    },
+    {
+     "type": "single",
+     "prompt": "What did Operation Blue Star (June 1984) do?",
+     "hint": "Two effects, one good for the Government and one bad.",
+     "options": [
+      "Flushed militants out of the Golden Temple, but damaged the shrine and deeply hurt Sikh sentiments",
+      "Ended the Punjab dispute at once and was welcomed by all Sikhs",
+      "Was the army action in the Kashmir Valley in 1990",
+      "Dismissed the Akali government"
+     ],
+     "correct": 0,
+     "answer": "The militants had made the Golden Temple their armed headquarters. Many Sikhs in India and abroad saw the operation as an attack on their faith, which gave further encouragement to extremist groups.",
+     "ref": "p. 5"
+    },
+    {
+     "type": "single",
+     "prompt": "What followed the assassination of Indira Gandhi on 31 October 1984?",
+     "hint": "Think of the next week.",
+     "options": [
+      "Violence against Sikhs in Delhi and northern India for almost a week; more than 2,000 killed in Delhi",
+      "A national ban on the Akali Dal",
+      "The Rajiv Gandhi–Longowal Accord the next day",
+      "A plebiscite in Punjab"
+     ],
+     "correct": 0,
+     "answer": "Her bodyguards, both Sikhs, wanted revenge for Blue Star. Sikhs were hurt by the delay in restoring normalcy and the failure to punish perpetrators. In 2005 Prime Minister Manmohan Singh apologised to the nation.",
+     "ref": "p. 5"
+    },
+    {
+     "type": "order",
+     "prompt": "Put the Punjab events in order.",
+     "hint": "Language state first; the elections are the last two.",
+     "items": [
+      "Punjabi-speaking state created (1966)",
+      "Anandpur Sahib Resolution (1973)",
+      "Operation Blue Star (June 1984)",
+      "Indira Gandhi assassinated (October 1984)",
+      "Rajiv Gandhi–Longowal Accord (July 1985)",
+      "Akali Dal (Badal)–BJP win the first normal post-militancy elections (1997)"
+     ],
+     "answer": "1966, 1973, June 1984, October 1984, July 1985, 1997. In between, the 1992 elections saw only 24% of electors vote.",
+     "ref": "pp. 4–6"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which were provisions of the Rajiv Gandhi–Longowal Accord (July 1985)? Pick all that apply.",
+     "hint": "Capital, borders, rivers, relief and a law.",
+     "options": [
+      "Chandigarh to be transferred to Punjab",
+      "A commission for the Punjab–Haryana border dispute",
+      "A tribunal for sharing Ravi–Beas water among Punjab, Haryana and Rajasthan",
+      "Compensation for people affected by militancy, and withdrawal of AFSPA from Punjab",
+      "Punjab to be divided into three states"
+     ],
+     "correct": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "answer": "All four are in the notes. The Accord did not divide Punjab. It was signed by Prime Minister Rajiv Gandhi and Harchand Singh Longowal, President of the Akali Dal.",
+     "ref": "p. 6"
+    },
+    {
+     "type": "single",
+     "prompt": "Why did peace not return immediately after the Punjab Accord?",
+     "hint": "Several things went wrong for nearly a decade.",
+     "options": [
+      "Violence continued for nearly a decade, with police excesses, a split in the Akali Dal and President's Rule; only 24% voted in 1992",
+      "The Accord was cancelled by the Supreme Court",
+      "The army was withdrawn from the state",
+      "Punjab stayed peaceful, and the problem was only economic"
+     ],
+     "correct": 0,
+     "answer": "Militancy and counter-insurgency caused human-rights violations. Militancy was eventually ended by security forces, peace returned by the mid-1990s, and politics gradually moved back to secular lines.",
+     "ref": "p. 6"
+    },
+    {
+     "type": "single",
+     "prompt": "How did the post-militancy period in Punjab begin?",
+     "hint": "The year and the alliance.",
+     "options": [
+      "With the 1997 victory of the Akali Dal (Badal)–BJP alliance; Punjab then focused on development",
+      "With a Congress sweep in 1984",
+      "With the Longowal Accord in 1985",
+      "With a boycott of the 1992 election"
+     ],
+     "correct": 0,
+     "answer": "Religious identities stayed important, but politics gradually moved towards secular lines and economic development.",
+     "ref": "p. 6"
+    }
+   ]
+  },
+  {
+   "title": "North-East: shape of the region and autonomy",
+   "ref": "pp. 6–8",
+   "why": "The 'three issues' framework is the usual first line of a North-East answer, and 'why autonomy was easier than secession' is a regular long-answer point.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Which statement about the North-East is correct?",
+     "hint": "Four per cent and twenty-two kilometres.",
+     "options": [
+      "About 4% of India's population but about twice that share of its area, linked to the rest of India by a corridor of about 22 km",
+      "About 40% of India's population, linked by a 220 km corridor",
+      "About 4% of India's area and 22% of its population",
+      "A region that borders only Pakistan and China"
+     ],
+     "correct": 0,
+     "answer": "The corridor is narrow, and the region shares borders with China, Myanmar and Bangladesh. It is India's gateway to South-East Asia.",
+     "ref": "p. 6"
+    },
+    {
+     "type": "single",
+     "prompt": "The eight North-East states are the 'Seven Sisters' plus a 'Brother'. Who is the 'Brother'?",
+     "hint": "The one that joined later.",
+     "options": [
+      "Sikkim",
+      "Nagaland",
+      "Tripura",
+      "Meghalaya"
+     ],
+     "correct": 0,
+     "answer": "The seven are Arunachal Pradesh, Assam, Nagaland, Manipur, Tripura, Mizoram and Meghalaya. Sikkim is the 'Brother'.",
+     "ref": "p. 6"
+    },
+    {
+     "type": "order",
+     "prompt": "Put these North-East political changes in order.",
+     "hint": "1947 first; the last wave is 1987.",
+     "items": [
+      "Partition makes the region landlocked (1947)",
+      "Nagaland is created (1963)",
+      "Manipur, Tripura and Meghalaya become States (1972)",
+      "Mizoram and Arunachal Pradesh become States (1987)"
+     ],
+     "answer": "1947, 1963, 1972, 1987. Partition cut the region off, causing economic neglect and relative political insulation, while migration changed its population.",
+     "ref": "p. 6"
+    },
+    {
+     "type": "single",
+     "prompt": "Which are the three major issues dominating North-East politics?",
+     "hint": "Stay, leave, or keep out.",
+     "options": [
+      "Demands for autonomy, movements for secession, and opposition to 'outsiders'",
+      "Border disputes, floods and language",
+      "Land reforms, Article 370 and plebiscite",
+      "Water sharing, Chandigarh and the Golden Temple"
+     ],
+     "correct": 0,
+     "answer": "Autonomy initiatives of the 1970s prepared the ground for the secession and outsiders issues of the 1980s. The last option is mostly Punjab.",
+     "ref": "p. 6"
+    },
+    {
+     "type": "single",
+     "prompt": "Why did demands for autonomy first arise in Assam?",
+     "hint": "A language grievance.",
+     "options": [
+      "Non-Assamese communities felt the Assam Government was imposing the Assamese language on them",
+      "The Assam Government refused to build roads",
+      "Tribal leaders wanted to join Burma",
+      "The Centre banned tribal councils"
+     ],
+     "correct": 0,
+     "answer": "At independence the whole North-East except Manipur and Tripura was part of Assam. Protests followed, and tribal leaders formed the Eastern India Tribal Union, later the All Party Hill Leaders Conference (1960).",
+     "ref": "p. 7"
+    },
+    {
+     "type": "single",
+     "prompt": "How were the tribal demands against Assam met?",
+     "hint": "Not by one state.",
+     "options": [
+      "Several states were carved out of Assam (Meghalaya, Mizoram, Arunachal), and Tripura and Manipur were upgraded to States; reorganisation was complete by 1972",
+      "One single tribal State was created",
+      "Assam was split into two Union Territories",
+      "All demands were rejected"
+     ],
+     "correct": 0,
+     "answer": "Instead of one tribal state, several were created. Demands did not end: Bodos, Karbis and Dimasas later asked for their own states.",
+     "ref": "p. 7"
+    },
+    {
+     "type": "single",
+     "prompt": "Why were more and more new states not created for the Bodos, Karbis and Dimasas, and what was done instead?",
+     "hint": "Overlapping claims.",
+     "options": [
+      "The same areas were claimed by more than one community; Karbis and Dimasas got District Councils and the Bodos an Autonomous Council within Assam",
+      "The Bodos refused any council",
+      "The Constitution forbids new states",
+      "Because they wanted to merge with Myanmar"
+     ],
+     "correct": 0,
+     "answer": "It was difficult to keep creating smaller and smaller states, so other federal provisions were used to accommodate the demands.",
+     "ref": "p. 7"
+    },
+    {
+     "type": "single",
+     "prompt": "Why were secessionist demands harder to accommodate than demands for autonomy?",
+     "hint": "What did the groups ask for?",
+     "options": [
+      "Some groups consistently demanded a separate country, while the Constitution has mechanisms for diversity within India",
+      "Because secessionists were always a majority",
+      "Because the Constitution banned all talks",
+      "Because they had no leaders"
+     ],
+     "correct": 0,
+     "answer": "Autonomy demands can be met through constitutional means. A demand for a separate country cannot.",
+     "ref": "p. 8"
+    },
+    {
+     "type": "text",
+     "prompt": "Why did the Mizo secessionist movement begin?",
+     "hint": "One event in 1959, one organisation.",
+     "keyPoints": [
+      {
+       "text": "Mizo Hills were an autonomous district of Assam; some Mizos felt they never belonged to the Indian Union",
+       "match": [
+        "autonomous",
+        "never",
+        "belong"
+       ]
+      },
+      {
+       "text": "The Assam Government failed to respond adequately to the famine of 1959",
+       "match": [
+        "famine",
+        "1959"
+       ]
+      },
+      {
+       "text": "Mizo National Front formed under Laldenga and began armed struggle in 1966",
+       "match": [
+        "mnf",
+        "laldenga",
+        "1966",
+        "armed"
+       ]
+      }
+     ],
+     "need": 2,
+     "answer": "Some Mizos felt they had never been part of British India. Anger over the Assam Government's poor response to the great famine of 1959 gave the demand popular support. The **Mizo National Front** under **Laldenga** began an armed campaign in 1966.",
+     "ref": "p. 8",
+     "mcq": {
+      "prompt": "What triggered the Mizo secessionist movement?",
+      "options": [
+       "Anger over the 1959 famine response by the Assam Government, which led to the MNF under Laldenga and armed struggle from 1966",
+       "The Assam Movement against illegal migrants from Bangladesh",
+       "A demand for a Punjabi Suba",
+       "The Mizo Hills being denied statehood in 1972"
+      ],
+      "correct": 0,
+      "why": "The 1959 famine and Laldenga's MNF are the two names to remember."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "How did the Mizo conflict end?",
+     "hint": "Rajiv Gandhi and Laldenga.",
+     "options": [
+      "The 1986 Rajiv Gandhi–Laldenga agreement: Mizoram got full statehood with special powers, the MNF gave up secession, and Laldenga became CM",
+      "The Mizos won independence",
+      "The UN divided Mizoram",
+      "The Army defeated the MNF with no talks"
+     ],
+     "correct": 0,
+     "answer": "After about two decades of insurgency, Laldenga returned from exile in Pakistan and negotiated. The MNF had received support from Pakistan and shelter in East Pakistan.",
+     "ref": "p. 8"
+    },
+    {
+     "type": "single",
+     "prompt": "Which statement on Nagaland is correct?",
+     "hint": "The oldest and still unresolved case.",
+     "options": [
+      "Led by Angami Zapu Phizo, a section of Nagas declared independence in 1951; the issue still awaits a final resolution",
+      "Nagaland's issue was resolved by the Assam Accord",
+      "Phizo accepted every negotiated offer",
+      "The Naga issue ended in 1986 with the Mizo Accord"
+     ],
+     "correct": 0,
+     "answer": "Phizo rejected several settlement offers and the Naga National Council launched an armed struggle. Some Nagas later signed an agreement with the Government, but other rebels rejected it.",
+     "ref": "p. 8"
+    }
+   ]
+  },
+  {
+   "title": "North-East: outsiders, and the big picture",
+   "ref": "p. 9",
+   "why": "The Assam Movement is a near-certain question. The cross-cutting questions at the end tie the three regions together.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Why did the Assam Movement (1979–85) arise? Give the main causes.",
+     "hint": "A fear about population, and a grievance about resources.",
+     "keyPoints": [
+      {
+       "text": "Fear that illegal migrants (from Bangladesh) would make the Assamese a minority",
+       "match": [
+        "migrant",
+        "bangladesh",
+        "minority",
+        "foreigner",
+        "illegal"
+       ]
+      },
+      {
+       "text": "Economic grievance: poverty and unemployment despite oil, tea and coal, with resources going out of the state",
+       "match": [
+        "oil",
+        "tea",
+        "coal",
+        "poverty",
+        "unemploy",
+        "resource"
+       ]
+      },
+      {
+       "text": "A faulty voters' register with names of lakhs of immigrants",
+       "match": [
+        "voter",
+        "register"
+       ]
+      }
+     ],
+     "need": 2,
+     "answer": "Assamese people suspected large numbers of illegal Bengali Muslim settlers from Bangladesh and feared becoming a minority. Economically, Assam stayed poor and jobless despite oil, tea and coal, and people felt the resources were taken out without benefit to the state. There was also a faulty voters' register.",
+     "ref": "p. 9",
+     "mcq": {
+      "prompt": "What were the main causes of the Assam Movement?",
+      "options": [
+       "Fear of illegal migrants making Assamese a minority, plus poverty and unemployment despite oil, tea and coal",
+       "Imposition of Hindi on the Assamese",
+       "A demand for a separate country called Greater Assam",
+       "The failure of the 1959 famine relief"
+      ],
+      "correct": 0,
+      "why": "Migration and resources are the two causes in the notes."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "The All Assam Students' Union (AASU) was:",
+     "hint": "Who led it, and what they demanded.",
+     "options": [
+      "A student organisation, not tied to any party, that led the 1979 anti-foreigner movement and demanded that outsiders who came after 1951 be sent back",
+      "A political party of the Bodos",
+      "A militant group from Nagaland",
+      "A trade union of tea workers"
+     ],
+     "correct": 0,
+     "answer": "The movement used many methods, including attempts to block trains and oil supply to refineries in Bihar, and mobilised all sections of Assamese society.",
+     "ref": "p. 9"
+    },
+    {
+     "type": "single",
+     "prompt": "How did the Assam Movement end, and what followed?",
+     "hint": "Six years, one accord, one new party.",
+     "options": [
+      "After six years the Rajiv Gandhi Government signed the 1985 Assam Accord; the AGP formed and came to power in 1985",
+      "The Army crushed it in 1979",
+      "The Mizo Accord ended it in 1986",
+      "AASU won statehood for Assam"
+     ],
+     "correct": 0,
+     "answer": "Under the Accord, foreigners who had migrated during and after the Bangladesh war were to be identified and deported. The Accord brought peace and changed Assam's politics but did not fully solve immigration.",
+     "ref": "p. 9"
+    },
+    {
+     "type": "single",
+     "prompt": "Where is the 'outsiders' issue described as especially acute?",
+     "hint": "A state where the original inhabitants became a minority.",
+     "options": [
+      "Tripura, where the original inhabitants became a minority",
+      "Punjab",
+      "Ladakh",
+      "Nagaland alone"
+     ],
+     "correct": 0,
+     "answer": "There is also hostility towards Chakma refugees among sections of the local population in Mizoram and Arunachal Pradesh.",
+     "ref": "p. 9"
+    },
+    {
+     "type": "single",
+     "prompt": "Which pair is correctly matched?",
+     "hint": "Match each leader to their organisation.",
+     "options": [
+      "Laldenga – Mizo National Front",
+      "Phizo – Mizo National Front",
+      "Longowal – All Assam Students' Union",
+      "Sheikh Abdullah – Akali Dal"
+     ],
+     "correct": 0,
+     "answer": "Laldenga led the MNF, Phizo the Naga National Council, Longowal was President of the Akali Dal, and Sheikh Abdullah led the National Conference.",
+     "ref": "pp. 1, 5, 8"
+    },
+    {
+     "type": "single",
+     "prompt": "Which Prime Minister was involved in the Punjab Accord (1985), the Assam Accord (1985) and the Mizo agreement (1986)?",
+     "hint": "The same leader across all three.",
+     "options": [
+      "Rajiv Gandhi",
+      "Indira Gandhi",
+      "Jawaharlal Nehru",
+      "Manmohan Singh"
+     ],
+     "correct": 0,
+     "answer": "All three settlements were negotiated under Prime Minister Rajiv Gandhi. Indira Gandhi had made the 1974 accord with Sheikh Abdullah, and Manmohan Singh apologised in 2005 for the anti-Sikh violence.",
+     "ref": "pp. 6, 8, 9"
+    },
+    {
+     "type": "text",
+     "prompt": "Using J&K, Punjab and the North-East, what do these cases show about how a democracy deals with regional aspirations?",
+     "hint": "Think of accords, federal tools, and what happened when democracy was disrupted.",
+     "keyPoints": [
+      {
+       "text": "Negotiated settlements and accords worked better than force alone (Mizo, Punjab, Assam)",
+       "match": [
+        "negotiat",
+        "accord",
+        "agreement",
+        "settle",
+        "talk"
+       ]
+      },
+      {
+       "text": "Federal tools can accommodate diversity (new states, councils, autonomy)",
+       "match": [
+        "federal",
+        "state",
+        "council",
+        "autonom",
+        "accommodat"
+       ]
+      },
+      {
+       "text": "Disrupting democracy and Centre interference (J&K, Punjab) deepened alienation",
+       "match": [
+        "interfer",
+        "democra",
+        "dismiss",
+        "rigg",
+        "resent",
+        "alienat"
+       ]
+      }
+     ],
+     "need": 2,
+     "answer": "Where the Centre negotiated, as in Mizoram, Punjab and Assam, the conflict eased, and federal tools such as new states and councils could accommodate diversity. Where democratic processes were disrupted, as in J&K and Punjab, alienation deepened. The notes support each example, but this comparison is a standard exam conclusion rather than a sentence in the notes.",
+     "ref": "pp. 1–9",
+     "tags": [
+      "discussion"
+     ],
+     "mcq": {
+      "prompt": "What do these cases suggest about democracy and regional aspirations?",
+      "options": [
+       "Negotiated accords and federal arrangements helped; dismissals and rigging of elections deepened alienation",
+       "Regional demands disappear if the Army is used",
+       "Regional demands were all met by creating new states",
+       "Democracy has no effect on regional conflicts"
+      ],
+      "correct": 0,
+      "why": "The pattern across the three regions: talks and federal tools work, interference makes things worse."
+     }
+    }
+   ]
+  }
+ ]
+}
