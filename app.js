@@ -900,6 +900,12 @@ applyView();
 route();
 loadSamples().then(route);
 if ("serviceWorker" in navigator && location.protocol === "https:") {
-  try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) {}
+  try {
+    // When a new version takes over, reload once so the new files show straight away.
+    const hadSW = !!navigator.serviceWorker.controller; let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hadSW || reloaded) return; reloaded = true; location.reload(); });
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => { reg.update().catch(() => {}); }).catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {}); });
+  } catch (e) {}
 }
 })();
