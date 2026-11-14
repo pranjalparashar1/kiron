@@ -212,7 +212,10 @@ const MODES = {
   early: { name: "Early revision", line: "Tap to answer. No typing or calculating." },
   deep: { name: "In-depth revision", line: "Type your answers to test yourself." }
 };
-const mode = () => SET.mode === "deep" ? "deep" : "early";
+// Switched off for now: the typed "In-depth revision" mode and the activity log. Their code is still here;
+// set DEEP_ON / ACTIVITY_ON to true to bring them back (chooser, mode cards, activity screen).
+const DEEP_ON = false, ACTIVITY_ON = false;
+const mode = () => DEEP_ON && SET.mode === "deep" ? "deep" : "early";
 function applyView() { document.documentElement.dataset.view = SET.view || (window.innerWidth >= 900 ? "laptop" : "phone"); }
 const curView = () => document.documentElement.dataset.view;
 window.addEventListener("resize", () => { if (!SET.view) applyView(); });
@@ -220,6 +223,7 @@ window.addEventListener("resize", () => { if (!SET.view) applyView(); });
 /* ---------------- activity log (stays on this device; lets you see if you get past 3 questions) ---------------- */
 const SESSION_GAP = 30 * 60 * 1000;
 function logEvent(kind, quizId) {
+  if (!ACTIVITY_ON) return;
   const log = LS.get(K_LOG, []);
   const now = Date.now();
   let s = log[log.length - 1];
@@ -292,7 +296,7 @@ function buildRound(quiz, P, opt) {
     if (!ids.length) { ids = pick(v => v === "miss" || v === "partial"); kind = "revisit"; }
   }
   if (!ids.length) return null;
-  ids.forEach(id => { delete P.a[id]; delete P.h[id]; });
+  ids.forEach(id => { delete P.a[id]; delete P.h[id]; P.n[id] = (P.n[id] || 0) + 1; });
   return { ids, i: 0, res: {}, kind, streak: 0, ended: false };
 }
 
@@ -307,10 +311,10 @@ function openQuiz(id) {
 function route() {
   applyView();
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
-  if (!SET.mode) return renderChooser();
+  if (DEEP_ON && !SET.mode) return renderChooser();
   if (h === "import") return renderImport();
   if (h === "make") return renderMake();
-  if (h === "activity") return renderActivity();
+  if (ACTIVITY_ON && h === "activity") return renderActivity();
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
     if (openQuiz(m[2])) return m[1] === "play" ? renderPlay() : renderHome();
@@ -337,32 +341,15 @@ function renderChooser() {
   </main>`;
 }
 
-/* ---------------- library ---------------- */
+/* ---------------- library: just the list ---------------- */
+const viewBtn = () => { const to = curView() === "laptop" ? "phone" : "laptop"; return `<button class="icon-btn" data-set-view="${to}" aria-label="Switch to ${to} layout" type="button">${to === "phone" ? "📱" : "💻"}</button>`; };
 function renderLibrary() {
   current = null; document.title = "Kiron";
-  const list = allQuizzes().map(x => ({ ...x, P: getProg(x.quiz.id) })).sort((a, b) => (b.P.seen || 0) - (a.P.seen || 0));
-  const card = x => {
-    const c = counts(x.quiz, x.P), done = c.total - c.left;
-    return `<button class="card qcard" data-go="quiz-${esc(x.quiz.id)}" type="button">
-      <div class="qc-top"><h3>${esc(x.quiz.title)}</h3>${x.mine ? `<span class="badge mine">Yours</span>` : ""}</div>
-      <div class="meta"><span>${c.total} questions</span><span>${done ? `${c.right} got · ${c.left} to go` : "Not started"}</span></div>
-      ${segBar(c)}
-    </button>`;
-  };
-  const s = logSummary();
-  app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`, `<button class="icon-btn" data-go="activity" type="button">${s.todayN ? s.todayN + " today" : "Activity"}</button>`) + `
-  <main class="wrap">
-    <div class="hello"><h2>Read it. Then prove you remember it.</h2></div>
-    ${modeCards()}
-    <div class="label">Pick a quiz</div>
-    <div class="grid">${list.length ? list.map(card).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet. Make or import one below." : "Loading…"}</p>`}</div>
-    <div class="label">Your own material</div>
-    <div class="actions2">
-      <button class="action" data-go="make" type="button"><b>Make a quiz</b><span>From your PDF, slides or Word file, using any AI chat.</span></button>
-      <button class="action" data-go="import" type="button"><b>Import a quiz</b><span>Paste quiz text someone sent you.</span></button>
-    </div>
-    <div class="row between"><span class="note">Layout</span>${seg("view", curView(), [["phone", "Phone view"], ["laptop", "Laptop view"]])}</div>
-    <p class="note">Everything stays on this device. Nothing is sent anywhere.</p>
+  const list = allQuizzes();
+  app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`, viewBtn()) + `
+  <main class="wrap lib">
+    <h1 class="pick">Pick your quiz</h1>
+    <div class="grid">${list.length ? list.map(x => `<button class="card qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
   </main>`;
 }
 function segBar(c) {
@@ -370,33 +357,24 @@ function segBar(c) {
   return `<div class="bar3" role="img" aria-label="${c.right} got, ${c.revisit} to revisit, ${c.skip} skipped, ${c.left} to go"><i class="g" style="width:${w(c.right)}"></i><i class="r" style="width:${w(c.revisit)}"></i><i class="s" style="width:${w(c.skip)}"></i></div>`;
 }
 
-/* ---------------- quiz home ---------------- */
+/* ---------------- quiz home: one button, a hidden part list, reset ---------------- */
 function renderHome() {
   const { quiz, P, mine } = current;
   document.title = quiz.title + " · Kiron";
   const c = counts(quiz, P), started = c.left < c.total;
   const inRound = P.round && !P.round.ended && P.round.i < P.round.ids.length;
-  const noTap = []; eachQ(quiz, (q, id) => { if (lacksTap(q)) noTap.push(id); });
   let primary;
-  if (inRound) primary = `<button class="btn primary xl" data-act="resume" type="button">Continue · question ${P.round.i + 1} of ${P.round.ids.length}</button>`;
-  else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Next " : "Start: "}${Math.min(ROUND, c.left)} questions</button>`;
-  else if (c.skip) primary = `<button class="btn primary xl" data-act="start" type="button">Try the ${c.skip} you skipped</button>`;
-  else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit ${c.revisit}</button>`;
-  else primary = `<div class="donebox"><b>All ${c.total} done in ${MODES[current.mode].name.toLowerCase()}.</b><span>${current.mode === "early" ? "Ready for a harder pass? Switch to In-depth revision below." : "Come back in a few days and see what stuck."}</span></div>`;
-  const parts = quiz.sections.map((s, i) => { const pc = counts(quiz, P, i); return `<button class="part" type="button" data-part="${i}"><span class="pn">${i + 1}</span><span class="pt"><b>${esc(s.title)}</b><small>${s.ref ? esc(s.ref) + " · " : ""}${pc.right} of ${pc.total} got${pc.revisit ? " · " + pc.revisit + " to revisit" : ""}</small>${segBar(pc)}</span><span class="go" aria-hidden="true">›</span></button>`; }).join("");
-  app().innerHTML = topBar(backBtn(), `<h1>${esc(quiz.title)}</h1>`, `<button class="icon-btn" data-act="share" type="button">Share</button>`) + `
+  if (inRound) primary = `<button class="btn primary xl" data-act="resume" type="button">Continue</button>`;
+  else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Continue" : "Start"}</button>`;
+  else if (c.skip) primary = `<button class="btn primary xl" data-act="start" type="button">Do the ones you left</button>`;
+  else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit what you missed</button>`;
+  else primary = `<div class="donebox"><b>That's the whole quiz.</b></div>`;
+  const parts = quiz.sections.map((s, i) => { const pc = counts(quiz, P, i); return `<button class="part" type="button" data-part="${i}"><span class="pn">${pc.total && pc.right === pc.total ? "✓" : i + 1}</span><b>${esc(s.title)}</b></button>`; }).join("");
+  app().innerHTML = topBar(backBtn(), `<span class="grow"></span>`, viewBtn()) + `
   <main class="wrap home">
-    <div class="intro">
-      ${quiz.source ? `<div class="src">${esc(quiz.source)}</div>` : ""}
-      ${quiz.purpose ? `<p class="purpose"><b>Why you're reading this:</b> ${fmt(quiz.purpose)}</p>` : ""}
-    </div>
-    <div class="status">${segBar(c)}<div class="legend"><span><i class="g"></i>${c.right} got it</span><span><i class="r"></i>${c.revisit} to revisit</span><span><i class="s"></i>${c.skip} skipped</span><span><i class="l"></i>${c.left} to go</span></div></div>
-    <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit ${c.revisit} now</button>` : ""}</div>
-    ${modeCards()}
-    ${current.mode === "early" && noTap.length ? `<div class="notice"><span><b>${noTap.length} ${noTap.length === 1 ? "question has" : "questions have"} no tap options yet.</b> ${noTap.length === 1 ? "It shows as a flip card" : "They show as flip cards"}: see the answer, then mark yourself.</span><button class="btn small" data-act="addtap" type="button">Add tap options with AI</button></div>` : ""}
-    ${quiz.sections.length > 1 ? `<div class="label">Or jump to a part</div><div class="parts">${parts}</div>` : ""}
-    <div class="row">${started ? `<button class="btn small ghost danger" data-act="reset" type="button">Start this quiz over</button>` : ""}${mine ? `<button class="btn small ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}${quiz.sourceUrl ? `<a class="btn small ghost" href="${esc(quiz.sourceUrl)}" target="_blank" rel="noopener">Open the source</a>` : ""}</div>
-    <div class="row between"><span class="note">Layout</span>${seg("view", curView(), [["phone", "Phone view"], ["laptop", "Laptop view"]])}</div>
+    <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
+    ${quiz.sections.length > 1 ? `<details class="jump"><summary>Jump to a part</summary><div class="parts">${parts}</div></details>` : ""}
+    <div class="foot">${started || inRound ? `<button class="btn ghost danger" data-act="reset" type="button">Reset quiz</button>` : ""}${mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
   </main>`;
 }
 function startRound(opt) {
@@ -407,41 +385,50 @@ function startRound(opt) {
 }
 
 /* ---------------- player: one question per screen ---------------- */
-const VLABEL = { right: "Got it", partial: "Nearly", miss: "To revisit", skip: "Skipped" };
-const KIND = { new: "", skipped: "Skipped earlier", revisit: "Revisit" };
+let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
+let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
+const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 function renderPlay(keepScroll) {
   const { quiz, P } = current;
   const r = P.round;
   if (!r) return go("quiz-" + quiz.id);
   document.title = quiz.title + " · Kiron";
   if (r.ended || r.i >= r.ids.length) return renderRoundEnd();
-  const { q, id, si } = getQ(quiz, r.ids[r.i]);
-  if (!P.cur || P.cur.id !== id) P.cur = { id, done: false };
+  const y0 = window.scrollY;
+  const { q, id } = getQ(quiz, r.ids[r.i]);
+  if (!P.cur || P.cur.id !== id) {
+    const was = r.res[id];
+    P.cur = was && was !== "skip" && P.a[id] !== undefined ? { id, done: true, status: was, revealed: true, ticks: [] } : { id, done: false };
+  }
   const cur = P.cur, f = formOf(q, current.mode);
-  const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] || "skip") : i === r.i ? "now" : ""}"></i>`).join("");
-  const tags = (KIND[r.kind] ? `<span class="tag">${KIND[r.kind]}</span>` : "") + q.tags.map(t => `<span class="tag ${t}">${t === "calc" ? "Calculation" : "Discussion"}</span>`).join("") + (P.h[id] ? `<span class="tag hintused">Hint used</span>` : "");
+  const fx = FX && FX.id === id ? FX : null; FX = null;
+  const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : "") : ""}"></i>`).join("");
   const status = cur.done ? cur.status : null;
-  let input = "", primary = "", kbd = "";
+  let input = "", primary = "";
   const a = P.a[id];
   if (f.kind === "pick") {
     const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
     input = `<div class="opts" role="group" aria-label="Options">` + ord.map((oi, pos) => {
-      let cls = "opt";
-      if (cur.done) { if (oi === f.correct) cls += " ok"; else if (a === oi) cls += " wrong"; else cls += " dim"; }
-      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? " disabled" : ""}><span class="k">${pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
+      let cls = "opt", ic = "";
+      if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
+      if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? " disabled" : ""}><span class="k${ic ? " ic" : ""}">${ic || pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
-    kbd = "1–" + f.options.length + " to answer";
   } else if (f.kind === "multi") {
     const sel = a || [];
     input = `<p class="lead">Pick all that apply.</p><div class="opts" role="group" aria-label="Options">` + q.options.map((o, i) => {
-      let cls = "opt" + (sel.includes(i) ? " sel" : "");
-      if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong" : right ? " missed" : " dim"); }
-      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? " disabled" : ""}><span class="k box">${sel.includes(i) ? "✓" : ""}</span><span>${fmt(o)}</span></button>`;
+      let cls = "opt" + (sel.includes(i) ? " sel" : ""), ic = sel.includes(i) ? "✓" : "";
+      if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong" : right ? " missed" : " dim"); ic = ch && right ? "✓" : ch ? "✕" : right ? "✓" : ""; }
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? " disabled" : ""}><span class="k box${cur.done && ic ? " ic" : ""}">${ic}</span><span>${fmt(o)}</span></button>`;
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
     const ord = a || orderStart(id, q.items.length);
-    input = `<p class="lead">Use the arrows to put these in order.</p><ol class="order">` + ord.map((it, pos) => `<li class="${cur.done ? (it === pos ? "ok" : "wrong") : ""}"><span class="p">${pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv" type="button" data-mv="${pos}" data-dir="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>↑</button><button class="mv" type="button" data-mv="${pos}" data-dir="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>↓</button>`}</li>`).join("") + `</ol>`;
+    input = `<p class="lead">${cur.done ? "Your order:" : "Drag the handle, or tap the arrows."}</p><ol class="order${cur.done ? " done" : ""}">` + ord.map((it, pos) => {
+      const ok = cur.done && it === pos;
+      return `<li data-it="${it}" class="${cur.done ? (ok ? "ok" : "wrong") : ""}">${cur.done ? "" : `<span class="grip" aria-hidden="true">⠿</span>`}<span class="p">${cur.done ? (ok ? "✓" : "✕") : pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv up" type="button" data-mv="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>▲</button><button class="mv dn" type="button" data-mv="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>▼</button>`}</li>`;
+    }).join("") + `</ol>`;
     primary = "check";
   } else if (f.kind === "flip") {
     input = cur.revealed ? "" : `<p class="lead">Say the answer in your head, then flip.</p>`;
@@ -454,7 +441,7 @@ function renderPlay(keepScroll) {
     primary = "check";
   }
   const hint = q.hint && P.h[id] ? `<div class="hint"><b>Hint</b>${fmt(q.hint)}</div>` : "";
-  // feedback
+  // feedback: the explanation only (no verdict banner)
   let fb = "";
   if (cur.done || cur.revealed) {
     let detail = "", why = f.kind === "pick" ? f.why : q.answer, more = f.kind === "pick" ? f.more : "";
@@ -465,56 +452,90 @@ function renderPlay(keepScroll) {
       const x = parseNum(a);
       detail = `<div class="yours">You: <b>${x === null ? "no answer" : esc(String(x))}</b> · Answer: <b>${esc(String(q.correct))}${q.unit ? " " + esc(q.unit) : ""}</b></div>${status !== "right" ? `<button class="btn small ghost" type="button" data-act="ihadit">I had this</button>` : ""}`;
     } else if (f.kind === "order" && status !== "right") {
-      detail = `<div class="yours">In order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>`;
+      detail = `<div class="yours">Right order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>`;
     }
     const selfMark = (f.kind === "flip" || (f.kind === "text" && !q.keyPoints.length)) ? `<p class="lead">How did you do?</p><div class="selfmark">${[["right", "Got it"], ["partial", "Nearly"], ["miss", "Not yet"]].map(k => `<button class="btn${status === k[0] ? " on" : ""}" type="button" data-self="${k[0]}">${k[1]}</button>`).join("")}</div>` : "";
-    const head = status ? `<div class="verdict ${status}"><b>${status === "right" ? (r.streak >= 3 ? r.streak + " in a row" : "Got it") : status === "partial" ? "Nearly there" : "Not quite"}</b>${status === "right" ? "" : `<span>Saved to revisit later.</span>`}</div>` : "";
-    fb = `<section class="fb ${status || "open"}" aria-live="polite">${head}${detail}<div class="model"><span class="k">${f.kind === "pick" || f.kind === "multi" || f.kind === "order" ? "Why" : "Answer"}</span>${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}${selfMark}</section>`;
+    fb = `<section class="fb ${status || "open"}" aria-live="polite">${detail}<div class="model"><span class="k">${f.kind === "pick" || f.kind === "multi" || f.kind === "order" ? "Why" : "Answer"}</span>${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}${selfMark}</section>`;
   }
   const needsSelf = (cur.revealed && !cur.done);
-  const canNext = cur.done;
-  const bar = canNext
-    ? `<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? "Finish round" : "Next"}</button>`
-    : `<button class="btn ghost" data-act="skip" type="button">Skip</button>${q.hint && !P.h[id] ? `<button class="btn ghost" data-act="hint" type="button">Hint</button>` : ""}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : `<span class="grow note">${needsSelf ? "Mark yourself to continue" : ""}</span>`}`;
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div><span class="count">${r.i + 1}/${r.ids.length}</span></div></header>
+  const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
+  const hintBtn = q.hint && !P.h[id] && !cur.done ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
+  const nudge = status && status !== "right" ? " pulse" : "";
+  const bar = cur.done
+    ? `${back}<button class="btn primary grow${nudge}" data-act="next" type="button">${r.i + 1 >= r.ids.length ? "Finish" : "Next"}</button>`
+    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : needsSelf ? `<span class="grow note">Mark yourself to continue</span>` : ""}`;
+  const long = f.prompt.length > 150 ? " long" : "";
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div></div></header>
   <main class="wrap play">
     <div class="stage">
-      <article class="qcardp">
-        <div class="qtop"><span class="tag where">${quiz.sections.length > 1 ? "Part " + (si + 1) + " · " : ""}${esc(quiz.sections[si].title.length > 34 ? quiz.sections[si].title.slice(0, 32) + "…" : quiz.sections[si].title)}</span>${tags}</div>
+      <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
+        <h2 class="prompt${long}" id="qprompt" tabindex="-1">${fmt(f.prompt)}</h2>
         ${f.setup ? `<p class="lead setup">No calculating. Pick the setup that gives the answer.</p>` : ""}
-        <h2 class="prompt" id="qprompt" tabindex="-1">${fmt(f.prompt)}</h2>
         ${hint}${input}${fb}
       </article>
-      <aside class="side"><b>${MODES[current.mode].name}</b><span>${counts(quiz, P).left} new questions left in this quiz.</span><span class="keys">Keys: ${kbd ? kbd + ", " : ""}Enter = ${canNext ? "next" : primary ? "check" : "next"}, S = skip, H = hint</span></aside>
     </div>
   </main>
-  <div class="actionbar"><div class="actionbar-in">${bar}</div></div>`;
-  if (!keepScroll) { window.scrollTo(0, 0); }
-  else if (cur.done || cur.revealed) { const el = app().querySelector(".fb"); if (el && keepScroll === "fb") el.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+  ${bar.trim() ? `<div class="actionbar"><div class="actionbar-in">${bar}</div></div>` : ""}`;
+  DIR = 0;
+  if (!keepScroll) window.scrollTo(0, 0);
+  else {
+    window.scrollTo(0, y0);
+    const el = app().querySelector(".fb");
+    if (keepScroll === "fb" && el) {
+      const wrong = status && status !== "right";
+      // a wrong answer: let the shake play, then bring the explanation into view
+      setTimeout(() => { if (el.isConnected) el.scrollIntoView({ block: wrong ? "start" : "nearest", behavior: reduceMotion() ? "auto" : "smooth" }); }, wrong && !reduceMotion() ? 480 : 60);
+    }
+  }
+  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); if (r.streak >= 3) streakPill(r.streak); }
+}
+function burst(el) {
+  if (reduceMotion()) return;
+  const b = el.getBoundingClientRect(), cols = ["#f5b700", "#ff6b6b", "#3a4fd0", "#1fa463", "#b46bff"];
+  for (let i = 0; i < 16; i++) {
+    const p = document.createElement("i"); p.className = "conf";
+    const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = 50 + Math.random() * 70;
+    p.style.cssText = `left:${b.right - 28}px;top:${b.top + b.height / 2}px;background:${cols[i % cols.length]};--dx:${Math.cos(ang) * d}px;--dy:${Math.sin(ang) * d - 20}px`;
+    document.body.append(p); setTimeout(() => p.remove(), 800);
+  }
+}
+function streakPill(n) {
+  const old = $("#streak"); if (old) old.remove();
+  const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.textContent = "🔥 " + n + " in a row";
+  document.body.append(el); setTimeout(() => el.remove(), 1700);
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
   const first = !P.cur.done;
   P.cur.done = true; P.cur.status = status;
   P.st[id] = status; r.res[id] = status;
-  if (first) { P.n[id] = (P.n[id] || 0) + 1; r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id); }
+  if (first) { r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id); }
   else if (status !== "right") r.streak = 0;
   saveProg();
+}
+// Story-style moves: forward (answered: next; unanswered: leave it for later) and back.
+function nav(dir) {
+  if (!current) return;
+  const { quiz, P } = current, r = P.round; if (!r || r.ended || r.i >= r.ids.length) return;
+  const id = r.ids[r.i];
+  if (dir < 0) { if (r.i === 0) return; r.i--; P.cur = null; DIR = -1; saveProg(); return renderPlay(); }
+  if (!P.cur || !P.cur.done) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); }
+  r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) r.ended = true;
+  saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true });
 }
 function playAct(act, el) {
   const { quiz, P } = current, r = P.round; if (!r) return;
   if (r.ended || r.i >= r.ids.length) return;
   const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q, current.mode);
-  if (act === "pick") { if (cur.done) return; P.a[id] = +el.dataset.pick; finalize(P.a[id] === f.correct ? "right" : "miss"); return renderPlay("fb"); }
+  if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
-  if (act === "mv") { if (cur.done) return; const ord = (P.a[id] || orderStart(id, q.items.length)).slice(), pos = +el.dataset.mv, to = pos + (+el.dataset.dir); if (to < 0 || to >= ord.length) return; [ord[pos], ord[to]] = [ord[to], ord[pos]]; P.a[id] = ord; saveProg(); renderPlay(true); const b = app().querySelector(`[data-mv="${to}"][data-dir="${el.dataset.dir}"]:not([disabled])`) || app().querySelector(`[data-mv="${to}"]:not([disabled])`); if (b) b.focus(); return; }
   if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.scrollIntoView({ block: "nearest" }); return; }
-  if (act === "skip") { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); r.i++; P.cur = null; saveProg(); return renderPlay(); }
+  if (act === "back") return nav(-1);
   if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
   if (act === "self") { finalize(el.dataset.self); return renderPlay(true); }
   if (act === "check") {
     if (cur.done) return;
-    if (f.kind === "multi") finalize(gradeMulti(q, P.a[id]));
+    if (f.kind === "multi") { finalize(gradeMulti(q, P.a[id])); buzz(12); }
     else if (f.kind === "order") { if (!P.a[id]) P.a[id] = orderStart(id, q.items.length); finalize(gradeOrder(q, P.a[id])); }
     else if (f.kind === "number") finalize(gradeNumber(q, P.a[id]));
     else if (f.kind === "text") {
@@ -525,8 +546,66 @@ function playAct(act, el) {
   }
   if (act === "kp") { const i = +el.dataset.kp, s = new Set(cur.ticks || []); s.has(i) ? s.delete(i) : s.add(i); cur.ticks = [...s].sort((x, y) => x - y); finalize(gradeTicks(q, cur.ticks)); renderPlay(true); const b = app().querySelector(`[data-kp="${i}"]`); if (b) b.focus(); return; }
   if (act === "ihadit") { finalize("right"); return renderPlay(true); }
-  if (act === "next") { if (!cur.done) return; r.i++; P.cur = null; if (r.i >= r.ids.length) r.ended = true; saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true }); return; }
+  if (act === "next") { if (!cur.done) return; return nav(1); }
 }
+
+/* ---- reordering: tap arrows (animated) or drag the handle; both move the real list item ---- */
+let dragging = null;
+function syncOrder(ol, save) {
+  const kids = [...ol.children];
+  kids.forEach((li, i) => { li.querySelector(".p").textContent = i + 1; li.querySelector(".up").disabled = i === 0; li.querySelector(".dn").disabled = i === kids.length - 1; });
+  if (save && current && current.P.cur) { current.P.a[current.P.cur.id] = kids.map(li => +li.dataset.it); saveProg(); }
+}
+function moveLi(ol, li, to) {
+  const kids = [...ol.children], from = kids.indexOf(li);
+  if (to < 0 || to >= kids.length || to === from) return false;
+  const before = new Map(kids.map(k => [k, k.getBoundingClientRect().top]));
+  ol.insertBefore(li, to > from ? kids[to].nextSibling : kids[to]);
+  if (!reduceMotion()) kids.forEach(k => { if (k === dragging) return; const d = before.get(k) - k.getBoundingClientRect().top; if (d) k.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.8,.2,1)" }); });
+  return true;
+}
+function flash(li) { li.classList.remove("moved"); void li.offsetWidth; li.classList.add("moved"); }
+function arrowMove(btn) {
+  const li = btn.closest("li"), ol = li.parentElement, dir = +btn.dataset.mv, i = [...ol.children].indexOf(li);
+  if (!moveLi(ol, li, i + dir)) return;
+  syncOrder(ol, true); flash(li); buzz(8);
+  const nb = li.querySelector(btn.classList.contains("up") ? ".up" : ".dn"); (nb && !nb.disabled ? nb : li.querySelector(".mv:not(:disabled)")) ?.focus({ preventScroll: true });
+}
+document.addEventListener("pointerdown", e => {
+  const g = e.target.closest && e.target.closest(".order .grip"); if (!g || !current) return;
+  const li = g.closest("li"), ol = li.parentElement; e.preventDefault();
+  const startY = e.clientY, startTop = li.offsetTop; dragging = li; li.classList.add("drag");
+  try { g.setPointerCapture(e.pointerId); } catch (_) {}
+  const place = ev => {
+    for (let n = 0; n < 6; n++) {
+      const dy = ev.clientY - startY - (li.offsetTop - startTop), cy = li.offsetTop + li.offsetHeight / 2 + dy;
+      const prev = li.previousElementSibling, next = li.nextElementSibling, idx = [...ol.children].indexOf(li);
+      if (prev && cy < prev.offsetTop + prev.offsetHeight / 2) { moveLi(ol, li, idx - 1); buzz(6); continue; }
+      if (next && cy > next.offsetTop + next.offsetHeight / 2) { moveLi(ol, li, idx + 1); buzz(6); continue; }
+      break;
+    }
+    li.style.transform = `translateY(${ev.clientY - startY - (li.offsetTop - startTop)}px)`;
+  };
+  const move = ev => place(ev);
+  const up = () => { g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up); dragging = null; li.classList.remove("drag"); li.style.transform = ""; syncOrder(ol, true); flash(li); };
+  g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+});
+
+/* ---- story-style side taps: left = back, right = next (or "do this later" if unanswered) ---- */
+let tapDown = null;
+document.addEventListener("pointerdown", e => { tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
+document.addEventListener("pointerup", e => {
+  const d = tapDown; tapDown = null;
+  if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
+  if (Math.abs(e.clientX - d.x) > 10 || Math.abs(e.clientY - d.y) > 10 || Date.now() - d.t > 450) return;
+  if (e.target.closest && e.target.closest("button, a, summary, details, input, textarea, label, .fb, .hint, .order, .actionbar, .top, .toast")) return;
+  if (String(getSelection && getSelection())) return;
+  ghostUntil = Date.now() + 250; // the browser sends a click after this tap: swallow it so it can't hit the next screen's option
+  nav(e.clientX < innerWidth * 0.35 ? -1 : 1);
+});
+let ghostUntil = 0;
+document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+
 function renderRoundEnd() {
   const { quiz, P } = current, r = P.round;
   r.ended = true; saveProg();
@@ -544,7 +623,7 @@ function renderRoundEnd() {
   <main class="wrap play"><div class="endcard">
     <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
     <div class="big3"><div><b>${got}</b><span>got it</span></div><div><b>${rev}</b><span>to revisit</span></div><div><b>${sk}</b><span>skipped</span></div></div>
-    <p>${allDone ? `All ${c.total} questions done in ${MODES[current.mode].name.toLowerCase()}. ${current.mode === "early" ? "When you're ready, In-depth revision asks the same questions with typing." : "Come back in a few days and see what stuck."}` : line}</p>
+    <p>${allDone ? `All ${c.total} questions done. Come back in a few days and see what stuck.` : line}</p>
     <div class="status">${segBar(c)}<div class="legend"><span><i class="g"></i>${c.right} got it</span><span><i class="r"></i>${c.revisit} to revisit</span><span><i class="l"></i>${c.left + c.skip} to go</span></div></div>
     <div class="cta">${next}${rev && c.left ? `<button class="btn" data-act="revisitround" type="button">Revisit this round's ${rev} first</button>` : ""}<button class="btn ghost" data-go="quiz-${esc(quiz.id)}" type="button">${allDone ? "Back to the quiz" : "Take a break"}</button></div>
   </div></main>`;
@@ -656,25 +735,25 @@ function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000)
 document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
-  if (d.setMode) { const first = !SET.mode; SET.mode = d.setMode; saveSet(); if (current) { current.mode = mode(); current.P = getProg(current.quiz.id); } route(); if (first) window.scrollTo(0, 0); else toast(MODES[SET.mode].name + " is on"); return; }
+  if (d.setMode && DEEP_ON) { const first = !SET.mode; SET.mode = d.setMode; saveSet(); if (current) { current.mode = mode(); current.P = getProg(current.quiz.id); } route(); if (first) window.scrollTo(0, 0); else toast(MODES[SET.mode].name + " is on"); return; }
   if (d.setView) { SET.view = d.setView; saveSet(); route(); return; }
   if (d.go !== undefined) { go(d.go); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); ["early", "deep"].forEach(m => LS.del(progKey2(d.del, m))); toast("Deleted"); go(""); return; }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
   if (d.toggle !== undefined) return playAct("toggle", t);
-  if (d.mv !== undefined) return playAct("mv", t);
+  if (d.mv !== undefined) return arrowMove(t);
   if (d.kp !== undefined) return playAct("kp", t);
   if (d.self) return playAct("self", t);
   if (d.part !== undefined) return startRound({ from: +d.part });
   const act = d.act; if (!act) return;
   if (act === "start") return startRound();
   if (act === "revisit") return startRound({ kind: "revisit" });
-  if (act === "revisitround") { const { P } = current; const ids = P.round.ids.filter(x => P.round.res[x] === "miss" || P.round.res[x] === "partial"); ids.forEach(x => { delete P.a[x]; delete P.h[x]; }); P.round = { ids, i: 0, res: {}, kind: "revisit", streak: 0, ended: false }; P.cur = null; saveProg(); return renderPlay(); }
+  if (act === "revisitround") { const { P } = current; const ids = P.round.ids.filter(x => P.round.res[x] === "miss" || P.round.res[x] === "partial"); ids.forEach(x => { delete P.a[x]; delete P.h[x]; P.n[x] = (P.n[x] || 0) + 1; }); P.round = { ids, i: 0, res: {}, kind: "revisit", streak: 0, ended: false }; P.cur = null; saveProg(); return renderPlay(); }
   if (act === "resume") return go("play-" + current.quiz.id);
   if (act === "share") return shareQuiz();
   if (act === "addtap") return sheet("Add tap options", `<p class="note">Paste this into any AI chat. It returns the same quiz with tap-to-answer options added. Import the result and choose <b>Replace it</b>.</p>`, addTapPrompt(current.quiz), "Copy prompt and quiz");
-  if (act === "reset") { if (!twoTap(t, "Tap again to clear your answers")) return; current.P = blankProg(); saveProg(); toast("Cleared. Fresh start."); return renderHome(); }
+  if (act === "reset") { if (!twoTap(t, "Tap again to reset")) return; current.P = blankProg(); saveProg(); toast("Reset"); return renderHome(); }
   playAct(act, t);
 });
 document.addEventListener("input", e => { if (current && e.target.dataset && e.target.dataset.in && current.P.cur) { current.P.a[current.P.cur.id] = e.target.value; saveProg(); } });
@@ -688,13 +767,15 @@ document.addEventListener("keydown", e => {
     click('[data-act="next"]') || click('[data-act="check"]') || click('[data-act="flip"]') || click('.endcard .btn.primary'); return;
   }
   if (typing || e.ctrlKey) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); return nav(-1); }
+  if (e.key === "ArrowRight") { e.preventDefault(); return nav(1); }
   if (/^[1-9]$/.test(e.key)) { const opts = app().querySelectorAll(".opts .opt"); const b = opts[+e.key - 1]; if (b && !b.disabled) { e.preventDefault(); b.click(); } return; }
   const k = e.key.toLowerCase();
-  if (k === "s") click('[data-act="skip"]'); else if (k === "h") click('[data-act="hint"]');
+  if (k === "h") click('[data-act="hint"]');
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { validateQuiz, parseQuizText, formOf, buildRound, logSummary };
+window.SB = { validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
 applyView();
 route();
 loadSamples().then(route);
