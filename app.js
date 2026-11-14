@@ -397,7 +397,7 @@ function renderChooser() {
 }
 
 /* ---------------- library: just the list ---------------- */
-const viewBtn = () => soundBtn();
+const viewBtn = () => "";
 function renderLibrary() {
   current = null; document.title = "Kiron";
   const list = allQuizzes();
@@ -479,35 +479,6 @@ document.addEventListener("visibilitychange", () => {
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-/* ---- sounds: tiny synthesized tones, no audio files. Created only after a tap. Muted by the phone's silent switch on iPhone. ---- */
-const SND = {
-  ctx: null,
-  on() { return !SET.muted; },
-  unlock() {
-    try {
-      if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; this.ctx = new AC(); }
-      if (this.ctx.state === "suspended") this.ctx.resume();
-    } catch (e) {}
-  },
-  tone(freq, t0, dur, vol, type) {
-    const c = this.ctx; if (!c) return;
-    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + t0;
-    o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.05);
-  },
-  play(kind, n) {
-    if (!this.on()) return; this.unlock(); if (!this.ctx) return;
-    try {
-      if (kind === "right") { this.tone(587, 0, .16, .09); this.tone(784, .08, .2, .09); }
-      else if (kind === "miss") { this.tone(262, 0, .22, .07); this.tone(220, .1, .26, .06); }
-      else if (kind === "streak") { const base = 660 * Math.pow(1.0595, Math.min(n || 3, 12)); this.tone(base * .75, 0, .14, .08); this.tone(base, .07, .14, .08); this.tone(base * 1.5, .14, .3, .08); }
-      else if (kind === "end") { this.tone(523, 0, .2, .07); this.tone(659, .12, .2, .07); this.tone(784, .24, .35, .07); }
-    } catch (e) {}
-  }
-};
-["pointerup", "touchend", "click", "keydown"].forEach(ev => document.addEventListener(ev, () => { if (!SND.ctx && SND.on()) SND.unlock(); else if (SND.ctx && SND.ctx.state === "suspended") SND.unlock(); }, { capture: true, passive: true }));
-const soundBtn = () => `<button class="icon-btn snd${SET.muted ? " off" : ""}" data-act="sound" type="button" aria-pressed="${!SET.muted}" aria-label="${SET.muted ? "Sound off" : "Sound on"}">${SET.muted ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9l5 6M21 9l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`}</button>`;
 const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 function renderPlay(keepScroll) {
   const { quiz, P } = current;
@@ -588,7 +559,7 @@ function renderPlay(keepScroll) {
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : needsSelf ? `<span class="grow note">Mark yourself to continue</span>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div>${streakBadge(r, fx)}${soundBtn()}${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div>${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -612,7 +583,7 @@ function renderPlay(keepScroll) {
       setTimeout(() => { if (el.isConnected) el.scrollIntoView({ block: wrong ? "start" : "nearest", behavior: reduceMotion() ? "auto" : "smooth" }); }, wrong && !reduceMotion() ? 480 : 60);
     }
   }
-  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
+  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); if (r.streak >= 3) streakPill(r.streak); }
   heat(r.review ? 0 : r.streak || 0);
 }
 function burst(el) {
@@ -625,16 +596,16 @@ function burst(el) {
     document.body.append(p); setTimeout(() => p.remove(), 800);
   }
 }
-/* Streak: a small flame + number from 3 in a row. Level 1 glows (3+), 2 flickers (5+), 3 shakes gently (10+). A wrong answer just clears it, quietly. */
-const streakLevel = n => n >= 10 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
-function streakBadge(r, fx) {
-  const n = r.review ? 0 : r.streak || 0, lv = streakLevel(n); if (!lv) return "";
-  return `<span class="flame lv${lv}${fx && fx.kind === "right" ? " bump" : ""}" role="img" aria-label="${n} right in a row"><span class="fl" aria-hidden="true">🔥</span><b>${n}</b></span>`;
+/* Streak: from 3 in a row a "🔥 n in a row" pill drops in on each right answer, and the screen heats up as the run grows. A wrong answer quietly cools it. */
+function streakPill(n) {
+  const old = $("#streak"); if (old) old.remove();
+  const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.textContent = "🔥 " + n + " in a row";
+  document.body.append(el); setTimeout(() => el.remove(), 1700);
 }
-// A numberless glow along the bottom edge that warms up as the streak grows (the "round glow").
+// Heat: warm gradients creep in from the bottom and the edges, stronger every answer, from 3 in a row up to about 15.
 function heat(n) {
   let h = $("#heat");
-  const lv = Math.min(1, Math.max(0, (n - 2) / 12));
+  const lv = Math.min(1, Math.max(0, (n - 2) / 13));
   if (!lv) { if (h) h.remove(); return; }
   if (!h) { h = document.createElement("div"); h.id = "heat"; h.className = "heat"; h.setAttribute("aria-hidden", "true"); document.body.append(h); }
   h.style.setProperty("--h", lv.toFixed(2));
@@ -646,9 +617,6 @@ function finalize(status) {
   P.st[id] = status; r.res[id] = status;
   if (first) {
     r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id);
-    if (status !== "right") SND.play("miss");
-    else if (r.streak === 3 || r.streak === 5 || (r.streak >= 10 && r.streak % 5 === 0)) SND.play("streak", r.streak);
-    else SND.play("right");
   }
   else if (status !== "right") r.streak = 0;
   saveProg();
@@ -661,7 +629,7 @@ function nav(dir) {
   if (dir < 0) { if (r.i === 0) return; r.i--; P.cur = null; DIR = -1; saveProg(); return renderPlay(); }
   if (!r.review && (!P.cur || !P.cur.done)) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); }
   if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go("quiz-" + quiz.id, true); }
-  r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) { r.ended = true; if (!r.review) SND.play("end"); }
+  r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) { r.ended = true; }
   saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true });
 }
 function playAct(act, el) {
@@ -880,7 +848,6 @@ document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
   if (d.setMode && DEEP_ON) { const first = !SET.mode; SET.mode = d.setMode; saveSet(); if (current) { current.mode = mode(); current.P = getProg(current.quiz.id); } route(); if (first) window.scrollTo(0, 0); else toast(MODES[SET.mode].name + " is on"); return; }
-  if (d.act === "sound") { SET.muted = !SET.muted; saveSet(); if (!SET.muted) { SND.unlock(); SND.play("right"); } if (current && /^#play-/.test(location.hash) && current.P.round && !current.P.round.ended) renderPlay(true); else route(); return; }
   if (d.go !== undefined) { go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); ["early", "deep"].forEach(m => LS.del(progKey2(d.del, m))); toast("Deleted"); go(""); return; }
   if (!current) return;
