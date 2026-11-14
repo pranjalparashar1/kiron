@@ -1,0 +1,917 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "cfa-l2-economics-investment-markets",
+ "title": "Economics and investment markets (CFA Level II)",
+ "source": "CFA Level II · Reading 34 study notes, Economics and Investment Markets",
+ "purpose": "Revising for the CFA Level II exam: how the economy drives discount rates, risk premiums and asset prices.",
+ "about": "Weighted to what item sets tend to test from this reading: the direction of each effect (rates, prices, spreads, premiums), the consumption-hedge logic behind every risk premium, and the few calculations (real rate from a bond price, Taylor rule, break-even inflation, expected loss). Page numbers refer to the notes.",
+ "sections": [
+  {
+   "title": "The present value model",
+   "ref": "pp. 1–2",
+   "why": "Every later section is this one equation with one more premium added. Know the building blocks cold.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "In the reading's present value model, an asset's value is its expected cash flows discounted at a rate built from three blocks. Name them.",
+     "hint": "One is real, one is about prices rising, one is compensation.",
+     "keyPoints": [
+      {
+       "text": "Real default-free interest rate (l)",
+       "match": [
+        "real+default",
+        "real+risk-free",
+        "real+risk free",
+        "real rate",
+        "real interest"
+       ]
+      },
+      {
+       "text": "Expected inflation (θ)",
+       "match": [
+        "inflation"
+       ]
+      },
+      {
+       "text": "Risk premium(s) for the uncertainty of the cash flows (ρ)",
+       "match": [
+        "risk premium",
+        "premium"
+       ]
+      }
+     ],
+     "answer": "Value = Σ E[CF] / (1 + l + θ + ρ)ˢ. The discount rate is the **real default-free rate (l)** plus **expected inflation (θ)** plus **risk premium(s) (ρ)** for the uncertainty in that asset's cash flows. Asset classes differ only in which premiums they need.",
+     "ref": "p. 1",
+     "mcq": {
+      "prompt": "What is the discount rate in the present value model built from?",
+      "options": [
+       "Real default-free rate + expected inflation + risk premium(s)",
+       "Nominal policy rate + credit spread + liquidity premium",
+       "Real GDP growth + inflation target + term premium",
+       "Real default-free rate + realised inflation + the dividend yield"
+      ],
+      "correct": 0,
+      "why": "l + θ + ρ. Each asset class just adds its own premiums to the same base."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "An index falls 3% on the day GDP growth is announced at 2.5%. Analysts had forecast 2.5%. According to the reading, the announcement itself:",
+     "hint": "What is already in the price?",
+     "options": [
+      "Should not have moved prices, because only unanticipated information changes asset values",
+      "Moved prices because growth of 2.5% is low",
+      "Moved prices because past cash flows were revised",
+      "Moved prices because any macro release changes the discount rate"
+     ],
+     "correct": 0,
+     "answer": "Prices already reflect expectations. Only **new, unanticipated information** changes expected cash flows, real rates, expected inflation or risk premiums, and so only that moves values. A classic item-set trap: an in-line release is not news.",
+     "ref": "pp. 1–2"
+    },
+    {
+     "type": "order",
+     "prompt": "Order these assets from the **fewest** to the **most** premiums in their discount rate.",
+     "hint": "Start with the bond that has no inflation and no default risk. End with the one that is also hard to sell.",
+     "items": [
+      "Real default-free bond (inflation-linked government bond)",
+      "Nominal default-free government bond",
+      "Credit-risky corporate bond",
+      "Equity",
+      "Commercial real estate"
+     ],
+     "answer": "Real default-free: **l** only. Nominal government: + expected inflation **θ** and inflation-uncertainty premium **π**. Corporate: + credit premium **γ**. Equity: + equity premium **κ**. Commercial real estate: + property-value premium **κ** and illiquidity premium **ϕ**.",
+     "ref": "pp. 8–22"
+    }
+   ]
+  },
+  {
+   "title": "Inter-temporal substitution and real rates",
+   "ref": "pp. 2–4",
+   "why": "This is where the real risk-free rate comes from. The exam tests the direction of each link in the chain.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Define the inter-temporal rate of substitution (m̃). Is it normally above or below 1, and why?",
+     "hint": "It's a ratio of two marginal utilities. Think about delayed gratification.",
+     "keyPoints": [
+      {
+       "text": "Ratio of marginal utility of future consumption to marginal utility of consumption today",
+       "match": [
+        "marginal util",
+        "mu"
+       ]
+      },
+      {
+       "text": "Normally below 1",
+       "match": [
+        "below 1",
+        "less than 1",
+        "< 1",
+        "<1",
+        "under 1",
+        "below one",
+        "less than one"
+       ]
+      },
+      {
+       "text": "Because investors prefer consuming today over later",
+       "match": [
+        "prefer",
+        "today",
+        "current",
+        "now",
+        "impatien"
+       ]
+      }
+     ],
+     "answer": "m̃ = marginal utility of consumption in the future ÷ marginal utility of consumption today. Investors prefer current consumption, so today's marginal utility is larger and **m̃ < 1** (deflation is the exception). It is the investor's willingness to trade consumption today for real wealth later.",
+     "ref": "p. 2",
+     "mcq": {
+      "prompt": "The inter-temporal rate of substitution is:",
+      "options": [
+       "MU of future consumption ÷ MU of consumption today, normally below 1",
+       "MU of consumption today ÷ MU of future consumption, normally below 1",
+       "MU of future consumption ÷ MU of consumption today, normally above 1",
+       "Future consumption ÷ current consumption, normally equal to 1"
+      ],
+      "correct": 0,
+      "why": "Future over current, and below 1 because people prefer to consume now."
+     }
+    },
+    {
+     "type": "number",
+     "prompt": "A real default-free zero-coupon bond paying 1 unit of consumption in one year is priced at 0.96. What one-period real risk-free rate does that imply (%)?",
+     "hint": "The price equals E[m̃]. The rate is the return from paying the price and receiving 1.",
+     "correct": 4.167,
+     "tolerance": 0.02,
+     "unit": "%",
+     "tags": [
+      "calc"
+     ],
+     "answer": "P = E[m̃] = 0.96, and l = 1/E[m̃] − 1 = 1/0.96 − 1 = **4.17%**. The bond price and the real rate always move in opposite directions.",
+     "ref": "pp. 2–3",
+     "mcq": {
+      "options": [
+       "1 ÷ 0.96 − 1",
+       "1 − 0.96",
+       "0.96 ÷ (1 + 0.96)",
+       "1 ÷ (1 − 0.96)"
+      ],
+      "correct": 0,
+      "why": "Rate = 1/E[m̃] − 1 = 4.17%. 1 − 0.96 is the discount, not the return on 0.96 invested."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "Investors come to expect **good** economic times ahead. All else equal, what happens?",
+     "hint": "If the future looks rich, do you need to save for it?",
+     "options": [
+      "They save less: m̃ falls, the real bond's price falls, real rates rise",
+      "They save more: m̃ rises, the real bond's price rises, real rates fall",
+      "They save less: m̃ rises, the real bond's price rises, real rates fall",
+      "They save more: m̃ falls, the real bond's price falls, real rates rise"
+     ],
+     "correct": 0,
+     "answer": "Good times ahead means high future consumption, so the marginal utility of future consumption is low. Investors save less, **m̃ falls** (say 0.90 rather than 0.95), the bond price P = E[m̃] falls, and the **real rate rises**. Expecting bad times does the reverse: more saving, higher m̃, higher price, lower real rate.",
+     "ref": "pp. 2–4"
+    },
+    {
+     "type": "single",
+     "prompt": "A real default-free bond trades **below** investors' E[m̃]. How does the market get back to equilibrium?",
+     "hint": "Cheap bond: buy it. What does buying do to today's consumption and today's marginal utility?",
+     "options": [
+      "Investors buy the bond, consume less today, today's marginal utility rises, and E[m̃] falls to the price",
+      "Investors sell the bond, consume more today, today's marginal utility falls, and E[m̃] rises",
+      "Investors buy the bond, consume more today, and E[m̃] rises to the price",
+      "Nothing changes, because m̃ is fixed by preferences"
+     ],
+     "correct": 0,
+     "answer": "Price < E[m̃] means the bond is cheap relative to what investors would pay. They buy, giving up consumption today. Less consumption today raises today's marginal utility (the denominator), so **E[m̃] falls** until it equals the price. If price > E[m̃], the reverse.",
+     "ref": "p. 4"
+    },
+    {
+     "type": "single",
+     "prompt": "Two investors face the same risky payoff. One is much wealthier. According to the reading:",
+     "hint": "What happens to absolute risk aversion as wealth rises?",
+     "options": [
+      "The wealthier investor demands a lower risk premium, because absolute risk aversion falls with wealth",
+      "The wealthier investor demands a higher risk premium, because more is at stake",
+      "Both demand the same premium, because the payoff is the same",
+      "Neither demands a premium if the expected payoff is positive"
+     ],
+     "correct": 0,
+     "answer": "Investors are risk averse: uncertainty in the payoff lowers expected marginal utility, so they want compensation. But marginal utility diminishes with wealth, so **absolute risk aversion falls as wealth rises** and the wealthy need a smaller premium for a given risk.",
+     "ref": "p. 4"
+    }
+   ]
+  },
+  {
+   "title": "Risk premiums and the covariance term",
+   "ref": "pp. 5–6",
+   "why": "The single most testable idea in the reading: an asset's premium depends on whether it pays off in bad times.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "For most risky assets, what is the sign of the covariance between the asset's future price and m̃, why, and what does that do to today's price and required return?",
+     "hint": "When is m̃ (the value of an extra unit of future consumption) high: good times or bad? When do risky assets pay off?",
+     "keyPoints": [
+      {
+       "text": "Covariance is negative",
+       "match": [
+        "negative"
+       ]
+      },
+      {
+       "text": "Risky assets pay off poorly in bad times, when marginal utility of consumption is high (and well in good times, when it is low)",
+       "match": [
+        "bad time",
+        "recession",
+        "marginal util",
+        "good time",
+        "downturn"
+       ]
+      },
+      {
+       "text": "Today's price is lower",
+       "match": [
+        "lower price",
+        "price is lower",
+        "price falls",
+        "discount",
+        "cheaper",
+        "lowers the price",
+        "reduces the price",
+        "price lower"
+       ]
+      },
+      {
+       "text": "So the risk premium / required return is positive and higher",
+       "match": [
+        "premium",
+        "required return",
+        "higher return",
+        "expected return"
+       ]
+      }
+     ],
+     "need": 3,
+     "answer": "m̃ is high in bad times (an extra unit of consumption is worth a lot). Risky assets tend to have low prices exactly then, so **cov(P, m̃) < 0**. That covariance is a discount on today's price, which means a **positive risk premium**. The more negative the covariance, the lower the price and the higher the required return.",
+     "ref": "pp. 5–6",
+     "mcq": {
+      "prompt": "For most risky assets, cov(future price, m̃) is:",
+      "options": [
+       "Negative: they pay off poorly in bad times, so price is lower and the premium is positive",
+       "Positive: they pay off well in bad times, so price is higher and the premium is negative",
+       "Negative: they pay off poorly in bad times, so price is higher and the premium is negative",
+       "Zero: covariance only matters for bonds"
+      ],
+      "correct": 0,
+      "why": "Paying off when you least need it is unattractive, so investors pay less today and demand a premium."
+     }
+    },
+    {
+     "type": "number",
+     "prompt": "A two-period default-free bond will be sold after one period. E[P₁] = 0.96, the one-period real risk-free rate is 2%, and cov(P₁, m̃) = −0.005. What is its price today?",
+     "hint": "Discount the expected price at the risk-free rate, then add the covariance term (it's negative here).",
+     "correct": 0.9362,
+     "tolerance": 0.001,
+     "tags": [
+      "calc"
+     ],
+     "answer": "P₀ = E[P₁]/(1 + l) + cov(P₁, m̃) = 0.96/1.02 − 0.005 = 0.9412 − 0.005 = **0.9362**. The −0.005 is the risk discount for not knowing the sale price.",
+     "ref": "pp. 5–6",
+     "mcq": {
+      "options": [
+       "0.96 ÷ 1.02 + (−0.005)",
+       "0.96 ÷ 1.02 − (−0.005)",
+       "(0.96 − 0.005) × 1.02",
+       "0.96 ÷ (1.02 − 0.005)"
+      ],
+      "correct": 0,
+      "why": "P₀ = E[P₁]/(1 + l) + cov. A negative covariance lowers the price to 0.9362."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "An asset tends to pay off **more** in bad economic times. Relative to an otherwise identical asset with zero covariance with m̃, it should have:",
+     "hint": "Would you pay up for insurance?",
+     "options": [
+      "A higher price and a lower (possibly negative) risk premium",
+      "A lower price and a higher risk premium",
+      "The same price, because expected cash flows are the same",
+      "A higher price and a higher risk premium"
+     ],
+     "correct": 0,
+     "answer": "Positive covariance with m̃ means the asset is a **consumption hedge**: it pays when marginal utility is high. Investors pay more for that, so its required return is lower. This is the logic behind low premiums on government bonds and high premiums on equities.",
+     "ref": "pp. 5–6"
+    },
+    {
+     "type": "single",
+     "prompt": "For a one-period real default-free bond held to maturity, the covariance term in the pricing equation is:",
+     "hint": "Is there anything uncertain about its payoff?",
+     "options": [
+      "Zero, because the payoff at maturity is certain",
+      "Negative, because all bonds are risky",
+      "Positive, because bonds hedge bad times",
+      "Equal to the real risk-free rate"
+     ],
+     "correct": 0,
+     "answer": "The payoff is known, so there is nothing to co-vary with m̃. The covariance (risk premium) term only appears when the future price is **uncertain**, as when a longer bond must be sold before maturity.",
+     "ref": "p. 6"
+    }
+   ]
+  },
+  {
+   "title": "Growth, volatility and real rates",
+   "ref": "p. 7",
+   "why": "Standard item-set setup: compare two economies and say whose real rates should be higher.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Trend real GDP growth in an economy is revised **up**. All else equal, real default-free interest rates should:",
+     "hint": "If you expect to be richer later, how keen are you to save today?",
+     "options": [
+      "Rise, because people expecting higher future income save less and borrow more",
+      "Fall, because higher growth lowers risk",
+      "Fall, because higher future income raises saving",
+      "Stay the same, because growth only affects nominal rates"
+     ],
+     "correct": 0,
+     "answer": "Higher expected income means more goods available in the future relative to today, so there is less need to save. Saving falls, borrowing rises, and a **higher real rate** is needed to induce saving.",
+     "ref": "p. 7"
+    },
+    {
+     "type": "single",
+     "prompt": "Country A and Country B have the same trend growth, but A's GDP growth is far more **volatile**. According to the reading, real default-free rates should be:",
+     "hint": "Uncertainty earns a premium.",
+     "options": [
+      "Higher in A",
+      "Higher in B",
+      "The same, because trend growth is the same",
+      "Lower in A, because of safe-haven demand"
+     ],
+     "correct": 0,
+     "answer": "The reading's rule: real default-free rates are **positively related to both** the trend GDP growth rate and the **volatility** of GDP growth. More volatile growth makes forecasts less certain and investors require a higher premium.",
+     "ref": "p. 7"
+    }
+   ]
+  },
+  {
+   "title": "Nominal rates, T-bills and the Taylor rule",
+   "ref": "pp. 10–13",
+   "why": "The Taylor rule is the one near-certain calculation from this reading.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Going from a real default-free bond to a **nominal** default-free bond adds two terms to the discount rate. What are they, and which one is close to zero for a T-bill?",
+     "hint": "One is what you expect, the other is compensation for being unsure about it.",
+     "keyPoints": [
+      {
+       "text": "Expected inflation (θ)",
+       "match": [
+        "expected inflation",
+        "inflation expect",
+        "expected+inflation"
+       ]
+      },
+      {
+       "text": "A premium for uncertainty about future inflation (π)",
+       "match": [
+        "uncertain",
+        "premium",
+        "risk"
+       ]
+      },
+      {
+       "text": "The uncertainty premium π is about zero for a T-bill, because inflation over a short horizon is fairly predictable",
+       "match": [
+        "t-bill",
+        "tbill",
+        "bill",
+        "short",
+        "zero",
+        "negligible"
+       ]
+      }
+     ],
+     "answer": "Nominal default-free discount rate = l + **θ** (expected inflation) + **π** (premium for inflation uncertainty). π grows with maturity. For a T-bill the horizon is so short that **π ≈ 0**, so the T-bill yield ≈ real rate + expected inflation, and it sits close to the central bank's policy rate.",
+     "ref": "pp. 10–11",
+     "mcq": {
+      "prompt": "What does a nominal default-free bond add to the real rate, and what drops out for a T-bill?",
+      "options": [
+       "Expected inflation and an inflation-uncertainty premium; the uncertainty premium is ≈ 0 for a T-bill",
+       "Expected inflation and a credit premium; the credit premium is ≈ 0 for a T-bill",
+       "Expected inflation and an inflation-uncertainty premium; expected inflation is ≈ 0 for a T-bill",
+       "A liquidity premium and a term premium; both are ≈ 0 for a T-bill"
+      ],
+      "correct": 0,
+      "why": "l + θ + π. Over a few months inflation is predictable, so π drops out."
+     }
+    },
+    {
+     "type": "number",
+     "prompt": "Taylor rule: neutral real policy rate 1.5%, current inflation 4%, target inflation 2%, output gap **−1%**. What policy rate does the rule prescribe (%)?",
+     "hint": "Neutral real rate + inflation + half the inflation gap + half the output gap. Mind the sign of the output gap.",
+     "correct": 6.0,
+     "tolerance": 0.01,
+     "unit": "%",
+     "tags": [
+      "calc"
+     ],
+     "answer": "Policy rate = l + ι + 0.5(ι − ι*) + 0.5(Y − Y*) = 1.5 + 4 + 0.5(4 − 2) + 0.5(−1) = 1.5 + 4 + 1 − 0.5 = **6.0%**. Common slips: adding the target instead of current inflation, or forgetting the 0.5 weights.",
+     "ref": "p. 12",
+     "mcq": {
+      "options": [
+       "1.5 + 4 + 0.5 × (4 − 2) + 0.5 × (−1)",
+       "1.5 + 2 + 0.5 × (4 − 2) + 0.5 × (−1)",
+       "1.5 + 4 + (4 − 2) + (−1)",
+       "1.5 + 4 + 0.5 × (4 − 2) − 0.5 × (−1)"
+      ],
+      "correct": 0,
+      "why": "Neutral real rate + current inflation + 0.5 × inflation gap + 0.5 × output gap = 6.0%."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "Under the Taylor rule, the policy rate equals the **neutral** rate when:",
+     "hint": "Which two terms in the rule have to vanish?",
+     "options": [
+      "Inflation equals its target and the output gap is zero",
+      "Inflation is zero and the output gap is zero",
+      "Inflation equals its target, whatever the output gap",
+      "The real policy rate is zero"
+     ],
+     "correct": 0,
+     "answer": "The neutral rate neither spurs nor impedes activity. It is what the rule gives when the last two terms are zero: **inflation = target and output gap = 0**. Inflation above target (or a positive gap) puts the prescribed rate above neutral; below target puts it below.",
+     "ref": "pp. 12–13"
+    },
+    {
+     "type": "single",
+     "prompt": "The output gap is **positive**. What does that mean, and what does the Taylor rule prescribe, all else equal?",
+     "hint": "Actual output versus potential output.",
+     "options": [
+      "The economy is producing beyond capacity (overheating); a higher policy rate",
+      "The economy is producing below capacity; a lower policy rate",
+      "The economy is producing beyond capacity; a lower policy rate",
+      "Inflation is above target; no change in the policy rate"
+     ],
+     "correct": 0,
+     "answer": "Output gap = actual − potential output. Positive means **overheating**, producing above sustainable capacity, and the rule adds half the gap to the policy rate. Negative means slack, and the rule lowers the rate.",
+     "ref": "p. 12"
+    }
+   ]
+  },
+  {
+   "title": "Break-even inflation and the yield curve",
+   "ref": "pp. 13–16",
+   "why": "Break-even inflation is a favourite trap: it is not a pure inflation forecast.",
+   "questions": [
+    {
+     "type": "number",
+     "prompt": "A 10-year zero-coupon nominal government bond yields 4.6%. A 10-year zero-coupon inflation-linked government bond yields 1.4%. What is the break-even inflation rate (%)?",
+     "hint": "Same maturity, nominal versus real.",
+     "correct": 3.2,
+     "tolerance": 0.01,
+     "unit": "%",
+     "tags": [
+      "calc"
+     ],
+     "answer": "Break-even inflation = nominal zero yield − real zero yield (same maturity) = 4.6 − 1.4 = **3.2%**.",
+     "ref": "p. 13",
+     "mcq": {
+      "options": [
+       "4.6 − 1.4",
+       "4.6 + 1.4",
+       "4.6 ÷ 1.4",
+       "1.4 − 4.6"
+      ],
+      "correct": 0,
+      "why": "Nominal yield minus real yield, same maturity: 3.2%."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "Break-even inflation is 3.2%. What can an analyst conclude about investors' **expected** inflation?",
+     "hint": "What two things are inside the break-even rate?",
+     "options": [
+      "It is probably below 3.2%, because break-even inflation also includes a premium for inflation uncertainty",
+      "It is exactly 3.2%",
+      "It is probably above 3.2%, because break-even inflation excludes the risk premium",
+      "Nothing, because break-even inflation is unrelated to expectations"
+     ],
+     "correct": 0,
+     "answer": "Break-even inflation = **expected inflation + a risk premium for uncertainty about future inflation** (θ + π). It overstates pure expected inflation by that premium, and the premium is larger at longer maturities.",
+     "ref": "p. 13"
+    },
+    {
+     "type": "number",
+     "prompt": "A 10-year nominal government bond yields 5.0%, a 10-year real (inflation-linked) government bond yields 1.5%, and surveys put expected inflation at 2.8%. What risk premium is priced into the nominal bond (%)?",
+     "hint": "Strip the real yield and expected inflation out of the nominal yield.",
+     "correct": 0.7,
+     "tolerance": 0.01,
+     "unit": "%",
+     "tags": [
+      "calc"
+     ],
+     "answer": "Risk premium = nominal yield − real yield − expected inflation = 5.0 − 1.5 − 2.8 = **0.7%**. Equivalently, break-even inflation (3.5%) minus expected inflation (2.8%).",
+     "ref": "p. 16",
+     "mcq": {
+      "options": [
+       "5.0 − 1.5 − 2.8",
+       "5.0 − 1.5 + 2.8",
+       "5.0 − 2.8",
+       "(5.0 − 1.5) ÷ 2.8"
+      ],
+      "correct": 0,
+      "why": "Nominal − real − expected inflation = 0.7%."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "Between two dates, nominal government yields fall sharply across the curve while break-even inflation rates barely move. The fall in yields was mainly due to:",
+     "hint": "Nominal ≈ real + break-even. Which piece is left?",
+     "options": [
+      "A fall in real interest rates",
+      "A fall in expected inflation",
+      "A fall in the inflation-uncertainty premium",
+      "A rise in credit risk"
+     ],
+     "correct": 0,
+     "answer": "Nominal yield = real yield + break-even inflation. If break-even is unchanged, the move came from **real rates**. This is the reading's UK example, July 2007 to December 2010: investors expected a slowing economy after 2008, so real rates fell.",
+     "ref": "pp. 13–14"
+    },
+    {
+     "type": "single",
+     "prompt": "Which statement about yield curve movements matches the reading?",
+     "hint": "Three factors. One dominates.",
+     "options": [
+      "Changes in level explain about 90–95% of movements; slope and curvature explain the rest",
+      "Changes in slope explain most movements, because of the business cycle",
+      "Level, slope and curvature each explain about a third",
+      "Curvature explains most movements at the short end"
+     ],
+     "correct": 0,
+     "answer": "**Level** (driven by views on future inflation) explains about 90–95% of yield curve movement, **slope** (driven by the size of the risk premium; it steepens in recessions) about 5%, and **curvature** about 1%.",
+     "ref": "p. 14"
+    },
+    {
+     "type": "single",
+     "prompt": "The economy is in recession, short rates are low, and the yield curve is steeply **upward** sloping. What is the market signalling?",
+     "hint": "Long yields embed where short rates and inflation are expected to go.",
+     "options": [
+      "Investors expect recovery: growth and inflation, and so short rates, are expected to rise",
+      "Investors expect the recession to deepen",
+      "Investors expect deflation",
+      "Nothing; the slope only reflects regulation"
+     ],
+     "correct": 0,
+     "answer": "Term spread = long yield − short yield. In recession the central bank holds short rates low; if investors expect growth and inflation to pick up, long yields are higher, giving an **upward slope**. An **inverted** curve in an overheated economy (short rates high) signals an expected slowdown.",
+     "ref": "p. 15"
+    },
+    {
+     "type": "single",
+     "prompt": "Which part of the yield curve is most volatile, and why?",
+     "hint": "Where does the central bank operate?",
+     "options": [
+      "The short end, because monetary policy acts on short rates",
+      "The long end, because inflation uncertainty is greatest there",
+      "The middle, because of curvature",
+      "All maturities are equally volatile"
+     ],
+     "correct": 0,
+     "answer": "Monetary policy is conducted at the short end, so short rates move most as policy responds to the cycle. The long end reflects longer-run growth and inflation expectations plus risk premiums.",
+     "ref": "p. 15"
+    },
+    {
+     "type": "multi",
+     "prompt": "According to the reading, which statements about **government bond risk premiums** are true? Pick all that apply.",
+     "hint": "Think of government bonds as something that tends to pay off in bad times.",
+     "options": [
+      "They are positive",
+      "They rise with bond maturity",
+      "They are linked to the consumption-hedging benefit of government bonds",
+      "They rise during bad economic times",
+      "They are larger than equity risk premiums"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "Government bond risk premiums are **positive**, **increase with maturity** (inflation uncertainty grows), and are kept small by the bonds' **consumption-hedging** benefit, since they tend to pay off well in bad times. The reading says they **fall**, not rise, in bad times. Equities, a poor hedge, carry the much larger premium.",
+     "ref": "p. 16"
+    }
+   ]
+  },
+  {
+   "title": "Credit premiums and the business cycle",
+   "ref": "pp. 16–20",
+   "why": "Expect a vignette asking which bonds to overweight given a view on the economy.",
+   "questions": [
+    {
+     "type": "number",
+     "prompt": "A bond has a 4% probability of default and an expected recovery rate of 40%. What is the expected loss (%)?",
+     "hint": "Probability of default times the share you lose if it defaults.",
+     "correct": 2.4,
+     "tolerance": 0.01,
+     "unit": "%",
+     "tags": [
+      "calc"
+     ],
+     "answer": "Expected loss = probability of default × (1 − recovery rate) = 4% × (1 − 0.40) = **2.4%**.",
+     "ref": "p. 17",
+     "mcq": {
+      "options": [
+       "4% × (1 − 0.40)",
+       "4% × 0.40",
+       "4% ÷ 0.40",
+       "(1 − 4%) × 0.40"
+      ],
+      "correct": 0,
+      "why": "PD × loss given default, where loss given default = 1 − recovery rate. 2.4%."
+     }
+    },
+    {
+     "type": "text",
+     "prompt": "Why do credit spreads **widen** when the economy weakens? Give the two inputs to expected loss that move, and the reason the premium itself rises.",
+     "hint": "Expected loss has two inputs. Then ask: when do defaults happen, in good times or bad?",
+     "keyPoints": [
+      {
+       "text": "Probability of default rises",
+       "match": [
+        "probability of default",
+        "default prob",
+        "defaults rise",
+        "more default",
+        "pd",
+        "default risk",
+        "default rate"
+       ]
+      },
+      {
+       "text": "Recovery rates fall",
+       "match": [
+        "recovery"
+       ]
+      },
+      {
+       "text": "Losses arrive in bad times, when investors least want them, so they demand a higher premium (poor consumption hedge)",
+       "match": [
+        "bad time",
+        "hedge",
+        "premium",
+        "marginal util",
+        "compensat",
+        "risk avers"
+       ]
+      }
+     ],
+     "answer": "Credit spread = corporate yield − government yield of the same maturity. In a slowdown the **probability of default rises** and **recovery rates fall**, so expected loss rises. And because defaults cluster in bad times, credit-risky bonds are a poor consumption hedge, so investors demand a **larger credit premium (γ)** on top.",
+     "ref": "pp. 16–17",
+     "mcq": {
+      "prompt": "Why do credit spreads widen in a downturn?",
+      "options": [
+       "Default probability rises, recovery rates fall, and investors demand more for losses that come in bad times",
+       "Default probability rises, but recovery rates rise to offset it",
+       "Government yields rise faster than corporate yields",
+       "Inflation expectations rise, which only affects corporate bonds"
+      ],
+      "correct": 0,
+      "why": "Expected loss = PD × (1 − recovery). Both inputs worsen, and the premium on top rises too."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "The economy is heading into recession. Whose credit spreads should widen the **most**?",
+     "hint": "Lower quality, and more cyclical.",
+     "options": [
+      "A non-investment-grade airline",
+      "An investment-grade airline",
+      "A non-investment-grade toothpaste maker",
+      "An investment-grade toothpaste maker"
+     ],
+     "correct": 0,
+     "answer": "Spreads widen more for **lower-rated** issuers and for **cyclical** sectors (airlines, discretionary goods). Consumer non-cyclicals (staples) are least affected because demand is stable.",
+     "ref": "pp. 17–18"
+    },
+    {
+     "type": "single",
+     "prompt": "An analyst expects the economy to **strengthen**. Within credit, the reading implies she should favour:",
+     "hint": "What happens to the gap between high- and low-rated spreads in an expansion?",
+     "options": [
+      "Lower-rated bonds, which tend to outperform as spreads narrow",
+      "Higher-rated bonds, which tend to outperform as spreads narrow",
+      "Higher-rated bonds, because spreads widen in expansions",
+      "Neither; ratings do not affect relative performance"
+     ],
+     "correct": 0,
+     "answer": "When the economy strengthens, spreads narrow and the gap between low- and high-rated issuers narrows too, so **low-rated bonds outperform**. When it weakens, **high-rated bonds outperform** as that gap widens.",
+     "ref": "pp. 17–20"
+    },
+    {
+     "type": "single",
+     "prompt": "What does the reading say about **sovereign** credit risk in developed markets?",
+     "hint": "Think about what changed after 2008 and the euro crisis.",
+     "options": [
+      "Investors now price credit risk into developed-market government bonds too",
+      "Developed-market government bonds remain free of credit risk",
+      "Sovereign credit risk matters only for emerging markets",
+      "Sovereign spreads no longer respond to the business cycle"
+     ],
+     "correct": 0,
+     "answer": "After the 2008 crisis and the euro area debt crisis, developed-market sovereigns are no longer assumed default-free: investors demand a **credit premium** on them as well, and like corporate credit they do poorly in bad times.",
+     "ref": "pp. 18–20"
+    }
+   ]
+  },
+  {
+   "title": "Equities and the equity risk premium",
+   "ref": "pp. 20–21",
+   "why": "The P/E drivers list is easy marks; the consumption-hedge argument explains everything else.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Using the consumption-hedging argument, explain why the equity risk premium must be positive and large.",
+     "hint": "When do equities do badly, and how much is an extra unit of consumption worth at that time?",
+     "keyPoints": [
+      {
+       "text": "Equities are a poor consumption hedge",
+       "match": [
+        "hedge"
+       ]
+      },
+      {
+       "text": "They pay off poorly / prices fall in bad times (recessions)",
+       "match": [
+        "bad time",
+        "recession",
+        "downturn",
+        "fall",
+        "poor"
+       ]
+      },
+      {
+       "text": "That is when marginal utility of consumption is high, so investors demand a large premium to hold them",
+       "match": [
+        "marginal util",
+        "premium",
+        "compensat",
+        "demand",
+        "require"
+       ]
+      }
+     ],
+     "answer": "Equity cash flows are uncertain in both **size and timing**, and equity prices fall in recessions. They pay off worst exactly when an extra unit of consumption is most valuable, so they are a **bad hedge for bad consumption outcomes**. Investors need a positive, large premium (κ, on top of the credit premium). Ex post it has been about 3–5% in developed markets.",
+     "ref": "p. 20",
+     "mcq": {
+      "prompt": "Why must the equity risk premium be positive and large?",
+      "options": [
+       "Equities fall in bad times, when consumption is most valuable, so they are a poor hedge",
+       "Equities rise in bad times, so investors pay up for them",
+       "Equity cash flows are certain in timing but not in size",
+       "Equities are illiquid compared with government bonds"
+      ],
+      "correct": 0,
+      "why": "A poor consumption hedge needs a large premium. Negative covariance with m̃ again."
+     }
+    },
+    {
+     "type": "multi",
+     "prompt": "All else equal, which changes would **raise** the forward P/E of an equity market? Pick all that apply.",
+     "hint": "P/E rises with expected growth and falls with every piece of the discount rate.",
+     "options": [
+      "Higher expected real earnings growth",
+      "Lower real interest rates",
+      "Lower inflation expectations",
+      "Lower uncertainty about future inflation",
+      "A higher equity risk premium"
+     ],
+     "correct": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "answer": "A high P/E can come from **higher expected real earnings growth** or from a lower discount rate: **falling real rates**, **lower expected inflation**, **less inflation uncertainty**, or a **lower** equity risk premium. A higher ERP raises the discount rate and lowers P/E. P/Es tend to be low in slowdowns.",
+     "ref": "p. 21"
+    },
+    {
+     "type": "single",
+     "prompt": "How do corporate earnings typically behave around the **end** of a recession?",
+     "hint": "Companies cut costs hard during the recession. Then revenue ticks up.",
+     "options": [
+      "Profit growth rebounds sharply, because cost cuts mean small revenue gains produce large profit gains",
+      "Profits keep falling for several years",
+      "Profits recover slowly, in line with revenue",
+      "Profits are unrelated to the business cycle"
+     ],
+     "correct": 0,
+     "answer": "Real earnings are highly correlated with the cycle. Firms shed costs in a recession, so when revenue starts to recover, **operating leverage** produces a sharp jump in profits. Cyclical sectors (discretionary, airlines) swing most; non-cyclicals (staples) least.",
+     "ref": "pp. 20–21"
+    },
+    {
+     "type": "single",
+     "prompt": "Which statement about the equity risk premium and the credit premium is correct?",
+     "hint": "Both are compensation for doing badly in bad times.",
+     "options": [
+      "They are positively correlated, but equities are more sensitive to the business cycle",
+      "They are negatively correlated, so equities hedge credit",
+      "They are positively correlated, and credit is more sensitive to the business cycle",
+      "They are unrelated"
+     ],
+     "correct": 0,
+     "answer": "Both premiums rise in bad times and fall in good times, so they are **positively correlated**. Equity holders sit behind bondholders, so equities are **more cyclical** than credit-risky bonds.",
+     "ref": "pp. 20–21"
+    },
+    {
+     "type": "single",
+     "prompt": "Which pairing matches the reading?",
+     "hint": "Size and book value.",
+     "options": [
+      "Small caps carry a larger equity risk premium; a higher P/B signals higher growth expectations",
+      "Large caps carry a larger equity risk premium; a higher P/B signals higher growth expectations",
+      "Small caps carry a larger equity risk premium; a higher P/B signals lower growth expectations",
+      "Large caps carry a larger equity risk premium; a higher P/B signals distress"
+     ],
+     "correct": 0,
+     "answer": "**Small caps** have a larger equity risk premium than mid and large caps. A **higher P/B** means investors expect more growth from the company's net assets.",
+     "ref": "p. 21"
+    }
+   ]
+  },
+  {
+   "title": "Commercial real estate",
+   "ref": "pp. 21–22",
+   "why": "Tested as the last extension of the pricing equation: which premiums are added, and why.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Compared with a nominal credit-risky bond, what two **additional** premiums go into the discount rate for commercial real estate, and what is each for?",
+     "hint": "One is about what the building is worth when the lease ends. The other is about how fast you can sell it.",
+     "keyPoints": [
+      {
+       "text": "A premium for uncertainty about the property's value at the end of the lease (κ, like an equity premium)",
+       "match": [
+        "value",
+        "end of the lease",
+        "lease end",
+        "residual",
+        "equity",
+        "price uncertain"
+       ]
+      },
+      {
+       "text": "A premium for illiquidity (ϕ)",
+       "match": [
+        "illiquid",
+        "liquidity"
+       ]
+      }
+     ],
+     "answer": "Commercial real estate's discount rate takes everything in a credit-risky bond's (l + θ + π + γ) and adds **κ**, for the uncertain value of the property when the lease ends (equity-like), and **ϕ**, for **illiquidity**.",
+     "ref": "p. 22",
+     "mcq": {
+      "prompt": "What does commercial real estate add to a credit-risky bond's discount rate?",
+      "options": [
+       "A premium for uncertain property value at lease end, and an illiquidity premium",
+       "A premium for inflation uncertainty, and a credit premium",
+       "A premium for tenant default, and a term premium",
+       "An equity premium, and a currency premium"
+      ],
+      "correct": 0,
+      "why": "κ (equity-like, property value) and ϕ (illiquidity). Inflation and credit premiums are already in the bond."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "Which feature of commercial real estate is **equity-like** rather than bond-like?",
+     "hint": "Rent behaves like a coupon. What doesn't?",
+     "options": [
+      "The uncertain value of the property at the end of the lease",
+      "Regular rental income",
+      "Dependence on the tenant's credit quality",
+      "Contractual lease terms"
+     ],
+     "correct": 0,
+     "answer": "**Bond-like:** rent is like a coupon, and the tenant's credit quality matters like an issuer's. **Equity-like:** the property's value at the end of the lease is uncertain, like a stock's future price.",
+     "ref": "pp. 21–22"
+    },
+    {
+     "type": "single",
+     "prompt": "How does commercial real estate behave over the business cycle?",
+     "hint": "Separate the rent from the price.",
+     "options": [
+      "Rents are relatively stable, but property prices are pro-cyclical, so it is not a good hedge against bad times",
+      "Rents and prices are both stable, so it is a good hedge",
+      "Prices are counter-cyclical, so it earns a low premium",
+      "Rents are highly cyclical, but prices are stable"
+     ],
+     "correct": 0,
+     "answer": "Rent on long leases is fairly insensitive to the cycle, but **property prices are pro-cyclical**: they fall in recessions and rise steeply in expansions. Like equity, commercial property is **not a good hedge** against bad outcomes, so investors demand a relatively high premium, one that is highly correlated with the premiums on equities and risky bonds.",
+     "ref": "p. 22"
+    }
+   ]
+  }
+ ]
+}
