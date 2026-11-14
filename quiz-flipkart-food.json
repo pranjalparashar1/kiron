@@ -1,0 +1,407 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "flipkart-food",
+ "title": "Flipkart food & nutrition growth",
+ "source": "Flipkart Stories · 9 July 2026",
+ "sourceUrl": "https://stories.flipkart.com/announcement/flipkart-sees-50-growth-in-food-and-nutrition-as-gen-z-and-bharat-redefine-food-commerce",
+ "purpose": "Learn India's health and wellness industry for a report that uncovers an insight.",
+ "about": "The July 2026 announcement about Flipkart's 50% growth in food and nutrition, driven by Gen Z and Tier 2+ shoppers.",
+ "sections": [
+  {
+   "title": "The big picture",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "What was the headline year-on-year growth of Flipkart's food & nutrition category, and which two groups drove it most?",
+     "keyPoints": [
+      {
+       "text": "50%",
+       "match": [
+        "50",
+        "fifty"
+       ]
+      },
+      {
+       "text": "Gen Z",
+       "match": [
+        "gen z",
+        "genz",
+        "young"
+       ]
+      },
+      {
+       "text": "Tier 2+ / Bharat",
+       "match": [
+        "tier",
+        "bharat",
+        "small town",
+        "smaller town",
+        "small cit",
+        "smaller cit",
+        "non metro",
+        "nonmetro"
+       ]
+      }
+     ],
+     "answer": "**50% YoY**, driven mainly by **Gen Z** and shoppers from **Tier 2+ towns** (\"Bharat\")."
+    },
+    {
+     "type": "text",
+     "prompt": "Why is this growth happening? Name what's pulling young shoppers in, and what non-metro shoppers are buying.",
+     "hint": "Think: how Gen Z discovers food, and what's in Bharat's basket.",
+     "keyPoints": [
+      {
+       "text": "recipes",
+       "match": [
+        "recipe"
+       ]
+      },
+      {
+       "text": "creator recommendations",
+       "match": [
+        "creator",
+        "influencer"
+       ]
+      },
+      {
+       "text": "wellness trends",
+       "match": [
+        "wellness",
+        "health"
+       ]
+      },
+      {
+       "text": "healthier staples / modern nutrition (Bharat)",
+       "match": [
+        "staple",
+        "nutrition",
+        "healthier",
+        "healthy"
+       ]
+      }
+     ],
+     "need": 3,
+     "answer": "Young consumers discover food through **recipes**, **creator recommendations** and **wellness trends**; non-metro shoppers are moving to **healthier kitchen staples** and **modern nutrition products**."
+    },
+    {
+     "type": "single",
+     "prompt": "How much of demand came through Flipkart Minutes, its quick-commerce service?",
+     "options": [
+      "10%",
+      "25%",
+      "40%",
+      "65%"
+     ],
+     "correct": 1,
+     "answer": "**25%**. Quick commerce was called out as a key contributor. (The summary says 25% of *category* demand; the body says 25% of *overall* demand.)"
+    },
+    {
+     "type": "single",
+     "prompt": "What share of overall demand comes from Tier 2+ markets?",
+     "options": [
+      "35%",
+      "50%",
+      "65%",
+      "80%"
+     ],
+     "correct": 2,
+     "answer": "**65%** of overall demand. This figure is only in the summary bullets at the top of the article, not the body. Don't confuse it with **80%**, which is how much searches for healthy products grew in Bharat."
+    }
+   ]
+  },
+  {
+   "title": "Gen Z and the metros",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "What growth figure did the article give for Gen Z?",
+     "keyPoints": [
+      {
+       "text": "60%",
+       "match": [
+        "60",
+        "sixty"
+       ]
+      }
+     ],
+     "answer": "**60% y-o-y**."
+    },
+    {
+     "type": "text",
+     "prompt": "Name the four top categories Gen Z is buying.",
+     "hint": "One point per item. Order doesn't matter.",
+     "keyPoints": [
+      {
+       "text": "Protein oats",
+       "match": [
+        "oat"
+       ]
+      },
+      {
+       "text": "High-protein peanut butter",
+       "match": [
+        "peanut",
+        "butter"
+       ]
+      },
+      {
+       "text": "Gourmet chocolates",
+       "match": [
+        "chocolate",
+        "choco"
+       ]
+      },
+      {
+       "text": "Protein muesli",
+       "match": [
+        "muesli",
+        "musli",
+        "museli"
+       ]
+      }
+     ],
+     "answer": "**Protein oats**, **high-protein peanut butter**, **gourmet chocolates**, **protein muesli**. (Notice the protein theme.)"
+    },
+    {
+     "type": "text",
+     "prompt": "Which cuisine's flavoured snacks are a fast-growing trend, which two cities lead it, and what are the example products?",
+     "keyPoints": [
+      {
+       "text": "Korean",
+       "match": [
+        "korea"
+       ]
+      },
+      {
+       "text": "Bengaluru",
+       "match": [
+        "bengal",
+        "bangal"
+       ]
+      },
+      {
+       "text": "New Delhi",
+       "match": [
+        "delhi"
+       ]
+      },
+      {
+       "text": "Cup noodles / chips",
+       "match": [
+        "noodle",
+        "chip",
+        "cuppa",
+        "ramen"
+       ]
+      }
+     ],
+     "answer": "**Korean**-flavoured snacks like **Cuppa Noodles** and **chips**, led by **Bengaluru** and **New Delhi**."
+    },
+    {
+     "type": "single",
+     "prompt": "Which basket did the article say WOMEN are adding?",
+     "options": [
+      "Nuts and dry fruits, chocolates, jams and spreads",
+      "Value-added tea, coffee and edible seeds",
+      "Protein oats, peanut butter and muesli",
+      "Cold-pressed oils, ghee and dates"
+     ],
+     "correct": 1,
+     "answer": "Women: **value-added tea, coffee, edible seeds**. Men drive **nuts & dry fruits, chocolates, jams & spreads**."
+    },
+    {
+     "type": "text",
+     "prompt": "And which categories are MEN driving demand for?",
+     "hint": "Three categories.",
+     "keyPoints": [
+      {
+       "text": "Nuts & dry fruits",
+       "match": [
+        "nut",
+        "dry fruit",
+        "dryfruit"
+       ]
+      },
+      {
+       "text": "Chocolates",
+       "match": [
+        "chocolate",
+        "choco"
+       ]
+      },
+      {
+       "text": "Jams & spreads",
+       "match": [
+        "jam",
+        "spread"
+       ]
+      }
+     ],
+     "answer": "**Nuts and dry fruits**, **chocolates**, **jams and spreads**."
+    }
+   ]
+  },
+  {
+   "title": "Bharat (Tier 2 and 3)",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Name any three of the Tier 2+ towns the article listed by name.",
+     "hint": "There were seven.",
+     "keyPoints": [
+      {
+       "text": "Dhulia",
+       "match": [
+        "dhul"
+       ]
+      },
+      {
+       "text": "Imphal",
+       "match": [
+        "imphal"
+       ]
+      },
+      {
+       "text": "Dharwad",
+       "match": [
+        "dharwa"
+       ]
+      },
+      {
+       "text": "Ujjain",
+       "match": [
+        "ujja"
+       ]
+      },
+      {
+       "text": "Hubli",
+       "match": [
+        "hubl"
+       ]
+      },
+      {
+       "text": "Mirganj",
+       "match": [
+        "mirganj"
+       ]
+      },
+      {
+       "text": "Laharpur",
+       "match": [
+        "lahar"
+       ]
+      }
+     ],
+     "need": 3,
+     "answer": "Any 3 of: **Dhulia, Imphal, Dharwad, Ujjain, Hubli, Mirganj, Laharpur**."
+    },
+    {
+     "type": "text",
+     "prompt": "Name at least four products seeing strong traction in Bharat.",
+     "hint": "Healthy, slightly premium staples.",
+     "keyPoints": [
+      {
+       "text": "Cold-pressed oils",
+       "match": [
+        "cold press",
+        "coldpress"
+       ]
+      },
+      {
+       "text": "Olive oil",
+       "match": [
+        "olive"
+       ]
+      },
+      {
+       "text": "Protein oats",
+       "match": [
+        "oat"
+       ]
+      },
+      {
+       "text": "Protein muesli",
+       "match": [
+        "muesli",
+        "musli"
+       ]
+      },
+      {
+       "text": "Premium dry fruits",
+       "match": [
+        "dry fruit",
+        "dryfruit",
+        "nuts"
+       ]
+      },
+      {
+       "text": "Authentic ghee",
+       "match": [
+        "ghee"
+       ]
+      },
+      {
+       "text": "Dates",
+       "match": [
+        "dates",
+        "date",
+        "khajur"
+       ]
+      }
+     ],
+     "need": 4,
+     "answer": "**Cold-pressed oils, olive oils, protein oats, protein muesli, premium dry fruits, authentic ghee, dates**."
+    },
+    {
+     "type": "single",
+     "prompt": "By how much did searches for those healthy products grow over the past year?",
+     "options": [
+      "25%",
+      "50%",
+      "65%",
+      "80%"
+     ],
+     "correct": 3,
+     "answer": "**80%**."
+    }
+   ]
+  },
+  {
+   "title": "The bigger shift",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Flipkart's take: food in India is no longer just about routine. What is it becoming an expression of?",
+     "hint": "Three words.",
+     "keyPoints": [
+      {
+       "text": "wellness",
+       "match": [
+        "wellness",
+        "health"
+       ]
+      },
+      {
+       "text": "identity",
+       "match": [
+        "identity",
+        "self",
+        "who"
+       ]
+      },
+      {
+       "text": "discovery",
+       "match": [
+        "discover",
+        "explor",
+        "new"
+       ]
+      }
+     ],
+     "answer": "An expression of **wellness**, **identity** and **discovery**. That's the article's thesis: food shopping is shifting from routine staples to choices about health and self-image."
+    }
+   ]
+  }
+ ]
+}

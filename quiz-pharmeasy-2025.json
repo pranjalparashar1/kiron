@@ -1,0 +1,274 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "pharmeasy-2025",
+ "title": "PharmEasy Health Report 2025",
+ "source": "PharmEasy Health Report 2025 · via MediaBrief",
+ "sourceUrl": "https://mediabrief.com/pharmeasy-health-report-2025/",
+ "purpose": "Learn India's health and wellness industry for a report that uncovers an insight.",
+ "about": "What India bought to stay healthy in 2025: the trends and numbers that matter for a health and wellness report.",
+ "sections": [
+  {
+   "title": "What India bought to stay healthy",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "What two big shifts does the report say Indian health buying made in 2025?",
+     "keyPoints": [
+      {
+       "text": "From acute / episodic (sick) care to preventive, proactive care",
+       "match": [
+        "prevent",
+        "proactiv",
+        "wellness",
+        "routine",
+        "habit"
+       ]
+      },
+      {
+       "text": "From metro-led demand to Tier-2 and Tier-3 cities",
+       "match": [
+        "tier",
+        "small cit",
+        "smaller cit",
+        "small town",
+        "beyond metro",
+        "non metro"
+       ]
+      }
+     ],
+     "answer": "(1) **Acute → preventive:** vitamins, supplements, diagnostics and chronic-care management became year-round habits rather than things bought when sick. (2) **Metro → Tier-2/3:** smaller cities drove a growing share of the growth.\n\nThe report's own one-liner: a move \"from reactive panic to proactive wellness\"."
+    },
+    {
+     "type": "text",
+     "prompt": "What was PharmEasy's most-ordered category of the year, which single product was bought most, and how much did that product grow?",
+     "keyPoints": [
+      {
+       "text": "Category: vitamins & supplements",
+       "match": [
+        "supplement",
+        "vitamins",
+        "multivitamin"
+       ]
+      },
+      {
+       "text": "Product: Vitamin B supplements",
+       "match": [
+        "vitamin b",
+        "vit b",
+        "b12",
+        "b complex",
+        "b vitamin"
+       ]
+      },
+      {
+       "text": "Up 33% versus last year",
+       "match": [
+        "33"
+       ]
+      }
+     ],
+     "answer": "**Vitamins & supplements** had the highest order volumes of any category; multivitamins top the monthly chart. The single most-purchased product was **Vitamin B supplements, up 33% vs 2024**, across cities and age groups. Calcium came a close second; Vitamin D was also among the top national purchases."
+    },
+    {
+     "type": "text",
+     "prompt": "Diagnostics: which test was booked most, which two tests rose especially in Tier-2 cities, and what changed about tests like CBC and lipid profiles?",
+     "keyPoints": [
+      {
+       "text": "Most-booked: Vitamin D test",
+       "match": [
+        "vitamin d",
+        "vit d"
+       ]
+      },
+      {
+       "text": "Rising in Tier-2: thyroid panels and HbA1c (diabetes)",
+       "match": [
+        "thyroid",
+        "hba1c",
+        "hb a1c",
+        "a1c",
+        "diabet",
+        "sugar"
+       ]
+      },
+      {
+       "text": "CBC / lipid became routine tracking, not illness-led testing",
+       "match": [
+        "routine",
+        "regular",
+        "track",
+        "monitor",
+        "prevent",
+        "checkup",
+        "check up",
+        "without symptom",
+        "not sick",
+        "not illness"
+       ]
+      }
+     ],
+     "answer": "**Vitamin D tests** were the most-booked. **Thyroid panels and HbA1c** rose, especially in Tier-2 cities. **CBC and lipid profiles** moved from \"test when ill\" to regular tracking.\n\nThis is the diagnostics side of the same preventive shift: people testing to monitor, not to diagnose."
+    },
+    {
+     "type": "single",
+     "prompt": "Blood pressure and diabetes medicines made up what share of chronic-condition orders?",
+     "options": [
+      "About 60%",
+      "71%",
+      "93%",
+      "About half"
+     ],
+     "correct": 2,
+     "answer": "**93%** of chronic-condition orders. Thyroid medicines were smaller but stable, especially among urban women; **women were nearly 60% of thyroid testing** (Delhi NCR and Bengaluru led). 71% is the weekday share of all orders, a different stat."
+    },
+    {
+     "type": "text",
+     "prompt": "GLP-1 medicines were flagged as a newly emerging category. How fast did they grow, and who is using them?",
+     "keyPoints": [
+      {
+       "text": "About 12% average growth",
+       "match": [
+        "12"
+       ]
+      },
+      {
+       "text": "Month-on-month (not year-on-year)",
+       "match": [
+        "month",
+        "mom",
+        "monthly"
+       ]
+      },
+      {
+       "text": "Nearly half of users are 25–45 (notable share 25–35)",
+       "match": [
+        "25",
+        "45",
+        "35",
+        "young",
+        "millennial"
+       ]
+      }
+     ],
+     "answer": "**~12% average month-on-month growth**, consistent through the year, with uptake varying by city. **Nearly half of GLP-1 users are aged 25–45**, with a notable share aged 25–35.\n\nThe report reads this as early engagement by young adults, not only older diabetic patients."
+    },
+    {
+     "type": "text",
+     "prompt": "Tier-2 and Tier-3 cities: name categories where they grew faster, and the products first-time buyers started with.",
+     "keyPoints": [
+      {
+       "text": "Faster growth (any 2): vitamins, sexual wellness, diagnostics, fitness",
+       "match": [
+        "vitamin",
+        "sexual",
+        "diagnos",
+        "test",
+        "fitness",
+        "protein"
+       ]
+      },
+      {
+       "text": "First-time buyer entry (any 1): multivitamins, speciality supplements, glucometer strips, sunscreens, moisturisers",
+       "match": [
+        "multivitamin",
+        "supplement",
+        "glucometer",
+        "strip",
+        "sunscreen",
+        "moistur"
+       ]
+      }
+     ],
+     "answer": "Tier-2/3 grew faster in **vitamins, sexual wellness, diagnostics and fitness**. First-time buyers came in mainly through **multivitamins, speciality supplements, glucometer strips, sunscreens and moisturisers**, so wellness and self-care products, not prescriptions, are the entry point.\n\nAlso: Tier-2 cities placed 22% more \"SOS-style\" orders. The article doesn't say what that's compared with, so don't lean on it without the original report."
+    },
+    {
+     "type": "text",
+     "prompt": "What does the timing of orders (weekday vs weekend, morning, late night) suggest about how people use an online pharmacy?",
+     "keyPoints": [
+      {
+       "text": "Weekdays = 71% of orders",
+       "match": [
+        "71"
+       ]
+      },
+      {
+       "text": "Mostly planned / routine restocking and chronic care, not emergencies",
+       "match": [
+        "routine",
+        "restock",
+        "plan",
+        "chronic",
+        "daily",
+        "regular",
+        "habit",
+        "refill",
+        "replenish"
+       ]
+      }
+     ],
+     "answer": "**Weekdays made up 71% of orders.** Mornings (6–9 am) are routine restocking of vitamins, calcium and daily-use medicines. Even late night (10 pm–4 am) is **chronic care, not emergencies**: blood thinners top it. Weekends bring spikes in antacids, skincare, sun care and exploratory OTC buys (Sunday antacids run 14–18% higher).\n\nTakeaway: the channel is used for planned replenishment more than urgent need."
+    },
+    {
+     "type": "single",
+     "prompt": "The report says “every second household” did what at least once in the year?",
+     "options": [
+      "Booked a diagnostic test",
+      "Bought a digestive / gut-health product",
+      "Ordered a multivitamin",
+      "Placed a late-night order"
+     ],
+     "correct": 1,
+     "answer": "**Bought a digestive product.** Gut health is a mass category: Hyderabad is called a gut-health hub (antacids, probiotics), Delhi and Bengaluru also show strong gut-care demand, and antacids spike on weekends. Note this is among PharmEasy's customers, not all Indian households."
+    },
+    {
+     "type": "text",
+     "prompt": "Which OTC and self-care categories does the report call out as rising? Name at least two.",
+     "keyPoints": [
+      {
+       "text": "Homeopathy, one of the fastest-growing categories",
+       "match": [
+        "homeopath",
+        "homoeopath"
+       ]
+      },
+      {
+       "text": "Protein powders & fitness supplements (Gurgaon, Mumbai lead whey; Tier-2 catching up)",
+       "match": [
+        "protein",
+        "whey",
+        "fitness",
+        "gym"
+       ]
+      },
+      {
+       "text": "Home-monitoring devices (glucometers, oximeters, thermometers)",
+       "match": [
+        "glucometer",
+        "oximeter",
+        "thermometer",
+        "monitor",
+        "device",
+        "bp machine"
+       ]
+      }
+     ],
+     "need": 2,
+     "answer": "**Homeopathy** was one of the fastest-growing categories. **Protein powders and fitness supplements** surged (Gurgaon and Mumbai lead whey protein; Tier-2 is catching up). **Home-monitoring devices** (thermometers, glucometers, oximeters) saw steady demand, peaking at seasonal transitions."
+    },
+    {
+     "type": "single",
+     "prompt": "What does the report's data actually cover?",
+     "options": [
+      "A nationally representative survey of Indian households",
+      "Anonymised PharmEasy medicine, lab and wellness orders, 1 Jan – 20 Nov 2025",
+      "Retail pharmacy sales audited across online and offline channels",
+      "PharmEasy orders across 2024 and 2025 combined"
+     ],
+     "correct": 1,
+     "answer": "**Only orders placed on PharmEasy**, 1 January to 20 November 2025, and the report says it doesn't aim to show broader national or regional trends.\n\nFor your report: treat these as signals from online, platform users (my read: likely urban and already health-aware), and look for an independent source before calling anything a national trend."
+    }
+   ]
+  }
+ ]
+}

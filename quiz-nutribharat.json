@@ -1,0 +1,252 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "nutribharat",
+ "title": "NutriBharat@2047",
+ "source": "EY × ASSOCHAM · NutriBharat@2047 · March 2026",
+ "purpose": "Learn India's health and wellness industry for a report that uncovers an insight.",
+ "about": "Six parts on India's nutraceutical industry: demand, market size, barriers, supply, regulation, and who's telling the story.",
+ "sections": [
+  {
+   "title": "The demand story",
+   "ref": "pp. 12–16, 18, 20",
+   "why": "What the industry says it is selling, and to whom.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "The report says India's nutrition problem has changed. From what to what? Why is that shift the foundation of the nutraceutical pitch?",
+     "keyPoints": [
+      "Shift from calorie sufficiency to micronutrient adequacy (hidden hunger)",
+      "Low dietary diversity and rising NCDs alongside it",
+      "Reframing lets nutraceuticals and fortified foods be pitched as the solution"
+     ],
+     "answer": "India has moved from calorie sufficiency (enough food) to a problem of micronutrient adequacy, often called hidden hunger: people eat enough calories but lack iron, zinc, vitamins and dietary diversity, alongside rising NCDs. That reframing is the industry's opening: if the gap is micronutrients rather than calories, the fix can be sold as supplements, fortified foods and functional foods rather than simply more food."
+    },
+    {
+     "type": "text",
+     "prompt": "The report leads with stunting (24.6% of under-fives) and anaemia (over 57% of women). Its own barriers section admits a limit on who actually buys these products. What is the tension, and how does the report try to bridge it?",
+     "keyPoints": [
+      "The malnourished (poor, rural) are not the main buyers",
+      "Report admits adoption is limited beyond urban wellness users (affordability, price sensitivity, cultural food frames)",
+      "Bridge: public procurement via ICDS / PM POSHAN / PDS under a national mission"
+     ],
+     "answer": "The people with the deficiencies are not the people buying supplements. Barrier 2 (p. 20) says price sensitivity, affordability and a food-centric culture limit adoption beyond urban wellness users. So the public-health numbers describe one population and the market describes another. The report bridges the gap by asking the state to become the buyer: a National Nutraceutical & Functional Foods Mission that aligns public procurement in ICDS, PM POSHAN and the PDS with these products."
+    },
+    {
+     "type": "multi",
+     "prompt": "Which of these does the report name as growth drivers for India's nutraceutical demand (p. 18)? Pick all that apply.",
+     "options": [
+      "Preventive health and immunity",
+      "Women's health",
+      "Protein and sports nutrition",
+      "Clean-label and plant-based formats",
+      "Infant formula",
+      "Weight-loss drugs"
+     ],
+     "correct": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "answer": "p. 18 names preventive health, women's health, protein and sports nutrition, and clean-label, plant-based and functional formats. Infant formula and weight-loss drugs are not in the list."
+    }
+   ]
+  },
+  {
+   "title": "How big is the market, really?",
+   "ref": "pp. 17–19",
+   "why": "The numbers you're most likely to quote, and the ones most likely to mislead.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Page 17 gives two very different sizes for India's nutraceutical market. Give both, with their sources, and explain what the gap means for how you use them.",
+     "keyPoints": [
+      "~US$32bn (2024), Grand View Research",
+      "US$6–11bn domestic consumption (2023–24), VitaFoods",
+      "Gap of roughly 3–5x, likely definitional (what's counted)",
+      "Both are commercial estimates: cite source and scope"
+     ],
+     "answer": "About US$32.1bn in 2024 (Grand View Research) and US$6–11bn for domestic consumption in 2023–24 (VitaFoods India, called 'independent market intelligence'). The bigger figure is 3–5 times the smaller. They probably measure different things (exports, ingredients, fortified foods, Ayurveda may be in or out), and both come from paid market-research firms. Never quote one without its source and scope, and prefer the consumption figure for domestic demand."
+    },
+    {
+     "type": "text",
+     "prompt": "What does the report project India's nutraceutical market to reach, by when, and at what growth rate? Whose number is it?",
+     "keyPoints": [
+      "~US$75.8bn",
+      "by 2033",
+      "~10% CAGR",
+      "A third-party commercial projection on the larger base, not measured"
+     ],
+     "answer": "About US$75.8bn by 2033 at roughly 10% CAGR, up from US$32.1bn in 2024 (p. 19). It is a projection carried over from commercial market-research estimates, not something EY measured, and it is built on the larger of the two base figures."
+    },
+    {
+     "type": "text",
+     "prompt": "From the SWOT on p. 18: who dominates the premium end of the market, and what are the main weaknesses of Indian players?",
+     "keyPoints": [
+      "Multinationals dominate premium segments",
+      "Limited clinical validation / low R&D",
+      "Trouble scaling and becoming export-ready",
+      "Food vs drug regulatory ambiguity",
+      "Affordability and access gaps"
+     ],
+     "answer": "Multinationals dominate premium segments (listed as a threat). Weaknesses: limited clinical validation and low R&D, entrants struggle with scale and export readiness, regulatory ambiguity between food and drugs, and gaps in affordability and access."
+    }
+   ]
+  },
+  {
+   "title": "What holds the industry back",
+   "ref": "pp. 20–21",
+   "why": "A lobby paper is most candid about its own industry's problems.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Name the four barriers to scale the report identifies.",
+     "keyPoints": [
+      "Limited clinical evidence / validation capacity",
+      "Consumer trust, affordability, cultural frames",
+      "Scale-up and manufacturing gaps (lab-to-market bottleneck)",
+      "Standardisation, safety and credibility"
+     ],
+     "answer": "1) Limited clinical evidence and validation capacity (small, under-powered trials). 2) Consumer trust, affordability and cultural frames. 3) Scale-up and manufacturing infrastructure gaps, the 'lab-to-market' bottleneck for startups and SMEs (few pilot-scale, GMP or clinical-grade batch facilities). 4) Standardisation, safety and credibility (variable phytochemical content, contaminant testing, export-grade quality)."
+    },
+    {
+     "type": "text",
+     "prompt": "The report also asks for stricter rules: prior approval backed by India-specific human data for novel ingredients and risk-reduction claims (pp. 9, 33). Given the barriers above, who wins and who loses if that happens?",
+     "keyPoints": [
+      "Trials are costly and capacity is limited",
+      "Large incumbents / MNCs can afford it and gain a moat or seal",
+      "Startups and SMEs are squeezed out",
+      "Possible upside: credibility and consumer safety"
+     ],
+     "answer": "Human trials are expensive and the report itself says clinical-validation capacity is thin and SMEs already struggle to scale. Stricter evidence rules therefore raise the cost of entry: large incumbents and multinationals that can fund trials gain a moat (plus a FOSHU-style quality seal to market with), while small brands and startups get squeezed. Consumers may gain on safety and credibility."
+    }
+   ]
+  },
+  {
+   "title": "India's real edge: the farm",
+   "ref": "pp. 21–25",
+   "why": "The supply-side argument is the paper's most distinctive idea.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "The report argues India's advantage is upstream, not in demand or manufacturing. What does that mean? Back it with at least two facts.",
+     "keyPoints": [
+      "Advantage is in raw materials / agri-biodiversity (upstream)",
+      "Millets ~43% of global output",
+      "Turmeric ~75% of global production",
+      "6,500+ medicinal plant species (1,100+ traded)",
+      "Pulses 27–29 MMT for plant protein"
+     ],
+     "answer": "India's strength is agriculture and biodiversity as the source of raw bioactives, which the report calls 'the structural engine' (p. 21). Facts (p. 22): millets about 18 MMT, roughly 43% of global output; turmeric over 1 MMT, about 75% of global production; 6,500+ documented medicinal-plant species, 1,100+ actively traded; pulses 27–29 MMT as the plant-protein base."
+    },
+    {
+     "type": "single",
+     "prompt": "According to the report, India accounts for roughly what share of global turmeric production?",
+     "options": [
+      "27%",
+      "43%",
+      "75%",
+      "90%"
+     ],
+     "correct": 2,
+     "answer": "75% of global production. 27% is the report's figure for India's share of global consumption, and 43% is millets' share of global output."
+    },
+    {
+     "type": "text",
+     "prompt": "What role do farmer producer organisations (FPOs) play in the value chain the report proposes, and which barrier does that address?",
+     "keyPoints": [
+      "Aggregation of small farmers",
+      "Farm-proximate processing and quality checks",
+      "Traceability (plot-to-lot), spec-ready inputs",
+      "Fixes the standardisation / credibility barrier and export readiness"
+     ],
+     "answer": "FPOs aggregate small farmers' output, run farm-proximate cleaning, grading and processing, and provide plot-to-lot traceability with specification-ready inputs (e.g. curcumin ranges, millet quality checks). That addresses the standardisation, safety and credibility barrier: consistent, traceable raw material is what export buyers and evidence-backed products need. The report also sells it as a farmer-income story (2–3x target)."
+    }
+   ]
+  },
+  {
+   "title": "The rules of the game",
+   "ref": "pp. 28–33",
+   "why": "Regulation shapes who can sell what, and what they can claim.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Name the main laws and regulations that govern nutraceuticals in India, with their years.",
+     "keyPoints": [
+      "FSS Act 2006",
+      "Nutraceutical Regulations 2016",
+      "Advertising and Claims Regulations 2018",
+      "2022 'Nutra 2.0' draft",
+      "(~400 approved ingredients)"
+     ],
+     "answer": "The Food Safety and Standards Act, 2006 (legal basis); the FSS Nutraceutical Regulations, 2016 (health supplements, nutraceuticals, special dietary and medical-purpose foods, probiotics/prebiotics, botanicals); the FSS (Advertising and Claims) Regulations, 2018; and the 2022 'Nutra 2.0' draft update. About 400 ingredients are approved."
+    },
+    {
+     "type": "single",
+     "prompt": "Which best describes how India regulates nutraceutical claims today?",
+     "options": [
+      "EU-style: every health claim needs pre-authorised wording from a central register",
+      "Food-first with reactive oversight: no central authorised-claims list, prior approval only for novel ingredients or non-standard claims",
+      "Drug-style: products need clinical trials before launch",
+      "Largely unregulated: no FSSAI rules apply to supplements"
+     ],
+     "correct": 1,
+     "answer": "India treats even tablets and capsules as food, relies on post-market enforcement, has no central authorised-claims list, and requires prior approval only for novel ingredients or non-standard claims. Disease-cure claims are banned (p. 30)."
+    },
+    {
+     "type": "text",
+     "prompt": "Pick one of Japan, the US or the EU. What does its system have that India's lacks, according to the report?",
+     "keyPoints": [
+      "Names a real gap: review panel, standard criteria, timelines or public claims database",
+      "Gives a correct feature of the chosen country (FOSHU dossier/tiers; DSHEA NDI notice, disclaimer, CAERS; EU claims register, novel-food authorisation)"
+     ],
+     "answer": "The report's list of India's gaps (p. 33): no structured scientific claims-review panel, no standard assessment criteria, no approval timeline, and no public claims database. Japan's FOSHU has a sponsor dossier with human trial or systematic-review data, tiered claim categories and a 60-day notification. The US (DSHEA) has no pre-approval but requires New Dietary Ingredient notification 75 days before sale, a disclaimer on structure/function claims, and publishes adverse-event data (CAERS). The EU has a register of authorised claim wording and pre-market authorisation for novel foods."
+    },
+    {
+     "type": "text",
+     "prompt": "Which existing government programmes could become big buyers of fortified and functional foods, and which schemes already subsidise manufacturers?",
+     "keyPoints": [
+      "Demand: POSHAN 2.0, PM POSHAN / mid-day meal, Anaemia Mukt Bharat, ICDS, PDS",
+      "Supply: PLI for food processing (health supplements), PM-FME, Mega Food Parks",
+      "Ask for PLI 2.0"
+     ],
+     "answer": "Buyers (demand side): POSHAN Abhiyaan / Poshan 2.0, PM POSHAN (mid-day meals), Anaemia Mukt Bharat, ICDS, and the PDS (millets). Subsidies (supply side): the PLI scheme for food processing (with a health-supplements category), PM-FME for micro food enterprises, and Mega Food Parks. The report wants a 'Nutraceutical PLI 2.0' on top."
+    }
+   ]
+  },
+  {
+   "title": "Who's telling the story",
+   "ref": "pp. 3–5, 8–9, 36–40",
+   "why": "So you can use this source without inheriting its agenda.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Who presents this report, and what are its biggest policy asks? Who gains if they happen?",
+     "keyPoints": [
+      "ASSOCHAM with EY",
+      "National mission + public procurement",
+      "PLI 2.0 subsidy",
+      "New claims authority / quality seal / ingredient lists",
+      "Beneficiaries: big incumbents, exporters, AYUSH, consultants"
+     ],
+     "answer": "ASSOCHAM (an industry chamber) presents it in partnership with EY. Asks: a National Nutraceutical & Functional Foods Mission that steers public procurement (ICDS, PM POSHAN, PDS); a Nutraceutical PLI 2.0; an India Food-Health Claims Authority with a FOSHU-style seal, positive and negative ingredient lists and an adverse-events portal; Codex alignment for exports; food–drug boundaries harmonised with AYUSH. Gainers: large incumbents (government buying, a seal, higher entry barriers), exporters, the AYUSH sector, and consultancies like EY who design and run new missions and portals."
+    },
+    {
+     "type": "text",
+     "prompt": "Name two things this report leaves out that your own report should cover.",
+     "keyPoints": [
+      "Product safety / harms",
+      "Evidence the products work",
+      "Affordability for the malnourished",
+      "Company / player landscape",
+      "Alternatives: diet diversity, PDS, sanitation",
+      "Tax and price"
+     ],
+     "need": 2,
+     "answer": "Any of: harms from supplements (adulteration, herbal liver injury, overdose); whether the products actually improve health outcomes (it cites deficiency rates, not product efficacy); affordability for the people who are malnourished; the company landscape (no players are named); cheaper alternatives such as dietary diversity, the PDS and sanitation; taxes and pricing (GST is not discussed)."
+    }
+   ]
+  }
+ ]
+}
