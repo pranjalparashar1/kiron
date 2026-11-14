@@ -208,9 +208,8 @@ pre.prompt-text { margin: 0; max-height: 260px; overflow: auto; background: var(
 @media (max-width: 380px) { .actions2 { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: no-preference) { .fb { animation: drop .18s ease-out; } @keyframes drop { from { transform: translateY(-4px); opacity: .6; } to { transform: none; opacity: 1; } } }
 
-/* ===== v2: one question per screen, two revision modes, phone / laptop view ===== */
+/* ===== v2: one question per screen, phone layout ===== */
 :root { --w: 560px; }
-:root[data-view="laptop"] { --w: 1040px; }
 .wrap, .top-in, .actionbar-in { max-width: var(--w); }
 .btn, .icon-btn, .opt, .kp, .mode, .part, .action, .chip { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .btn { min-height: 48px; }
@@ -325,28 +324,6 @@ table.log th { text-align: left; font-size: 12px; text-transform: uppercase; let
 table.log td { padding: 7px 6px 7px 0; border-top: 1px solid var(--line); }
 .card:has(table.log) { overflow-x: auto; }
 
-/* laptop view */
-:root[data-view="laptop"] .stage { grid-template-columns: minmax(0, 1fr) 250px; align-items: start; }
-:root[data-view="laptop"] .side { display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--muted); border-left: 1px solid var(--line); padding-left: 20px; position: sticky; top: 90px; }
-:root[data-view="laptop"] .side b { color: var(--ink); }
-:root[data-view="laptop"] .side .keys { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; }
-:root[data-view="laptop"] .qcardp { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 28px; }
-:root[data-view="laptop"] .qcardp .prompt { font-size: 23px; }
-:root[data-view="laptop"] .qcardp button.opt { background: var(--bg); }
-:root[data-view="laptop"] .qcardp button.opt.ok { background: var(--good-soft); }
-:root[data-view="laptop"] .qcardp button.opt.wrong { background: var(--bad-soft); }
-:root[data-view="laptop"] .qcardp button.opt.sel { background: var(--accent-soft); }
-:root[data-view="laptop"] .hello h2 { font-size: 32px; }
-:root[data-view="laptop"] .modes, :root[data-view="laptop"] .cta { max-width: 560px; }
-:root[data-view="laptop"] .chooser { max-width: 560px; }
-@media (max-width: 760px) {
-  :root[data-view="laptop"] .stage { grid-template-columns: minmax(0, 1fr); }
-  :root[data-view="laptop"] .side { display: none; }
-  :root[data-view="laptop"] .qcardp { padding: 16px; }
-  :root[data-view="laptop"] .wrap { gap: 12px; }
-  :root[data-view="laptop"] .qcardp .prompt { font-size: 18px; }
-  :root[data-view="laptop"] button.opt { min-height: 48px; font-size: 16px; padding: 8px 12px; }
-}
 @media (max-width: 380px) { .modes { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: no-preference) { button.opt.ok { animation: pop .22s ease-out; } @keyframes pop { 50% { transform: scale(1.015); } } }
 
@@ -367,7 +344,6 @@ body { font-weight: 500; font-variant-numeric: lining-nums; }
 .qcard:active { transform: scale(.98); border-color: var(--accent); }
 .qcard h3 { font-size: 19px; font-weight: 800; }
 .qcard .chev { font-size: 28px; color: var(--accent); line-height: 1; }
-:root[data-view="laptop"] .lib { max-width: 720px; }
 
 /* quiz home */
 .home { padding-top: 12vh; gap: 22px; min-height: calc(100dvh - 72px); }
@@ -408,9 +384,9 @@ button.opt:active:not(:disabled) { transform: scale(.985); border-color: var(--a
 /* right vs wrong: different fill, different icon, different motion (not just green vs red) */
 button.opt:disabled { opacity: 1; }
 button.opt.dim { opacity: .5; }
-button.opt.ok, :root[data-view="laptop"] .qcardp button.opt.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); font-weight: 800; }
+button.opt.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); font-weight: 800; }
 button.opt.ok .k { background: #fff; color: var(--ok); border-color: #fff; font-size: 17px; }
-button.opt.wrong, :root[data-view="laptop"] .qcardp button.opt.wrong { background: var(--no-soft); border: 3px dashed var(--no); color: var(--no-ink); }
+button.opt.wrong { background: var(--no-soft); border: 3px dashed var(--no); color: var(--no-ink); }
 button.opt.wrong .k { background: var(--no); color: #fff; border-color: var(--no); font-size: 16px; }
 :root[data-view] .k.ic { display: inline-flex; }
 button.opt.missed { border: 3px dashed var(--ok); }
@@ -461,13 +437,6 @@ button.opt.wrong .k.box { background: var(--no); }
 .actionbar .btn.back { min-width: 54px; padding-inline: 0; font-size: 28px; line-height: 1; color: var(--ink); flex: none; }
 .actionbar .btn.primary { font-size: 18px; border-radius: 14px; }
 
-/* laptop: single centred column, no side panel */
-:root[data-view="laptop"] .stage { grid-template-columns: minmax(0, 1fr); max-width: 680px; margin: 0 auto; width: 100%; }
-:root[data-view="laptop"] .qcardp .prompt { font-size: 28px; }
-:root[data-view="laptop"] .qcardp .prompt.long { font-size: 23px; }
-:root[data-view="laptop"] .home { max-width: 520px; }
-:root[data-view="laptop"] .actionbar-in { max-width: 680px; }
-@media (max-width: 760px) { :root[data-view="laptop"] .qcardp .prompt { font-size: 24px; } :root[data-view="laptop"] .qcardp .prompt.long { font-size: 20px; } }
 
 /* ===== v4: calmer numbers, nicer maths, unfurl, quiet fill ===== */
 :root { --orange: #a84a08; --orange-soft: #ffeedd; --orange-ink: #8a4400; }

@@ -137,7 +137,7 @@ function validateQuiz(d) {
       type = TYPE_ALIASES[type] || type;
       if (!type) type = Array.isArray(q.options) ? (Array.isArray(q.correct) ? "multi" : "single") : Array.isArray(q.items) ? "order" : typeof q.correct === "number" ? "number" : "text";
       if (!TYPES.includes(type)) { errs.push(where + ": unknown “type” “" + q.type + "”. Use one of: " + TYPES.join(", ") + "."); return; }
-      const Q = { type, prompt: isStr(q.prompt) ? q.prompt.trim() : (isStr(q.question) ? q.question.trim() : ""), hint: isStr(q.hint) ? q.hint.trim() : "", answer: isStr(q.answer) ? q.answer.trim() : (isStr(q.explanation) ? q.explanation.trim() : ""), ref: isStr(q.ref) ? q.ref.trim() : "" };
+      const Q = { type, prompt: isStr(q.prompt) ? q.prompt.trim() : (isStr(q.question) ? q.question.trim() : ""), hint: isStr(q.hint) ? q.hint.trim() : "", answer: isStr(q.answer) ? q.answer.trim() : isStr(q.why) ? q.why.trim() : (isStr(q.explanation) ? q.explanation.trim() : ""), ref: isStr(q.ref) ? q.ref.trim() : "" };
       Q.tags = (Array.isArray(q.tags) ? q.tags : (isStr(q.tags) ? [q.tags] : [])).map(t => String(t).toLowerCase().trim()).map(t => t === "disc" ? "discussion" : t === "calculation" ? "calc" : t).filter(t => t === "calc" || t === "discussion");
       if (!Q.prompt) errs.push(where + " has no “prompt” (the question text).");
       if (!Q.answer) errs.push(where + " has no “answer” (the model answer or explanation shown after checking).");
@@ -246,9 +246,8 @@ const MODES = {
 // set DEEP_ON / ACTIVITY_ON to true to bring them back (chooser, mode cards, activity screen).
 const DEEP_ON = false, ACTIVITY_ON = false;
 const mode = () => DEEP_ON && SET.mode === "deep" ? "deep" : "early";
-function applyView() { document.documentElement.dataset.view = SET.view || (window.innerWidth >= 900 ? "laptop" : "phone"); }
-const curView = () => document.documentElement.dataset.view;
-window.addEventListener("resize", () => { if (!SET.view) applyView(); });
+// Phone-only now: one layout everywhere (it still runs on a laptop, just at phone width).
+function applyView() { document.documentElement.dataset.view = "phone"; }
 
 /* ---------------- activity log (stays on this device; lets you see if you get past 3 questions) ---------------- */
 const SESSION_GAP = 30 * 60 * 1000;
@@ -394,7 +393,7 @@ function renderChooser() {
 }
 
 /* ---------------- library: just the list ---------------- */
-const viewBtn = () => { const to = curView() === "laptop" ? "phone" : "laptop"; return `<button class="icon-btn" data-set-view="${to}" aria-label="Switch to ${to} layout" type="button">${to === "phone" ? "📱" : "💻"}</button>`; };
+const viewBtn = () => "";
 function renderLibrary() {
   current = null; document.title = "Kiron";
   const list = allQuizzes();
@@ -821,7 +820,7 @@ function renderMake() {
     </ol>
     <div class="row"><button class="btn primary" id="mk-copy" type="button">Copy the prompt</button><button class="btn" data-go="import" type="button">Import a quiz</button></div>
     <details class="how"><summary>Read the prompt</summary><pre class="prompt-text" id="mk-text">${esc(prompt)}</pre></details>
-    <p class="note">Each question comes in two forms, tap-to-answer and typed, so the quiz works in both revision modes. Big file? Upload a chapter at a time and make one quiz per part.</p>
+    <p class="note">Big file? Upload a chapter at a time and make one quiz per part.</p>
   </main>`;
   $("#mk-copy").onclick = () => { document.querySelector("details.how").open = true; copyText(prompt, $("#mk-text")); };
 }
@@ -833,7 +832,6 @@ document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
   if (d.setMode && DEEP_ON) { const first = !SET.mode; SET.mode = d.setMode; saveSet(); if (current) { current.mode = mode(); current.P = getProg(current.quiz.id); } route(); if (first) window.scrollTo(0, 0); else toast(MODES[SET.mode].name + " is on"); return; }
-  if (d.setView) { SET.view = d.setView; saveSet(); route(); return; }
   if (d.go !== undefined) { go(d.go); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); ["early", "deep"].forEach(m => LS.del(progKey2(d.del, m))); toast("Deleted"); go(""); return; }
   if (!current) return;
