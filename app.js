@@ -445,7 +445,16 @@ function startRound(opt) {
 
 /* ---------------- player: one question per screen ---------------- */
 /* ---- auto-advance timer: the story bar fills over the question; when full, the question is left for later (never marked wrong) ---- */
-const DUR = { pick: 15000, flip: 15000, multi: 30000, order: 30000 };   // ordering and multi-select get twice as long
+// Time per question scales with how much there is to read: 12s thinking + 0.35s per word, at least 20s, at most 60s (ordering and multi-select x1.5).
+const TIME = { base: 12000, perWord: 350, min: 20000, max: 60000, mult: { multi: 1.5, order: 1.5 }, fixed: null };
+function durFor(q, f) {
+  if (!(f.kind in { pick: 1, flip: 1, multi: 1, order: 1 })) return 0;
+  if (TIME.fixed) return TIME.fixed;
+  const parts = [f.prompt || "", ...(f.options || q.options || q.items || [])].join(" ").replace(/<[^>]*>/g, " ");
+  const words = (parts.match(/\S+/g) || []).length;
+  const ms = Math.min(TIME.max, Math.max(TIME.min, TIME.base + words * TIME.perWord));
+  return Math.round(ms * (TIME.mult[f.kind] || 1));
+}
 let TIMER = null;   // { id, dur, t0, pausedAt, to }
 function clearTimer() { if (TIMER) { clearTimeout(TIMER.to); TIMER = null; } }
 function timerElapsed() { return TIMER ? (TIMER.pausedAt || Date.now()) - TIMER.t0 : 0; }
@@ -482,7 +491,7 @@ function renderPlay(keepScroll) {
   }
   const cur = P.cur, f = formOf(q, current.mode);
   const fx = FX && FX.id === id ? FX : null; FX = null;
-  const timedDur = !cur.done && !r.review && !cur.revealed ? DUR[f.kind] : 0;
+  const timedDur = !SET.paused && !cur.done && !r.review && !cur.revealed ? durFor(q, f) : 0;
   if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); TIMER = { id, dur: timedDur, t0: Date.now(), pausedAt: 0, to: null }; } } else clearTimer();
   const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
@@ -547,7 +556,7 @@ function renderPlay(keepScroll) {
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : needsSelf ? `<span class="grow note">Mark yourself to continue</span>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div></div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div>${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -615,6 +624,7 @@ function playAct(act, el) {
   if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
   if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.scrollIntoView({ block: "nearest" }); return; }
+  if (act === "pause") { SET.paused = !SET.paused; saveSet(); if (SET.paused) clearTimer(); return renderPlay(true); }
   if (act === "back") return nav(-1);
   if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
   if (act === "self") { finalize(el.dataset.self); return renderPlay(true); }
@@ -867,11 +877,11 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") { e.preventDefault(); return nav(1); }
   if (/^[1-9]$/.test(e.key)) { const opts = app().querySelectorAll(".opts .opt"); const b = opts[+e.key - 1]; if (b && !b.disabled) { e.preventDefault(); b.click(); } return; }
   const k = e.key.toLowerCase();
-  if (k === "h") click('[data-act="hint"]');
+  if (k === "h") click('[data-act="hint"]'); else if (k === "p") click('[data-act="pause"]');
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { DUR, fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
+window.SB = { TIME, durOf: durFor, fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
 applyView();
 route();
 loadSamples().then(route);

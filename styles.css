@@ -547,3 +547,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar { display
 .ratio i.r { background: repeating-linear-gradient(135deg, #c8321f 0 8px, #a62616 8px 16px); justify-content: flex-end; }
 details.more { scroll-margin-top: 72px; }
 .wrap.play:has(details.more[open]) { padding-bottom: calc(55vh + 110px); }
+
+/* pause control for the timer */
+.icon-btn.pause { flex: none; min-width: 44px; padding: 0; }
+.icon-btn.pause svg { width: 20px; height: 20px; fill: currentColor; }
+.icon-btn.pause.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.dots.halted i.now:not(.full)::after { width: 40%; }
