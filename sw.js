@@ -1,18 +1,22 @@
-// Offline support: serve saved copies instantly, refresh them in the background.
-// Bump VERSION when you change app files so phones pick up the new version.
-const VERSION = "kiron-v11";
+// Offline support. Online: always fetch the latest file (falls back to the saved copy after 4s or when offline).
+// Offline: serve the saved copy. Bump VERSION when you change app files.
+const VERSION = "kiron-v12";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "prompt.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "quizzes.json", "nunito-latin.woff2"];
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET") return;
+  if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(caches.open(VERSION).then(async cache => {
-    const hit = await cache.match(e.request, { ignoreSearch: true });
-    const net = fetch(e.request).then(res => { if (res && (res.ok || res.type === "opaque")) cache.put(e.request, res.clone()); return res; }).catch(() => hit);
-    return hit || net;
+    const net = fetch(e.request, { cache: "no-cache" }).then(res => { if (res && res.ok) cache.put(e.request, res.clone()); return res; });
+    const slow = new Promise(r => setTimeout(r, 4000));
+    try {
+      const res = await Promise.race([net, slow.then(() => cache.match(e.request, { ignoreSearch: true }).then(h => h || net))]);
+      if (res) return res;
+    } catch (err) {}
+    return (await cache.match(e.request, { ignoreSearch: true })) || net;
   }));
 });
