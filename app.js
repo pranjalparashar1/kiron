@@ -360,6 +360,7 @@ function openQuiz(id) {
   return current;
 }
 function route() {
+  clearTimer();
   applyView();
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (DEEP_ON && !SET.mode) return renderChooser();
@@ -429,6 +430,7 @@ function renderHome() {
   }).join("");
   app().innerHTML = topBar(backBtn(), `<span class="grow"></span>`, viewBtn()) + `
   <main class="wrap home">
+    <h1 class="qtitle">${esc(quiz.title)}</h1>
     <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
     ${quiz.sections.length > 1 ? `<div class="jump"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button><div class="unfurl"><div class="unfurl-in"><div class="parts">${parts}</div></div></div></div>` : ""}
     <div class="foot">${started || inRound ? `<button class="btn ghost danger" data-act="reset" type="button">Reset quiz</button>` : ""}${mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
@@ -442,6 +444,26 @@ function startRound(opt) {
 }
 
 /* ---------------- player: one question per screen ---------------- */
+/* ---- auto-advance timer: the story bar fills over the question; when full, the question is left for later (never marked wrong) ---- */
+const DUR = { pick: 15000, flip: 15000, multi: 30000, order: 30000 };   // ordering and multi-select get twice as long
+let TIMER = null;   // { id, dur, t0, pausedAt, to }
+function clearTimer() { if (TIMER) { clearTimeout(TIMER.to); TIMER = null; } }
+function timerElapsed() { return TIMER ? (TIMER.pausedAt || Date.now()) - TIMER.t0 : 0; }
+function armTimer() {
+  if (!TIMER) return; clearTimeout(TIMER.to);
+  if (document.hidden) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); return; }
+  TIMER.to = setTimeout(() => {
+    if (!current || !current.P.round || !TIMER) return;
+    const r = current.P.round, id = TIMER.id;
+    if (r.ended || r.ids[r.i] !== id || (current.P.cur && current.P.cur.done)) return;
+    nav(1);
+  }, Math.max(0, TIMER.dur - timerElapsed()));
+}
+document.addEventListener("visibilitychange", () => {
+  if (!TIMER) return; const dots = document.querySelector(".dots");
+  if (document.hidden) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); clearTimeout(TIMER.to); if (dots) dots.classList.add("paused"); }
+  else { if (TIMER.pausedAt) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } if (dots) dots.classList.remove("paused"); armTimer(); }
+});
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -460,7 +482,9 @@ function renderPlay(keepScroll) {
   }
   const cur = P.cur, f = formOf(q, current.mode);
   const fx = FX && FX.id === id ? FX : null; FX = null;
-  const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : "") : ""}"></i>`).join("");
+  const timedDur = !cur.done && !r.review && !cur.revealed ? DUR[f.kind] : 0;
+  if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); TIMER = { id, dur: timedDur, t0: Date.now(), pausedAt: 0, to: null }; } } else clearTimer();
+  const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
   let input = "", primary = "";
   const a = P.a[id];
@@ -536,6 +560,7 @@ function renderPlay(keepScroll) {
   </main>
   ${bar.trim() ? `<div class="actionbar"><div class="actionbar-in">${bar}</div></div>` : ""}`;
   DIR = 0;
+  armTimer(); if (TIMER && TIMER.pausedAt) { const dd = document.querySelector(".dots"); if (dd) dd.classList.add("paused"); }
   if (!keepScroll) window.scrollTo(0, 0);
   else {
     window.scrollTo(0, y0);
@@ -672,22 +697,23 @@ document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preve
 
 function renderRoundEnd() {
   const { quiz, P } = current, r = P.round;
-  r.ended = true;
+  clearTimer(); r.ended = true;
   const c = counts(quiz, P), total = c.total || 1;
-  const pct = Math.round(100 * (c.right + c.revisit) / total), prev = P.pctPrev || 0;
-  P.pctPrev = pct; saveProg();
+  const answered = c.right + c.revisit, gNow = answered ? 100 * c.right / answered : 0, rNow = answered ? 100 - gNow : 0;
+  const prev = P.ratioPrev || { g: 0, r: 0 };
+  P.ratioPrev = { g: gNow, r: rNow }; saveProg();
   const res = Object.values(r.res), missed = res.filter(x => x === "miss" || x === "partial").length;
   const allDone = !c.left && !c.skip;
   const keep = c.left || c.skip ? `<button class="btn primary xl" data-act="${r.only !== undefined && counts(quiz, P, r.only).left ? "keeppart" : "start"}" type="button">Keep going</button>` : "";
   const rev = missed ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisitround" type="button">Revisit</button>` : c.revisit ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisit" type="button">Revisit</button>` : "";
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="" type="button">Done</button></div></header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
     <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
-    <div class="loadbar" role="img" aria-label="Quiz progress"><i id="lf" style="width:${prev}%"></i></div>
+    <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="width:${prev.g}%"><b aria-hidden="true">✓</b></i><i class="r" id="rr" style="width:${prev.r}%"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
     ${allDone ? `<p>Come back in a few days and see what stuck.</p>` : ""}
     <div class="cta">${keep}${rev}</div>
   </div></main>`;
-  const lf = $("#lf"); if (lf) { lf.getBoundingClientRect(); requestAnimationFrame(() => requestAnimationFrame(() => { lf.style.width = pct + "%"; })); }
+  const rg = $("#rg"), rr = $("#rr"); if (rg && rr) { rg.getBoundingClientRect(); requestAnimationFrame(() => requestAnimationFrame(() => { rg.style.width = gNow + "%"; rr.style.width = rNow + "%"; })); }
 }
 
 /* ---------------- activity ---------------- */
@@ -819,9 +845,13 @@ document.addEventListener("click", e => {
   if (act === "resume") return go("play-" + current.quiz.id);
   if (act === "share") return shareQuiz();
   if (act === "addtap") return sheet("Add tap options", `<p class="note">Paste this into any AI chat. It returns the same quiz with tap-to-answer options added. Import the result and choose <b>Replace it</b>.</p>`, addTapPrompt(current.quiz), "Copy prompt and quiz");
-  if (act === "reset") { if (!twoTap(t, "Tap again to reset")) return; current.P = blankProg(); saveProg(); toast("Reset"); return renderHome(); }
+  if (act === "reset") { if (!twoTap(t, "Tap again to reset")) return; current.P = blankProg(); saveProg(); t.classList.add("ticked"); t.innerHTML = `<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg><span class="sr">Reset</span>`; t.disabled = true; return setTimeout(() => { if (current && /^#quiz-/.test(location.hash)) renderHome(); }, 850); }
   playAct(act, t);
 });
+document.addEventListener("toggle", e => {
+  const d = e.target; if (!d || !d.classList || !d.classList.contains("more") || !d.open) return;
+  setTimeout(() => d.scrollIntoView({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" }), 40);
+}, true);
 document.addEventListener("input", e => { if (current && e.target.dataset && e.target.dataset.in && current.P.cur) { current.P.a[current.P.cur.id] = e.target.value; saveProg(); } });
 document.addEventListener("keydown", e => {
   if (!current || !/^#play-/.test(location.hash) || e.metaKey || e.altKey) return;
@@ -841,7 +871,7 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
+window.SB = { DUR, fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
 applyView();
 route();
 loadSamples().then(route);
