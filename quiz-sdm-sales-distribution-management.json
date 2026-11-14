@@ -1,0 +1,973 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "sdm-sales-distribution-management",
+ "title": "Sales & Distribution Management (MBA)",
+ "source": "SDM course decks (Intro, Sessions 2, 3, 4–5, 6) and handwritten class notes",
+ "purpose": "Revising for an MBA Sales & Distribution Management exam.",
+ "about": "Frameworks, definitions, processes in order and two short numericals. Refs point to the parts of the consolidated exam notes and the source slides.",
+ "sections": [
+  {
+   "title": "Sales management basics",
+   "ref": "Part 1",
+   "why": "The definition and the selling-vs-marketing contrast turn up in almost every paper.",
+   "questions": [
+    {
+     "type": "text",
+     "prompt": "Define sales management.",
+     "hint": "Four management verbs, two objectives.",
+     "keyPoints": [
+      {
+       "text": "Planning, organising, leading, controlling",
+       "match": [
+        "plan",
+        "organi",
+        "lead",
+        "control"
+       ]
+      },
+      {
+       "text": "Personal contact programmes",
+       "match": [
+        "personal contact",
+        "personal selling"
+       ]
+      },
+      {
+       "text": "Sales and profit objectives",
+       "match": [
+        "profit"
+       ]
+      }
+     ],
+     "answer": "The **planning, organising, leading and controlling** of personal contact programmes designed to achieve the **sales and profit** objectives of the firm.",
+     "ref": "Intro, slide 1",
+     "mcq": {
+      "prompt": "Sales management is planning, organising, leading and controlling personal contact programmes to achieve…",
+      "options": [
+       "The firm's sales and profit objectives",
+       "The highest possible sales volume",
+       "The marketing department's brand goals",
+       "Customer satisfaction scores"
+      ],
+      "correct": 0,
+      "why": "Sales **and profit**. Modern sales management is profit-oriented, not volume-oriented."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "Under the marketing concept, how are price and cost related?",
+     "hint": "Who sets the price?",
+     "options": [
+      "The consumer sets the price, and price determines cost",
+      "Cost determines price",
+      "Price is fixed by the sales team's targets",
+      "Cost and price are set independently"
+     ],
+     "correct": 0,
+     "answer": "Selling concept: **cost determines price**. Marketing concept: **consumers determine price, and price determines cost**.",
+     "ref": "Intro, slide 5"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which belong to the **selling** orientation rather than marketing? Pick all that apply.",
+     "hint": "Think short-term and seller-first.",
+     "options": [
+      "Sales volume is the goal",
+      "Short-run planning around today's products",
+      "Customer seen as the last link in the business",
+      "Departments integrated around customer satisfaction",
+      "Innovation in every sphere to give better value"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "Selling: volume, short run, seller's needs, customer as last link, water-tight departments. Marketing: profit, long run, buyer's needs, customer as the purpose, integrated departments, innovation.",
+     "ref": "Intro, slides 3–5"
+    },
+    {
+     "type": "single",
+     "prompt": "Which shift is one of the slide's sales management trends?",
+     "hint": "Think about what gets measured.",
+     "options": [
+      "From sales volume to sales productivity",
+      "From relationships to transactions",
+      "From teams to individuals",
+      "From global to local"
+     ],
+     "correct": 0,
+     "answer": "The five trends: transactions → relationships, individuals → teams, **volume → productivity**, management → leadership, local → global.",
+     "ref": "Intro, slide 9"
+    },
+    {
+     "type": "single",
+     "prompt": "Which skill does the deck say matters most for today's sales manager?",
+     "hint": "Coaching beats monitoring.",
+     "options": [
+      "People skills",
+      "Analytical skills",
+      "Evaluative skills",
+      "Product knowledge"
+     ],
+     "correct": 0,
+     "answer": "“People skills” are more important than analytical and evaluative skills. The modern manager coaches and communicates more than they monitor and control.",
+     "ref": "Intro, slide 11"
+    },
+    {
+     "type": "single",
+     "prompt": "A sales manager's DSO keeps rising. What does it signal?",
+     "hint": "DSO counts days of sales not yet collected.",
+     "options": [
+      "More working capital is tied up in unpaid customer bills",
+      "Sales calls per day are falling",
+      "The sales forecast is too optimistic",
+      "Inventory is turning faster"
+     ],
+     "correct": 0,
+     "answer": "**DSO (days sales outstanding)** measures how long customers take to pay. Higher DSO means more money stuck in receivables, so working capital needs go up. It is a sales-manager KRA alongside forecast accuracy, skewness, revenue and margin.",
+     "ref": "Notes pp. 1–2"
+    },
+    {
+     "type": "order",
+     "prompt": "Order these from the goal to the action.",
+     "hint": "What you want, how you'll get it, what people do.",
+     "items": [
+      "Objectives",
+      "Strategies",
+      "Tactics"
+     ],
+     "answer": "**Objectives** (specific, measurable goals) → **strategies** (plans of action) → **tactics** (the activities people perform to carry out the strategy).",
+     "ref": "Intro, slide 14"
+    }
+   ]
+  },
+  {
+   "title": "How buyers buy",
+   "ref": "Part 2",
+   "why": "Selling starts with knowing who decides and how.",
+   "questions": [
+    {
+     "type": "order",
+     "prompt": "Put the consumer buying decision process in order.",
+     "hint": "It ends after the purchase.",
+     "items": [
+      "Need arousal",
+      "Collection of information",
+      "Evaluation of information",
+      "Purchase decision",
+      "Post-purchase (satisfaction or dissonance)"
+     ],
+     "answer": "Need arousal → information → evaluation → purchase → post-purchase feelings: **satisfaction** or **cognitive dissonance**.",
+     "ref": "S2, slide 12"
+    },
+    {
+     "type": "order",
+     "prompt": "Put the business buying process in order.",
+     "hint": "Specify before you search; review comes last.",
+     "items": [
+      "Problem recognition",
+      "General need description",
+      "Product specification",
+      "Supplier search",
+      "Proposal solicitation",
+      "Supplier selection",
+      "Order-routine specification",
+      "Performance review"
+     ],
+     "answer": "Eight stages. **Proposal solicitation** invites qualified suppliers to bid; **order-routine specification** writes the final order (specs, quantity, delivery, returns, warranty, payment terms).",
+     "ref": "S2, slides 16–17"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which are buying-centre roles on the slide? Pick all that apply.",
+     "hint": "Who uses, who sways, who signs, who places the order, who controls access.",
+     "options": [
+      "Users",
+      "Influencers",
+      "Deciders",
+      "Gatekeepers",
+      "Distributors"
+     ],
+     "correct": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "answer": "Five on the slide: **users, influencers, deciders, buyers, gatekeepers**. Kotler adds initiators and approvers. Distributors are channel members, not buying-centre roles.",
+     "ref": "S2, slide 17"
+    },
+    {
+     "type": "single",
+     "prompt": "A firm reorders the same office paper from the same supplier. What buying situation is this?",
+     "hint": "Nothing new to decide.",
+     "options": [
+      "Straight rebuy",
+      "Modified rebuy",
+      "New task",
+      "Extensive decision making"
+     ],
+     "correct": 0,
+     "answer": "**Straight rebuy**: routine, low priority. **Modified rebuy**: some specs, prices or suppliers change. **New task**: first-time, judgmental, strategic. (Extensive decision making is a consumer decision type.)",
+     "ref": "S2, slide 17"
+    },
+    {
+     "type": "single",
+     "prompt": "Which is a buyer's **personal** goal rather than an organisational one?",
+     "hint": "Something the buyer wants for themselves.",
+     "options": [
+      "Job security",
+      "Dependable delivery",
+      "Cost within budget",
+      "Few product breakdowns"
+     ],
+     "correct": 0,
+     "answer": "Personal goals: power, pleasure, **job security**, being liked, respect. Organisational: cost control, reliability, dependable delivery, adequate supply, budget. A good pitch serves both.",
+     "ref": "S2, slide 14"
+    }
+   ]
+  },
+  {
+   "title": "The art of selling",
+   "ref": "Part 3",
+   "why": "The selling process and its acronyms are standard 5- and 10-mark questions.",
+   "questions": [
+    {
+     "type": "order",
+     "prompt": "Put the personal selling process in order.",
+     "hint": "Find them, research them, meet them, understand them…",
+     "items": [
+      "Prospecting",
+      "Pre-approach",
+      "Approach",
+      "Need assessment",
+      "Presentation / demonstration",
+      "Handling objections",
+      "Closing the sale",
+      "Follow-up"
+     ],
+     "answer": "Prospecting → pre-approach → approach → need assessment → presentation → objections → close → follow-up.",
+     "ref": "S3, slides 6–16"
+    },
+    {
+     "type": "single",
+     "prompt": "Which step of the selling process is the only one that produces revenue?",
+     "hint": "Asking for the order.",
+     "options": [
+      "Closing the sale",
+      "Presentation",
+      "Follow-up",
+      "Prospecting"
+     ],
+     "correct": 0,
+     "answer": "**Closing** is the only revenue-producing step, and the hardest, because of the salesperson's fear of rejection. Keep it simple, honest and direct.",
+     "ref": "S3, slide 15"
+    },
+    {
+     "type": "single",
+     "prompt": "In need assessment, what does LOCATE stand for?",
+     "hint": "Starts with Listen, ends with Empathise.",
+     "options": [
+      "Listen, Observe, Combine, Ask questions, Talk to others, Empathise",
+      "Learn, Offer, Close, Ask, Track, Evaluate",
+      "Listen, Organise, Clarify, Act, Test, Explain",
+      "Locate, Observe, Contact, Approach, Talk, Engage"
+     ],
+     "correct": 0,
+     "answer": "**L**isten, **O**bserve, **C**ombine, **A**sk questions, **T**alk to others, **E**mpathise: ways to uncover needs the prospect may not state.",
+     "ref": "S3, slide 11"
+    },
+    {
+     "type": "single",
+     "prompt": "In the SELL sequence, what does the first L ask the salesperson to do?",
+     "hint": "Feature → advantage → …",
+     "options": [
+      "Lead into the benefit",
+      "Let the customer talk",
+      "Listen to objections",
+      "Link to price"
+     ],
+     "correct": 0,
+     "answer": "**S**how the feature → **E**xplain the advantage → **L**ead into the benefit → **L**et the customer talk (ask an opinion question). It's the FAB logic.",
+     "ref": "S3, slide 12"
+    },
+    {
+     "type": "text",
+     "prompt": "John Salley had top grades and deep product knowledge, yet only average sales. What was going wrong?",
+     "hint": "He knew the product. Did he know the customer?",
+     "keyPoints": [
+      {
+       "text": "Sold features, not benefits",
+       "match": [
+        "feature",
+        "benefit"
+       ]
+      },
+      {
+       "text": "Didn't uncover the customer's needs",
+       "match": [
+        "need"
+       ]
+      },
+      {
+       "text": "Should listen and use need assessment",
+       "match": [
+        "listen",
+        "locate",
+        "need assess"
+       ]
+      }
+     ],
+     "answer": "He talked **features** the customer didn't need. The fix: uncover needs (LOCATE), translate features into **benefits** (SELL/FAB), listen more, and work on the psychology of selling.",
+     "ref": "S3, slide 1",
+     "mcq": {
+      "prompt": "Why were John Salley's sales only average?",
+      "options": [
+       "He sold product features instead of uncovering needs and selling benefits",
+       "He lacked product knowledge",
+       "His territory had too little potential",
+       "His prices were too high"
+      ],
+      "correct": 0,
+      "why": "Knowledge wasn't the gap. Customers buy solutions, so he needed to find needs and sell benefits."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "What is the “hot button”?",
+     "hint": "It's about emotion.",
+     "options": [
+      "The buyer's most highly emotional reason for buying",
+      "The product's most technical feature",
+      "The final price the buyer will accept",
+      "The buyer's main objection"
+     ],
+     "correct": 0,
+     "answer": "People buy for rational and emotional reasons. The **hot button** is the most highly emotional one (for example respect or status).",
+     "ref": "S3, slide 4"
+    },
+    {
+     "type": "multi",
+     "prompt": "Self-concept has three parts. Which? Pick all that apply.",
+     "hint": "How you see yourself, who you want to be, how you feel about yourself.",
+     "options": [
+      "Self-image",
+      "Self-ideal",
+      "Self-esteem",
+      "Self-control",
+      "Self-promotion"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "**Self-image** (how you see yourself), **self-ideal** (how you'd like to be), **self-esteem** (how much you like yourself).",
+     "ref": "S3, slide 2"
+    },
+    {
+     "type": "single",
+     "prompt": "Which selling approach focuses on the customer's strategic objectives?",
+     "hint": "The salesperson becomes an adviser.",
+     "options": [
+      "Consultative selling",
+      "Stimulus–response",
+      "Mental states (AIDA)",
+      "Need satisfaction"
+     ],
+     "correct": 0,
+     "answer": "Stimulus–response and mental states (AIDA) suit simple transactions. Need satisfaction and problem solving suit solutions. **Consultative** selling serves partnerships and collaboration.",
+     "ref": "Notes p. 3; S3, last slide"
+    },
+    {
+     "type": "single",
+     "prompt": "Moving from transactional to partnership relationships, what happens to cost to serve?",
+     "hint": "Look at the class graph's axes.",
+     "options": [
+      "It rises, along with commitment to the customer",
+      "It falls as trust grows",
+      "It stays flat",
+      "It rises while commitment falls"
+     ],
+     "correct": 0,
+     "answer": "Transactional → relationship → partnership: **commitment** and **cost to serve** both rise. Only accounts worth it should get partnerships.",
+     "ref": "Notes p. 2"
+    }
+   ]
+  },
+  {
+   "title": "Potential, forecasts and quotas",
+   "ref": "Part 4",
+   "why": "The potential-vs-forecast distinction and forecasting methods are classic exam material.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Market potential is measured for…",
+     "hint": "Industry or firm?",
+     "options": [
+      "The whole industry in a market and period",
+      "One firm's maximum share",
+      "One firm's expected sales under its plan",
+      "One salesperson's territory"
+     ],
+     "correct": 0,
+     "answer": "**Market potential**: total expected industry sales. **Sales potential**: a firm's maximum reasonable share. **Sales forecast**: what the firm expects under its marketing plan.",
+     "ref": "S4-5, slide 2"
+    },
+    {
+     "type": "order",
+     "prompt": "Order from largest to smallest, as they usually stand.",
+     "hint": "Industry ceiling, firm ceiling, firm's realistic plan.",
+     "items": [
+      "Market potential",
+      "Sales potential",
+      "Sales forecast"
+     ],
+     "answer": "Market potential ≥ sales potential ≥ sales forecast. The forecast sits below sales potential because of capacity and financial limits.",
+     "ref": "S4-5, slides 2 and 6"
+    },
+    {
+     "type": "single",
+     "prompt": "When are market potential and sales potential equal?",
+     "hint": "One seller.",
+     "options": [
+      "Under a monopoly",
+      "In a test market",
+      "When the forecast is accurate",
+      "In a mature market"
+     ],
+     "correct": 0,
+     "answer": "With a **monopoly**, the firm *is* the industry, so its sales potential equals market potential.",
+     "ref": "S4-5, slide 2"
+    },
+    {
+     "type": "multi",
+     "prompt": "Why is a sales forecast usually below sales potential? Pick all that apply.",
+     "hint": "Inside the firm.",
+     "options": [
+      "Limited production capacity",
+      "Limited finance (working capital, cash, ad budget)",
+      "Competitors take part of the market",
+      "The forecast ignores the marketing plan"
+     ],
+     "correct": [
+      0,
+      1
+     ],
+     "answer": "Internal limits: **capacity** (plant, warehouse) and **finance**. Competition explains the gap between *market* and *sales* potential, not this one. The forecast is always tied to a proposed marketing plan.",
+     "ref": "S4-5, slide 6; Notes p. 8"
+    },
+    {
+     "type": "single",
+     "prompt": "Which method of estimating potential is probably the most accurate?",
+     "hint": "Buyers spend real money.",
+     "options": [
+      "Test markets",
+      "Market factor derivation",
+      "Survey of buyers' intentions",
+      "Executive opinion"
+     ],
+     "correct": 0,
+     "answer": "**Test markets**: buyers spend real money, the acid test. But they're slow, costly, and impossible for products needing big fixed investment before launch.",
+     "ref": "S4-5, slide 5"
+    },
+    {
+     "type": "single",
+     "prompt": "What is a market factor?",
+     "hint": "Births for baby food.",
+     "options": [
+      "Something that causes demand or is related to it",
+      "A competitor's market share",
+      "A salesperson's quota",
+      "A discount offered to dealers"
+     ],
+     "correct": 0,
+     "answer": "A **market factor** causes demand or moves with it. Market factor derivation is valid, simple, needs little statistics and is cheap.",
+     "ref": "S4-5, slide 3"
+    },
+    {
+     "type": "single",
+     "prompt": "The sales force composite method is…",
+     "hint": "Who makes the estimate?",
+     "options": [
+      "Bottom-up: each rep estimates their own territory",
+      "Top-down: executives set one total",
+      "Statistical: based on past sales only",
+      "Experimental: based on a test market"
+     ],
+     "correct": 0,
+     "answer": "**Bottom-up**. Reps are close to customers, but may lowball forecasts to get easier quotas.",
+     "ref": "Notes p. 9"
+    },
+    {
+     "type": "number",
+     "prompt": "Last forecast 110, last actual 120, α = 0.3. What is the exponential-smoothing forecast?",
+     "hint": "New = old + α × (actual − old).",
+     "correct": 113,
+     "tolerance": 0.5,
+     "answer": "F = 110 + 0.3 × (120 − 110) = **113**. Exponential smoothing weights recent sales more; higher α reacts faster.",
+     "ref": "Notes p. 9",
+     "tags": [
+      "calc"
+     ],
+     "mcq": {
+      "prompt": "Which formula gives the exponential-smoothing forecast?",
+      "options": [
+       "F(t) = F(t−1) + α × (A(t−1) − F(t−1))",
+       "F(t) = (A(t−1) + A(t−2) + A(t−3)) ÷ 3",
+       "F(t) = A(t−1) × (1 + α)",
+       "F(t) = α × F(t−1) − A(t−1)"
+      ],
+      "correct": 0,
+      "why": "Old forecast plus α times the last error. The second option is a moving average."
+     }
+    },
+    {
+     "type": "single",
+     "prompt": "A moving average forecast works best for products with…",
+     "hint": "It treats all recent periods equally.",
+     "options": [
+      "A stable sales pattern",
+      "A sharp upward trend",
+      "Strong recent turning points",
+      "No sales history"
+     ],
+     "correct": 0,
+     "answer": "Moving average = sum of the last n periods ÷ n. Good for **stable** patterns; it lags turns because old and new data weigh the same.",
+     "ref": "Notes p. 10"
+    },
+    {
+     "type": "single",
+     "prompt": "Which budgeting method costs the tasks needed to hit the objectives?",
+     "hint": "Start from the goal.",
+     "options": [
+      "Objective and task",
+      "Percentage of sales",
+      "Competitive parity",
+      "What the firm can afford"
+     ],
+     "correct": 0,
+     "answer": "**Objective and task**: set objectives, cost the tasks. **Percentage of sales**: simple, but treats sales as the cause of spending.",
+     "ref": "S4-5, slide 11"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which are purposes of sales quotas? Pick all that apply.",
+     "hint": "Goals, control, evaluation.",
+     "options": [
+      "Indicate strong and weak spots in the selling structure",
+      "Evaluate sales-force productivity",
+      "Control selling expenses",
+      "Improve compensation-plan effectiveness",
+      "Set the product's list price"
+     ],
+     "correct": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "answer": "Quotas indicate strong/weak spots, give goals and incentives, control activities, evaluate productivity, improve compensation plans and control expenses. They don't set prices.",
+     "ref": "S4-5, slide 13"
+    },
+    {
+     "type": "single",
+     "prompt": "Which is a feature of a good quota plan?",
+     "hint": "Can the rep actually hit it?",
+     "options": [
+      "Realistic attainability",
+      "Set as high as possible to stretch reps",
+      "Kept vague so managers can adjust it",
+      "Changed every week"
+     ],
+     "correct": 0,
+     "answer": "Good quotas are **realistic, objective, easy to understand, flexible and fair**.",
+     "ref": "S4-5, slide 14"
+    }
+   ]
+  },
+  {
+   "title": "Territories and deployment",
+   "ref": "Part 5",
+   "why": "Territory design and the workload calculation are the main numerical in the course.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "The build-up method of territory design equalises…",
+     "hint": "Build up from the calls needed.",
+     "options": [
+      "Salesperson workload",
+      "Sales potential",
+      "Number of customers",
+      "Travel distance"
+     ],
+     "correct": 0,
+     "answer": "**Build-up** = equal **workload** (accounts × call frequency). **Break-down** = equal **sales potential**.",
+     "ref": "Notes pp. 11–12"
+    },
+    {
+     "type": "number",
+     "prompt": "Territory Y: 5 A-accounts at 24 calls a year, 15 B at 12, 60 C at 6. Total calls a year?",
+     "hint": "Multiply each class, then add.",
+     "correct": 660,
+     "tolerance": 0,
+     "answer": "5×24 + 15×12 + 60×6 = 120 + 180 + 360 = **660**. Territory X in class was 540, so Y is overloaded.",
+     "ref": "Notes p. 11",
+     "tags": [
+      "calc"
+     ],
+     "mcq": {
+      "prompt": "How do you calculate a territory's workload?",
+      "options": [
+       "Sum of (accounts in each class × call frequency for that class)",
+       "Number of accounts × number of salespeople",
+       "Sales potential ÷ number of accounts",
+       "Total calls ÷ calls one rep can make"
+      ],
+      "correct": 0,
+      "why": "Workload = Σ accounts × calls. Dividing total calls by one rep's capacity gives the number of reps needed, the next step."
+     },
+     "unit": "calls"
+    },
+    {
+     "type": "order",
+     "prompt": "Put the territory design steps in order.",
+     "hint": "Smallest unit first, assign people last.",
+     "items": [
+      "Select basic control units",
+      "Decide allocation criteria",
+      "Choose a starting point",
+      "Combine adjacent control units",
+      "Run a workload analysis",
+      "Modify boundaries",
+      "Assign salespeople"
+     ],
+     "answer": "Control unit → criteria → starting point → combine → workload analysis → modify → assign.",
+     "ref": "S4-5, slide 16"
+    },
+    {
+     "type": "single",
+     "prompt": "An account has high potential, and you're in a strong position. What's the strategy?",
+     "hint": "Top-left box.",
+     "options": [
+      "Commit high sales resources",
+      "Maintain with moderate resources",
+      "Minimal resources or drop it",
+      "Shift resources to other accounts"
+     ],
+     "correct": 0,
+     "answer": "Account opportunity grid: high potential + strong = **commit heavily**. Low + strong = maintain. High + weak = invest to improve or shift. Low + weak = minimal or abandon.",
+     "ref": "S4-5, slide 17"
+    },
+    {
+     "type": "order",
+     "prompt": "Put the sales force deployment stages in order.",
+     "hint": "Review, evaluate, realign, fine-tune.",
+     "items": [
+      "Audit",
+      "Assessment",
+      "Prescription (alignment)",
+      "Monitoring (fine-tuning)"
+     ],
+     "answer": "**Audit** goals, strategy, constraints, resources, data → **assess** potential and workload → **prescribe** alignment → **monitor**.",
+     "ref": "S4-5, slide 18"
+    },
+    {
+     "type": "single",
+     "prompt": "When should territories be aligned on market potential rather than workload?",
+     "hint": "Pay fairness.",
+     "options": [
+      "When equitable earning opportunity matters most",
+      "When account coverage is the key success factor",
+      "When the territory is vacant",
+      "When travel costs are high"
+     ],
+     "correct": 0,
+     "answer": "Balance **workload** when coverage is critical. Balance **potential** when fair pay opportunity is needed to attract and motivate reps.",
+     "ref": "S4-5, slide 20"
+    },
+    {
+     "type": "single",
+     "prompt": "In the pricing waterfall, what sits between invoice price and pocket price?",
+     "hint": "Money that leaks after the invoice.",
+     "options": [
+      "Off-invoice leakages like rebates, credit costs and returns",
+      "On-invoice discounts",
+      "Cost of goods",
+      "The list price"
+     ],
+     "correct": 0,
+     "answer": "List price → on-invoice discounts → **invoice price** → off-invoice leakages → **pocket price** → minus COGS and cost-to-serve → **pocket margin**.",
+     "ref": "S4-5, slide 22"
+    }
+   ]
+  },
+  {
+   "title": "Building the sales team",
+   "ref": "Part 6",
+   "why": "Assessment centres, training evaluation and motivation are favourite theory questions.",
+   "questions": [
+    {
+     "type": "order",
+     "prompt": "Put the staffing process in order.",
+     "hint": "Plan, find, pick, offer, settle in.",
+     "items": [
+      "Planning (job analysis, description, hiring spec)",
+      "Recruitment",
+      "Selection",
+      "Hiring",
+      "Assimilation"
+     ],
+     "answer": "Planning → recruitment → selection → hiring → **assimilation** (joining, policies, culture, socialisation).",
+     "ref": "Notes pp. 13–14"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which would **not** count as an assessment centre? Pick all that apply.",
+     "hint": "ACs need many observers, many exercises, pooled data.",
+     "options": [
+      "A single assessor",
+      "Only a battery of paper-and-pencil tests",
+      "A panel interview as the only technique",
+      "Several simulations with several assessors and pooled data"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "Not ACs: single assessor, only written tests, interviews alone, a single technique, or no pooling of data. A real AC uses multiple trained observers, exercises and pooled judgments.",
+     "ref": "S6, slide 4"
+    },
+    {
+     "type": "single",
+     "prompt": "What does the deck call the most critical aspect of an assessment centre?",
+     "hint": "What the assessors do.",
+     "options": [
+      "Accurate and unbiased observation",
+      "The number of participants",
+      "Paper-and-pencil tests",
+      "The venue"
+     ],
+     "correct": 0,
+     "answer": "**Observation** is the most critical element, which is why ACs use multiple trained observers and test each competency in at least two exercises.",
+     "ref": "S6, slide 5"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which are uses of assessment centres? Pick all that apply.",
+     "hint": "Beyond hiring.",
+     "options": [
+      "Selection",
+      "Succession planning",
+      "Identifying training needs",
+      "Potential appraisal",
+      "Setting sales quotas"
+     ],
+     "correct": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "answer": "Selection, career development, potential appraisal, high-potential identification, succession planning, challenging assignments, management development, training needs, global talent pools.",
+     "ref": "S6, slides 7–8"
+    },
+    {
+     "type": "order",
+     "prompt": "Put Kirkpatrick's four levels of training evaluation in order.",
+     "hint": "From how they felt to what changed in the business.",
+     "items": [
+      "Reactions",
+      "Learning",
+      "Behaviour",
+      "Results"
+     ],
+     "answer": "**Reactions** (feedback) → **learning** (tested) → **behaviour** (on the job) → **results** (performance).",
+     "ref": "S6, slide 10"
+    },
+    {
+     "type": "single",
+     "prompt": "“I'm concerned about your call ratios. You've always been a top performer. What's up?” Which quadrant?",
+     "hint": "Feelings, said warmly.",
+     "options": [
+      "Positive counselling",
+      "Positive coaching",
+      "Negative coaching",
+      "Negative counselling"
+     ],
+     "correct": 0,
+     "answer": "Coaching uses facts and logic; counselling uses emotion and empathy. A warm, emotional opener is **positive counselling**.",
+     "ref": "S6, slides 12–16"
+    },
+    {
+     "type": "multi",
+     "prompt": "What are the three dimensions of motivation? Pick all that apply.",
+     "hint": "Which way, how hard, how long.",
+     "options": [
+      "Direction",
+      "Intensity",
+      "Persistence",
+      "Compensation"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "**Direction** (choice of action), **intensity** (effort), **persistence** (how long). Compensation is a motivator, not a dimension.",
+     "ref": "Notes p. 15"
+    },
+    {
+     "type": "single",
+     "prompt": "A rep asks, “If I try harder, will my numbers actually go up?” Which link is this?",
+     "hint": "Effort to performance.",
+     "options": [
+      "Expectancy",
+      "Instrumentality",
+      "Valence",
+      "Equity"
+     ],
+     "correct": 0,
+     "answer": "**Expectancy**: effort → performance. **Instrumentality**: performance → reward. **Valence**: is the reward worth it? Weak links kill motivation.",
+     "ref": "Notes p. 16"
+    },
+    {
+     "type": "order",
+     "prompt": "Order a salesperson's career stages.",
+     "hint": "Explore, settle, sustain, wind down.",
+     "items": [
+      "Exploration",
+      "Establishment",
+      "Maintenance",
+      "Disengagement"
+     ],
+     "answer": "Each stage needs different motivators: coaching early, promotion when establishing, recognition and fresh challenges in maintenance, security near disengagement.",
+     "ref": "Notes p. 15"
+    },
+    {
+     "type": "single",
+     "prompt": "In a commission plan, what is the “base”?",
+     "hint": "Where it starts.",
+     "options": [
+      "The point from which commission starts being paid",
+      "The fixed monthly salary",
+      "The commission percentage",
+      "The total yearly pay"
+     ],
+     "correct": 0,
+     "answer": "**Base** = where commission starts; **rate** = the % or amount paid above it. Method of pay: fixed, variable, or combination.",
+     "ref": "Notes p. 16"
+    }
+   ]
+  },
+  {
+   "title": "Channels and intermediaries",
+   "ref": "Part 7",
+   "why": "Why channels exist, and what flows through them, anchors the distribution half.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "What is a marketing channel?",
+     "hint": "Interdependent organisations.",
+     "options": [
+      "A set of interdependent organisations that make a product available for use or consumption",
+      "The company's own sales force",
+      "The route a salesperson follows",
+      "Any advertising medium"
+     ],
+     "correct": 0,
+     "answer": "A **marketing channel** is a set of interdependent organisations involved in making a product or service available for use or consumption. Sales plans; distribution executes.",
+     "ref": "S2, slide 4"
+    },
+    {
+     "type": "multi",
+     "prompt": "Which gaps justify intermediaries? Pick all that apply.",
+     "hint": "Time, place, size, variety.",
+     "options": [
+      "Temporal discrepancy",
+      "Spatial discrepancy",
+      "Need to break bulk",
+      "Need for assortment",
+      "Need for higher prices"
+     ],
+     "correct": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "answer": "**Temporal** (time), **spatial** (place), **bulk** (lot size) and **assortment** (variety). Intermediaries close them.",
+     "ref": "S2, slide 6"
+    },
+    {
+     "type": "order",
+     "prompt": "Put the sorting functions in order.",
+     "hint": "Grade, pile up, split, mix.",
+     "items": [
+      "Sorting out",
+      "Accumulation",
+      "Allocation (breaking bulk)",
+      "Assorting"
+     ],
+     "answer": "Sort out mixed supply → **accumulate** homogeneous stock → **allocate** into smaller lots → **assort** a range for buyers.",
+     "ref": "S2, slide 7"
+    },
+    {
+     "type": "number",
+     "prompt": "5 manufacturers each sell to 10 customers. How many contacts are saved by routing everything through one intermediary?",
+     "hint": "Direct = M × C. Via one = M + C.",
+     "correct": 35,
+     "tolerance": 0,
+     "answer": "Direct: 5 × 10 = 50. Via one intermediary: 5 + 10 = 15. **35 fewer** contacts.",
+     "ref": "Notes p. 4",
+     "tags": [
+      "calc"
+     ],
+     "mcq": {
+      "prompt": "How many contacts are needed with one intermediary between M makers and C customers?",
+      "options": [
+       "M + C",
+       "M × C",
+       "M × C − 1",
+       "(M + C) × 2"
+      ],
+      "correct": 0,
+      "why": "Each party deals only with the intermediary. Direct dealing needs M × C."
+     },
+     "unit": "contacts"
+    },
+    {
+     "type": "single",
+     "prompt": "Which channel flow moves backward, from customer towards manufacturer?",
+     "hint": "Money and orders go up.",
+     "options": [
+      "Payment",
+      "Physical possession",
+      "Promotion",
+      "Ownership"
+     ],
+     "correct": 0,
+     "answer": "Forward: possession, ownership, promotion. **Backward: ordering, payment.** Both ways: negotiation, financing, risk, information.",
+     "ref": "S2, slide 9"
+    },
+    {
+     "type": "single",
+     "prompt": "Manufacturer → C&FA → Distributor → Retailer is how many tiers?",
+     "hint": "Count the intermediaries.",
+     "options": [
+      "Three",
+      "Two",
+      "One",
+      "Four"
+     ],
+     "correct": 0,
+     "answer": "C&FA, distributor, retailer: **3-tier**, common in Indian FMCG. A C&FA holds regional stock for the maker, usually without owning it.",
+     "ref": "Notes p. 3"
+    }
+   ]
+  }
+ ]
+}
