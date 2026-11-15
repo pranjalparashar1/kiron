@@ -431,8 +431,6 @@ button.opt.wrong .k.box { background: var(--no); }
 /* numbers question: friendly heads-up, never red */
 .numtag { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; background: var(--orange-soft); color: var(--orange-ink); font-weight: 800; font-size: 14px; padding: 5px 12px; border-radius: 99px; letter-spacing: .01em; }
 .numtag::before { content: "123"; font-size: 11px; font-weight: 800; background: var(--orange); color: #fff; border-radius: 6px; padding: 1px 5px; }
-.headsup { background: var(--orange-soft); color: var(--orange-ink); font-weight: 700; font-size: 14.5px; text-align: center; padding: 8px 16px; border-top: 1px solid rgba(194,87,12,.18); }
-@media (prefers-reduced-motion: no-preference) { .headsup { animation: hu .35s ease-out; } @keyframes hu { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } } }
 /* typeset maths */
 sup, sub { font-size: .72em; line-height: 0; }
 sup { vertical-align: .5em; } sub { vertical-align: -.28em; }
@@ -621,7 +619,6 @@ details.more[open] > p { animation: fullin .32s cubic-bezier(.25,.6,.3,1); }
 
 /* numbers heads-up in brand blue */
 .numtag::before { color: var(--bg); }
-.headsup { border-top-color: rgba(106,155,204,.25); }
 .ratio i.r { background: repeating-linear-gradient(135deg, #b5473c 0 8px, #9a3a30 8px 16px); }
 .ratio i.g { background: var(--ok); }
 .donebox { background: var(--good-soft); }
