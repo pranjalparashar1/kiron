@@ -597,12 +597,14 @@ function renderPlay(keepScroll) {
   // keeps animating without restarting, and on an answer the options change in place so they can fade and fold smoothly.
   // A new question still gets a fresh card (for the slide-in).
   const onPlay = app().querySelector(".top.play") && app().querySelector(".qcardp");
+  const heat0 = app().querySelector(".heat"), heatWas = !!(heat0 && heat0.classList.contains("on")), barW0 = heatWas !== !!heatNow && onPlay ? barWidth() : 0;
   const sameQ = !!(onPlay && keepScroll && app().dataset.qid === id);
   if (onPlay) { const t = document.createElement("div"); t.innerHTML = html; patchKids(app(), t, sameQ); }
   else app().innerHTML = html;
   app().dataset.qid = id;
   DIR = 0;
   if (!r.review) { placeSky(heatNow); placeGlint(heatNow); }
+  if (barW0) slideFrom(barW0);
   armTimer(); if (TIMER && TIMER.pausedAt) { const dd = document.querySelector(".dots"); if (dd) dd.classList.add("paused"); }
   if (!keepScroll) { cancelScroll(); window.scrollTo(0, 0); }
   else {
@@ -708,10 +710,15 @@ const heatLevel = n => { let l = 0; STAGES.forEach((t, i) => { if (n >= t) l = i
 const HEAT_COL = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b", "#9b7bff", "#dfe7ff", "#fff1c9"];
 const PILL_BG = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b", "linear-gradient(100deg,#7c5cff,#c86bd1 55%,#4fb6c9)", "#dfe7ff", "linear-gradient(100deg,#fff1c9,#ffffff 45%,#c9b8ff)"];
 // The flame: two shapes, an outer tongue and a hot core, that flicker out of step. From 25 it becomes a star; at 30 a ringed star.
+// Each moving part is its own small SVG stacked in an HTML box, and the flicker, twinkle and orbit move those boxes
+// (transform only), so iPhone Safari runs them on the GPU instead of repainting the inside of an SVG every frame.
+const STAR_D = "M0-11C1.1-3.2 3.2-1.1 11 0C3.2 1.1 1.1 3.2 0 11C-1.1 3.2-3.2 1.1-11 0C-3.2-1.1-1.1-3.2 0-11Z";
 function heatIcon(l) {
   if (l >= 6) gooDefs();
-  if (l >= 7) return `<svg class="kstar${l >= 8 ? " ringed" : ""}" viewBox="-14 -14 28 28" aria-hidden="true">${l >= 8 ? `<ellipse class="ring" rx="12.5" ry="4.2" transform="rotate(-22)"/>` : ""}<path class="s" d="M0-11C1.1-3.2 3.2-1.1 11 0C3.2 1.1 1.1 3.2 0 11C-1.1 3.2-3.2 1.1-11 0C-3.2-1.1-1.1-3.2 0-11Z"/><circle class="core" r="1.8"/>${l >= 8 ? `<g transform="rotate(-22) scale(1 .336)"><g class="moon"><circle cx="12.5" r="4.4"/></g></g>` : ""}</svg>`;
-  return `<svg class="kf" viewBox="0 0 24 32" aria-hidden="true"><path class="o" d="M12 1.5c1.2 6.2 7.5 9.6 7.5 18a7.5 7.5 0 0 1-15 0c0-4.1 2-6.9 3.7-8.4.3 2.5 1.4 3.8 2.8 4.3C10.4 10.6 10.8 5.7 12 1.5z"/><path class="c" d="M12.2 14.5c.7 3 4.1 4.7 4.1 8.4a4.3 4.3 0 0 1-8.6 0c0-2.1 1-3.4 2.1-4.2.2 1.1.8 1.7 1.4 1.9-.2-2.4.2-4.3 1-6.1z"/></svg>`;
+  if (l >= 8) { const sv = (c, inner) => `<svg${c ? ` class="${c}"` : ""} viewBox="-14 -14 28 28" aria-hidden="true">${inner}</svg>`;
+    return `<span class="kstar ringed" aria-hidden="true">${sv("kr", `<ellipse class="ring" rx="12.5" ry="4.2" transform="rotate(-22)"/>`)}${sv("ks", `<path class="s" d="${STAR_D}"/>`)}${sv("kc", `<circle class="core" r="1.8"/>`)}<span class="kmo"><span class="moon">${sv("", `<circle cx="12.5" r="4.4"/>`)}</span></span></span>`; }
+  if (l >= 7) return `<svg class="kstar" viewBox="-14 -14 28 28" aria-hidden="true"><path class="s" d="${STAR_D}"/><circle class="core" r="1.8"/></svg>`;
+  return `<span class="kf" aria-hidden="true"><svg class="o" viewBox="0 0 24 32"><path d="M12 1.5c1.2 6.2 7.5 9.6 7.5 18a7.5 7.5 0 0 1-15 0c0-4.1 2-6.9 3.7-8.4.3 2.5 1.4 3.8 2.8 4.3C10.4 10.6 10.8 5.7 12 1.5z"/></svg><svg class="c" viewBox="0 0 24 32"><path d="M12.2 14.5c.7 3 4.1 4.7 4.1 8.4a4.3 4.3 0 0 1-8.6 0c0-2.1 1-3.4 2.1-4.2.2 1.1.8 1.7 1.4 1.9-.2-2.4.2-4.3 1-6.1z"/></svg></span>`;
 }
 function gooDefs() {
   if ($("#kgoo-svg")) return;
@@ -722,6 +729,14 @@ function gooDefs() {
     <linearGradient id="kgold" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#c9b8ff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient></defs>`;
   document.body.append(svg);
 }
+/* The counter at the end of the bar opens or closes in one layout step (no width or margin animation, which
+   re-laid out the whole top bar for a third of a second). The bar then eases to its new length with a transform. */
+const barWidth = () => { const d = $(".dots"); return d ? d.getBoundingClientRect().width : 0; };
+function slideFrom(w0) {
+  const d = $(".dots"), w1 = barWidth(); if (!d || !w0 || !w1 || Math.abs(w0 - w1) < 1 || reduceMotion() || !d.animate) return;
+  d.animate([{ transform: `scaleX(${(w0 / w1).toFixed(4)})`, transformOrigin: "0 50%" }, { transform: "none", transformOrigin: "0 50%" }], { duration: 300, easing: "cubic-bezier(.2,.8,.3,1)" });
+}
+function slideBar(change) { const w0 = barWidth(); change(); slideFrom(w0); }
 // a tiny seeded random, so the sky looks the same on every screen of a run instead of jumping around
 const seeded = seed => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 // The celestial sky lives behind the timer bar, inside the top bar only (never over the question).
@@ -746,7 +761,8 @@ function placeSky(lvl, fresh) {
     // from its star (a stretch, which the GPU does) instead of being drawn along (which repainted every frame).
     h += pts.slice(1).map((p, i) => { const q = pts[i], len = Math.hypot(p[0] - q[0], p[1] - q[1]), a = Math.atan2(p[1] - q[1], p[0] - q[0]) * 180 / Math.PI;
       return `<b class="ln" style="left:${q[0]}px;top:${q[1]}px;width:${len.toFixed(1)}px;--a:${a.toFixed(1)}deg;--i:${i}"></b>`; }).join("");
-    h += `<svg class="cons" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i % 3 ? 1.3 : 1.9}" style="--i:${i}"/>`).join("")}</svg>`;
+    // The stars are plain round dots with their glow drawn once (a shadow), so they twinkle on the GPU.
+    h += pts.map((p, i) => { const r = i % 3 ? 1.3 : 1.9; return `<b class="cs" style="left:${(p[0] - r).toFixed(1)}px;top:${(p[1] - r).toFixed(1)}px;width:${2 * r}px;height:${2 * r}px;--i:${i}"></b>`; }).join("");
   }
   const np = lvl >= 8 ? 16 : 10;
   for (let i = 0; i < np; i++) h += `<i style="left:${(rnd() * 100).toFixed(1)}%;top:${(10 + rnd() * 80).toFixed(1)}%;--s:${(1 + rnd() * 1.6).toFixed(1)}px;--d:${(4 + rnd() * 5).toFixed(1)}s;--l:-${(rnd() * 8).toFixed(1)}s;--x:${Math.round(rnd() * 24 - 12)}px"></i>`;
@@ -796,12 +812,14 @@ const EASE = {
   out: "cubic-bezier(.16,.8,.3,1)"
 };
 // A quick swell that springs back (the count, the flame, the bar on landing). Without linear(), a plain swell.
-function kick(el, prop, amount, dur) {
+// add = play on top of the element's own CSS motion (the black-fire sway) instead of replacing it for a moment,
+// so the sway carries on through the kick and nothing snaps when it ends.
+function kick(el, prop, amount, dur, add) {
   if (!el || !el.animate) return null;
-  const base = prop === "scaleY" ? "scaleY(" : "scale(";
+  const base = prop === "scaleY" ? "scaleY(" : "scale(", o = add ? { composite: "add" } : {};
   return EASE.kick
-    ? el.animate([{ transform: base + "1)" }, { transform: base + (1 + amount) + ")" }], { duration: dur, easing: EASE.kick })
-    : el.animate([{ transform: base + "1)" }, { transform: base + (1 + amount) + ")", offset: .3 }, { transform: base + "1)" }], { duration: dur, easing: "ease-out" });
+    ? el.animate([{ transform: base + "1)" }, { transform: base + (1 + amount) + ")" }], Object.assign({ duration: dur, easing: EASE.kick }, o))
+    : el.animate([{ transform: base + "1)" }, { transform: base + (1 + amount) + ")", offset: .3 }, { transform: base + "1)" }], Object.assign({ duration: dur, easing: "ease-out" }, o));
 }
 let FX_EL = null;
 function fxLayer() {
@@ -831,7 +849,7 @@ function streakFeed(n, wait) {
   pill.innerHTML = `<span class="fl">${heatIcon(lvl)}</span>${n} in a row`;
   // The first time a streak shows, the counter slides open at the end of the bar now (while the eye is on the
   // pill), empty, so the pill has somewhere to land. It fills in when the pill arrives.
-  if (!slot.classList.contains("on")) slot.classList.add("on", "pre");
+  if (!slot.classList.contains("on")) slideBar(() => slot.classList.add("on", "pre"));
   const hdr = ($(".top.play") || dots).getBoundingClientRect(), px = innerWidth / 2, py = hdr.bottom + 44;
   [main, ...fx.querySelectorAll(".fx-tr")].forEach(el => { el.style.transform = `translate3d(${px}px,${py}px,0)`; });
   fx.classList.add("run");
@@ -880,7 +898,7 @@ function land(n, lvl, up, tx, ty, id) {
   const fx = FX_EL; if (!fx) return;
   const { dots, slot, fl } = landState(n, lvl, up); if (!dots) return clearFeed();
   const k = Math.min(lvl, 8) / 8, done = [];
-  kick(slot, "scale", .14 + .1 * k, 520); kick(fl, "scale", .35 + .25 * k + (up ? .15 : 0), 600); kick(dots, "scaleY", .9 + .7 * k, 480);
+  kick(slot, "scale", .14 + .1 * k, 520); kick(fl, "scale", .35 + .25 * k + (up ? .15 : 0), 600, true); kick(dots, "scaleY", .9 + .7 * k, 480);
   const burst = fx.querySelector(".fx-burst");
   burst.style.transform = `translate3d(${tx}px,${ty}px,0)`;
   done.push(fxAnim(burst.querySelector(".fx-ring"), [{ opacity: .95, transform: "scale(.14)" }, { opacity: 0, transform: `scale(${.55 + .45 * k + (up ? .15 : 0)})` }], { duration: 560, easing: EASE.out }));

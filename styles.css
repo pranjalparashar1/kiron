@@ -679,7 +679,7 @@ button.opt.missed { background: var(--good-soft); border: 2px dashed var(--ok); 
 .dots[data-heat="5"] { filter: drop-shadow(0 0 6px rgba(255,92,40,.85)); }
 .flame, .streak, .streak-label { display: none !important; }
 /* the count sits at the end of the bar, in the bar's colour */
-.heat { flex: none; display: inline-flex; align-items: center; gap: 1px; max-width: 0; opacity: 0; overflow: visible; margin-left: -12px; white-space: nowrap; transition: max-width .35s cubic-bezier(.3,1.3,.5,1), opacity .25s ease, margin-left .35s ease; }
+.heat { flex: none; display: inline-flex; align-items: center; gap: 1px; max-width: 0; opacity: 0; overflow: visible; margin-left: -12px; white-space: nowrap; transition: opacity .25s ease; }
 .heat.on { max-width: 72px; opacity: 1; margin-left: -4px; }
 .heat .fl { font-size: 17px; line-height: 1; }
 .heat .n { font: 800 17px var(--head); color: var(--heat, var(--ink)); font-variant-numeric: tabular-nums; text-shadow: 0 0 8px var(--glow, transparent); display: inline-block; min-width: 1ch; transform-origin: 50% 60%; }
@@ -731,8 +731,11 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
 
 /* the drawn flame (replaces the emoji) */
 .heat .fl { font-size: 0; display: inline-flex; align-items: flex-end; width: 18px; height: 22px; position: relative; filter: none !important; animation: none; }
-.kf { width: 16px; height: 21px; overflow: visible; display: block; margin: 0 auto; filter: drop-shadow(0 0 4px var(--glow, transparent)); }
-.kf .o, .kf .c { transform-box: fill-box; transform-origin: 50% 100%; }
+/* The flame is two stacked SVGs (outer tongue, hot core) in one box; each flickers from the foot of its own shape. */
+.kf { position: relative; width: 16px; height: 21px; display: block; margin: 0 auto; }
+.kf > svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+.kf .o { transform-origin: 50% 84.375%; filter: drop-shadow(0 0 4px var(--glow, transparent)); }
+.kf .c { transform-origin: 50% 85%; }
 .kf .o { fill: var(--f1, #d97757); }
 .kf .c { fill: var(--f2, #f0b23a); }
 [data-heat="1"] { --f1: #d97757; --f2: #f0b23a; }
@@ -742,13 +745,21 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
 [data-heat="5"] { --f1: #0b0b0b; --f2: #7a3cff; }
 [data-heat="6"] { --f1: url(#kneb); --f2: #eaf7ff; }
 [data-heat="5"] .kf .o { stroke: #ff6a2b; stroke-width: 1.3; }
-[data-heat="5"] .kf { filter: drop-shadow(0 0 4px rgba(255,92,40,.9)) drop-shadow(0 0 7px rgba(150,70,255,.7)); }
+[data-heat="5"] .kf .o { filter: drop-shadow(0 0 4px rgba(255,92,40,.9)) drop-shadow(0 0 7px rgba(150,70,255,.7)); }
+.heat .kf .o, .fxpill .kf .o { filter: none; }
 .kstar { width: 22px; height: 22px; overflow: visible; display: block; filter: drop-shadow(0 0 4px var(--glow)); }
 .kstar .s { fill: var(--heat); }
 .kstar .core { fill: #fff; }
 .kstar.ringed .s { fill: url(#kgold); }
 .kstar .ring { fill: none; stroke: rgba(201,184,255,.85); stroke-width: 1; }
 .kstar .moon circle { fill: #ffe3a0; }
+/* The ringed star is stacked layers too: ring, star, core, and the moon on an orbit squashed to the ring's tilt.
+   Each layer carries its own glow, drawn once; only the star and the moon's orbit move. */
+.kstar.ringed { position: relative; flex: none; filter: none; }
+.kstar.ringed > svg, .kstar.ringed .kmo, .kstar.ringed .moon, .kstar.ringed .moon svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+.kstar.ringed .kmo { transform: rotate(-22deg) scale(1, .336); }
+.kstar.ringed .kr, .kstar.ringed .ks, .kstar.ringed .moon svg { filter: drop-shadow(0 0 4px var(--glow)); }
+.fxpill .kstar.ringed > svg, .fxpill .kstar.ringed .moon svg { filter: none; }
 .heat .fl .kstar { margin-bottom: -1px; }
 
 /* "N in a row": the reward pill (see v14 below) */
@@ -782,7 +793,7 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
 .sky i { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(200,215,255,.9); opacity: .8; }
 .sky .cons { position: absolute; inset: 0; overflow: visible; }
 .sky .ln { position: absolute; height: 1px; margin-top: -.5px; background: rgba(205,220,255,.5); transform-origin: 0 50%; transform: rotate(var(--a)); }
-.sky .cons circle { fill: #fff; filter: drop-shadow(0 0 2px #cfdcff); }
+.sky .cs { position: absolute; border-radius: 50%; background: #fff; box-shadow: 0 0 2px #cfdcff; }
 .bestrun em { font-style: normal; }
 @media (prefers-reduced-motion: no-preference) {
   .kf .o { animation: flick 1.3s ease-in-out infinite; }
@@ -800,7 +811,7 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
   .kstar { animation: twinkle 2.4s ease-in-out infinite; }
   @keyframes twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.12) rotate(12deg); } }
   .kstar.ringed { animation: none; }
-  .kstar.ringed .s { transform-box: fill-box; transform-origin: center; animation: twinkle 2.4s ease-in-out infinite; }
+  .kstar.ringed .ks { animation: twinkle 2.4s ease-in-out infinite; }
   .kstar .moon { animation: orbit 3.2s linear infinite; }
   @keyframes orbit { to { transform: rotate(360deg); } }
   .sky .neb { animation: drift 9s ease-in-out infinite alternate; }
@@ -809,9 +820,9 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
   @keyframes drift { from { transform: translateX(-8%) scale(1); } to { transform: translateX(10%) scale(1.15); } }
   .sky i { animation: mote var(--d) ease-in-out var(--l) infinite; }
   @keyframes mote { 0%, 100% { opacity: .15; transform: translate(0, 0); } 50% { opacity: .95; transform: translate(var(--x), -5px); } }
-  .sky .cons circle { transform-box: fill-box; transform-origin: center; animation: twinkle 2.6s ease-in-out calc(var(--i) * -.37s) infinite; }
+  .sky .cs { animation: twinkle 2.6s ease-in-out calc(var(--i) * -.37s) infinite; }
   .sky.fresh .ln { animation: lnin .45s cubic-bezier(.3,.7,.4,1) calc(.15s + var(--i) * .12s) both; }
-  .sky.fresh .cons circle { animation: starin .5s cubic-bezier(.3,1.6,.5,1) calc(var(--i) * .12s) both, twinkle 2.6s ease-in-out 1.2s infinite; }
+  .sky.fresh .cs { animation: starin .5s cubic-bezier(.3,1.6,.5,1) calc(var(--i) * .12s) both, twinkle 2.6s ease-in-out 1.2s infinite; }
   @keyframes lnin { from { opacity: 0; transform: rotate(var(--a)) scaleX(0); } to { opacity: 1; transform: rotate(var(--a)) scaleX(1); } }
   @keyframes starin { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
   .sky.fresh { animation: skyin .9s ease-out; }
