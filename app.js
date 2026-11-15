@@ -602,7 +602,7 @@ function renderPlay(keepScroll) {
   else app().innerHTML = html;
   app().dataset.qid = id;
   DIR = 0;
-  if (!r.review) placeSky(heatNow);
+  if (!r.review) { placeSky(heatNow); placeGlint(heatNow); }
   armTimer(); if (TIMER && TIMER.pausedAt) { const dd = document.querySelector(".dots"); if (dd) dd.classList.add("paused"); }
   if (!keepScroll) { cancelScroll(); window.scrollTo(0, 0); }
   else {
@@ -695,8 +695,8 @@ function burst(el) {
     document.body.append(p); setTimeout(() => p.remove(), 800);
   }
 }
-/* Streak: from 3 in a row, each right answer drips a bubble out of the middle of the timer bar. It swells into
-   "N in a row" at the top centre of the screen, then rolls up and melts into the end of the bar (liquid merge).
+/* Streak: from 3 in a row, each right answer is rewarded: "N in a row" pops up at the top centre, then swoops
+   into the flame and count at the end of the bar, which pop and flash as it lands (see streakFeed).
    The bar, the flame and the count beside it take the streak's colour. The timer keeps running throughout.
    Fire:      3 amber · 5 gold · 8 pale gold · 11 white-hot · 15 black fire
    Celestial: 20 nebula (violet, magenta and teal clouds drift behind the bar)
@@ -742,126 +742,159 @@ function placeSky(lvl, fresh) {
   if (lvl >= 7) {
     const n = Math.max(5, Math.min(9, Math.round(W / 34))), pts = [];
     for (let i = 0; i < n; i++) { const up = i % 2 ? -1 : 1; pts.push([Math.round(W * .12 + W * .76 * (i + .15 + rnd() * .7) / n), Math.round(H / 2 + up * (5 + rnd() * 7))]); }
-    const line = pts.map(p => p.join(",")).join(" "), len = Math.round(pts.reduce((a, p, i) => i ? a + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0));
-    h += `<svg class="cons" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><polyline points="${line}" style="--len:${len}"/>${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i % 3 ? 1.3 : 1.9}" style="--i:${i}"/>`).join("")}</svg>`;
+    // The lines are thin plain strips, each turned to point at the next star. On a new stage each one grows out
+    // from its star (a stretch, which the GPU does) instead of being drawn along (which repainted every frame).
+    h += pts.slice(1).map((p, i) => { const q = pts[i], len = Math.hypot(p[0] - q[0], p[1] - q[1]), a = Math.atan2(p[1] - q[1], p[0] - q[0]) * 180 / Math.PI;
+      return `<b class="ln" style="left:${q[0]}px;top:${q[1]}px;width:${len.toFixed(1)}px;--a:${a.toFixed(1)}deg;--i:${i}"></b>`; }).join("");
+    h += `<svg class="cons" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i % 3 ? 1.3 : 1.9}" style="--i:${i}"/>`).join("")}</svg>`;
   }
   const np = lvl >= 8 ? 16 : 10;
   for (let i = 0; i < np; i++) h += `<i style="left:${(rnd() * 100).toFixed(1)}%;top:${(10 + rnd() * 80).toFixed(1)}%;--s:${(1 + rnd() * 1.6).toFixed(1)}px;--d:${(4 + rnd() * 5).toFixed(1)}s;--l:-${(rnd() * 8).toFixed(1)}s;--x:${Math.round(rnd() * 24 - 12)}px"></i>`;
   sky.innerHTML = h;
   if (still) sky.classList.add("still");
 }
-addEventListener("resize", () => { const s = $(".sky"), d = $(".dots"); if (s && d) placeSky(+d.dataset.heat || 0); });
-/* Timers for a streak bubble that is waiting or playing, so moving on cancels it cleanly. */
-let FEED = [];
-function clearFeed() { FEED.forEach(clearTimeout); FEED = []; [".drip", ".goo", ".fly", ".rowlabel"].forEach(s => document.querySelectorAll(s).forEach(o => o.remove())); }
-// Wait for the answer's pop, the confetti and the options folding away to finish first, so the phone
-// is not doing all of them in the same frames.
+/* The bar's shimmer at 15 (black fire: an ember glow) and 30 (galaxy: gold-white): a soft band of light that
+   glides along the bar now and then. It moves (transform) instead of sliding the bar's gradient (which repainted
+   the bar every frame). The old shimmer had in fact never shown: a stronger rule switched it off. */
+function placeGlint(lvl) {
+  const top = $(".top.play .top-in"), dots = $(".dots"); if (!top || !dots) return;
+  let g = top.querySelector(".glint");
+  if (lvl !== 5 && lvl !== 8) { if (g) g.remove(); return; }
+  if (!g) { g = document.createElement("span"); g.className = "glint"; g.setAttribute("aria-hidden", "true"); g.dataset.keep = "1"; g.innerHTML = "<b></b>"; top.append(g); }
+  const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect();
+  g.dataset.heat = lvl; g.style.cssText = `left:${d.left - t.left}px;top:${d.top - t.top}px;width:${d.width}px;height:${d.height}px;--w:${d.width}px`;
+}
+addEventListener("resize", () => { const s = $(".sky"), d = $(".dots"); if (s && d) placeSky(+d.dataset.heat || 0); if (d) placeGlint(+d.dataset.heat || 0); });
+/* ---------- The streak reward: appear, beat, fly to the counter, land ----------
+   Everything here runs as Web Animations on transform and opacity only, so iPhone Safari hands it to the GPU
+   (the compositor) and it plays at the screen's full 120Hz even if the page is busy. No filters, shadows, blurs,
+   masks or size changes move. The pieces are built once and stay in the page, hidden; a run only sets where they
+   start, then animates them, so starting it costs no layout.
+   Why the old bubble paused half way: its flight was cut into several keyframes, each with its own ease-in-out
+   curve, so the speed fell to zero at every keyframe and it visibly stopped for a moment. Each motion here is ONE
+   animation with ONE curve. The curved path comes from two nested wrappers (one moves sideways, the other up)
+   on different curves, never from stops along the way. */
+const SPRING_OK = typeof CSS !== "undefined" && CSS.supports && CSS.supports("animation-timing-function", "linear(0, 1)");
+// A spring written out as a linear() curve (Safari 17.2+), so the GPU can play the bounce on its own.
+// settle: goes 0 -> 1 with one soft overshoot. kick: goes 0 -> 1 -> back to 0 with a small dip (for pops).
+function springCurve(kind, zeta) {
+  const z = zeta, w = 6.4 / z, wd = w * Math.sqrt(1 - z * z), pts = [];
+  for (let i = 0; i <= 40; i++) {
+    const t = i / 40, e = Math.exp(-z * w * t);
+    const v = kind === "kick" ? e * Math.sin(wd * t) / Math.exp(-z * w * Math.atan(wd / (z * w)) / wd) / Math.sin(Math.atan(wd / (z * w)))
+                              : 1 - e * (Math.cos(wd * t) + (z * w / wd) * Math.sin(wd * t));
+    pts.push((i === 40 ? (kind === "kick" ? 0 : 1) : v).toFixed(4));
+  }
+  return `linear(${pts.join(", ")})`;
+}
+const EASE = {
+  appear: SPRING_OK ? springCurve("settle", .52) : "cubic-bezier(.34,1.45,.64,1)",
+  kick: SPRING_OK ? springCurve("kick", .42) : null,
+  flyX: "cubic-bezier(.62,0,.82,.55)",   // sideways: starts slow, keeps speeding up into the counter
+  flyY: "cubic-bezier(.3,.05,.5,1)",     // upward: lifts early, so the path bends in an arc
+  flyS: "cubic-bezier(.55,0,.85,.45)",   // shrinking: speeds up with the flight
+  out: "cubic-bezier(.16,.8,.3,1)"
+};
+// A quick swell that springs back (the count, the flame, the bar on landing). Without linear(), a plain swell.
+function kick(el, prop, amount, dur) {
+  if (!el || !el.animate) return null;
+  const base = prop === "scaleY" ? "scaleY(" : "scale(";
+  return EASE.kick
+    ? el.animate([{ transform: base + "1)" }, { transform: base + (1 + amount) + ")" }], { duration: dur, easing: EASE.kick })
+    : el.animate([{ transform: base + "1)" }, { transform: base + (1 + amount) + ")", offset: .3 }, { transform: base + "1)" }], { duration: dur, easing: "ease-out" });
+}
+let FX_EL = null;
+function fxLayer() {
+  if (FX_EL && FX_EL.isConnected) return FX_EL;
+  const root = document.createElement("div"); root.className = "fx"; root.setAttribute("aria-hidden", "true");
+  let h = `<div class="fx-x fx-main"><div class="fx-y"><div class="fx-k"><div class="fx-s"><b class="fx-halo"></b><span class="fxpill"></span></div></div></div></div>`;
+  for (let i = 0; i < 3; i++) h += `<div class="fx-x fx-tr"><div class="fx-y"><b class="fx-dot"></b></div></div>`;
+  h += `<div class="fx-sweep"><b class="fx-band"></b></div><div class="fx-burst"><b class="fx-ring"></b>${"<i></i>".repeat(12)}</div>`;
+  root.innerHTML = h; document.body.append(root); FX_EL = root; return root;
+}
+let FEED = [], FXRUN = [], FXID = 0;
+function clearFeed() {
+  FEED.forEach(clearTimeout); FEED = [];
+  FXRUN.forEach(a => { try { a.cancel(); } catch (e) {} }); FXRUN = [];
+  if (FX_EL) FX_EL.classList.remove("run");
+}
+const fxAnim = (el, kf, opt) => { const a = el.animate(kf, Object.assign({ fill: "both" }, opt)); FXRUN.push(a); return a; };
+// The streak only starts once the answer's pop, the confetti and the options folding away are done,
+// so the phone is never doing two heavy things in the same frames.
 function streakFeed(n, wait) {
-  clearFeed();
+  clearFeed(); const id = ++FXID;
   if (wait && !reduceMotion()) { FEED.push(setTimeout(() => { FEED = []; streakFeed(n); }, wait)); return; }
   const dots = $(".dots"), slot = $(".heat"); if (!dots || !slot) return;
-  const lvl = heatLevel(n), was = heatLevel(n - 1), up = lvl !== was;
-  const lift = () => {
-    if (!dots.isConnected) return;
-    dots.dataset.heat = lvl; slot.dataset.heat = lvl; slot.classList.add("on");
-    const num = slot.querySelector(".n"); if (num) num.textContent = n;
-    const fl = slot.querySelector(".fl"); if (fl && up) fl.innerHTML = heatIcon(lvl);
-    placeSky(lvl, up);
-    flash(dots, "fed"); flash(slot, "fed");
-  };
-  // "N in a row" at the top centre, below the bar
-  const label = document.createElement("span"); label.className = "rowlabel" + (up ? " up" : ""); label.dataset.heat = lvl; label.setAttribute("aria-hidden", "true");
-  label.innerHTML = `<span class="fl">${heatIcon(lvl)}</span>${n} in a row`;
-  const t = dots.getBoundingClientRect(), s = slot.getBoundingClientRect(), hdr = ($(".top.play") || dots).getBoundingClientRect();
-  const px = innerWidth / 2, py = hdr.bottom + 46;
-  label.style.left = px + "px"; label.style.top = py + "px"; document.body.append(label);
-  if (reduceMotion() || !document.body.animate) {
-    lift(); label.classList.add("calm"); setTimeout(() => label.remove(), 1500); return;
+  const lvl = heatLevel(n), up = lvl !== heatLevel(n - 1), still = reduceMotion() || !document.body.animate;
+  const fx = fxLayer(), main = fx.querySelector(".fx-main"), pill = fx.querySelector(".fxpill");
+  fx.dataset.heat = lvl; fx.classList.toggle("up", up);
+  pill.innerHTML = `<span class="fl">${heatIcon(lvl)}</span>${n} in a row`;
+  // The first time a streak shows, the counter slides open at the end of the bar now (while the eye is on the
+  // pill), empty, so the pill has somewhere to land. It fills in when the pill arrives.
+  if (!slot.classList.contains("on")) slot.classList.add("on", "pre");
+  const hdr = ($(".top.play") || dots).getBoundingClientRect(), px = innerWidth / 2, py = hdr.bottom + 44;
+  [main, ...fx.querySelectorAll(".fx-tr")].forEach(el => { el.style.transform = `translate3d(${px}px,${py}px,0)`; });
+  fx.classList.add("run");
+  if (still) {
+    // Reduced motion: the pill fades in where it is, stays a moment, fades out. The bar updates plainly.
+    if (main.animate) fxAnim(main.querySelector(".fx-s"), [{ opacity: 0, transform: "scale(.94)" }, { opacity: 1, transform: "scale(.94)", offset: .15 }, { opacity: 1, transform: "scale(.94)", offset: .8 }, { opacity: 0, transform: "scale(.94)" }], { duration: 1500, easing: "linear" });
+    FEED.push(setTimeout(() => { landState(n, lvl, up); placeSky(lvl, up); placeGlint(lvl); }, 400), setTimeout(clearFeed, 1550));
+    return;
   }
-  /* No filter here. The old version drew the bubble through an SVG blur + threshold ("goo") filter, which iPhone
-     Safari runs on the CPU and redraws on every frame, so it stuttered badly. Now every piece is a plain coloured
-     shape that only moves, scales and fades (transform and opacity), which the GPU does on its own at full speed.
-     Same-coloured shapes that overlap read as one blob, so the drip, the pill and the bar still look joined. */
-  const W = Math.max(label.offsetWidth + 8, 120), H = label.offsetHeight || 42, hw = (W - H) / 2;
-  const bx = t.left + t.width / 2, by = t.top + t.height / 2;
-  const tx = s.width > 4 ? s.left + 10 : t.right - 4, ty = t.top + t.height / 2;
-  const bg = PILL_BG[lvl], grad = /gradient/.test(bg), e = "cubic-bezier(.45,0,.4,1)", soft = "cubic-bezier(.3,1.35,.5,1)";
-  const drip = document.createElement("div"); drip.className = "drip";
-  // The pill is built from two round end caps and a middle strip, so it is a true pill at every width
-  // (stretching one rounded box squashes its ends into flat-sided blocks).
-  const blob = document.createElement("b"), capL = document.createElement("i"), mid = document.createElement("i"), capR = document.createElement("i");
-  const neck = document.createElement("i"), well = document.createElement("i");
-  blob.className = "blob"; capL.className = "cap"; capR.className = "cap"; mid.className = "mid"; neck.className = "neck"; well.className = "well";
-  blob.style.cssText = `left:${px - W / 2}px;top:${py - H / 2}px;width:${W}px;height:${H}px`;
-  const paint = (el, x) => el.style.background = grad ? `${bg} ${-x}px 0 / ${W}px ${H}px no-repeat` : bg;
-  capL.style.cssText = capR.style.cssText = `width:${H}px;height:${H}px;left:${hw}px`;
-  mid.style.cssText = `width:${W - H}px;height:${H}px;left:${H / 2}px`;
-  paint(capL, 0); paint(capR, W - H); paint(mid, H / 2);
-  const L = Math.max(8, py - by);
-  neck.style.cssText = `left:${bx - 4}px;top:${by}px;height:${L}px;background:${grad ? bg.match(/#[0-9a-f]{6}/gi).pop() : bg}`;
-  well.style.cssText = `left:${tx - 10}px;top:${ty - 8}px;background:${grad ? "#9b7bff" : bg}`;
-  blob.append(mid, capL, capR);
-  drip.append(neck, well, blob);
-  document.body.append(drip);
-  const dur = 1900, opt = { duration: dur, easing: "linear", fill: "forwards" }, dx = tx - px, dy = ty - py, up0 = by - py;
-  const all = [];
-  // the whole blob: falls out of the bar, sits as the pill, then rolls up into the end of the bar
-  all.push(blob.animate([
-    { offset: 0, easing: e,   opacity: 0, transform: `translate3d(0,${up0}px,0) scale(.16)` },
-    { offset: .04, easing: e, opacity: 1, transform: `translate3d(0,${up0 + 6}px,0) scale(.3)` },
-    { offset: .14, easing: e, opacity: 1, transform: `translate3d(0,6px,0) scale(.62, .7)` },
-    { offset: .2, easing: e,  opacity: 1, transform: `translate3d(0,-2px,0) scale(1.03, .95)` },
-    { offset: .27, easing: e, opacity: 1, transform: `translate3d(0,0,0) scale(1)` },
-    { offset: .6, easing: e,  opacity: 1, transform: `translate3d(0,0,0) scale(1)` },
-    { offset: .7, easing: e,  opacity: 1, transform: `translate3d(0,3px,0) scale(.7)` },
-    { offset: .8, easing: e,  opacity: 1, transform: `translate3d(${dx * .55}px,${dy * .45}px,0) scale(.48, .44)` },
-    { offset: .89, easing: e, opacity: 1, transform: `translate3d(${dx}px,${dy}px,0) scale(.3, .26)` },
-    { offset: 1,              opacity: 0, transform: `translate3d(${dx}px,${dy}px,0) scale(.08)` }
-  ], opt));
-  // the pill opens out of the round drop, then closes back into one
-  const spread = x => [
-    { offset: 0,               transform: "translate3d(0,0,0)" },
-    { offset: .15, easing: soft, transform: "translate3d(0,0,0)" },
-    { offset: .27, easing: e,  transform: `translate3d(${x}px,0,0)` },
-    { offset: .6, easing: e,   transform: `translate3d(${x}px,0,0)` },
-    { offset: .69,             transform: "translate3d(0,0,0)" },
-    { offset: 1,               transform: "translate3d(0,0,0)" }
-  ];
-  all.push(capL.animate(spread(-hw), opt), capR.animate(spread(hw), opt));
-  all.push(mid.animate([
-    { offset: 0,                 transform: "scaleX(0.001)" },
-    { offset: .15, easing: soft, transform: "scaleX(0.001)" },
-    { offset: .27, easing: e,    transform: "scaleX(1)" },
-    { offset: .6, easing: e,     transform: "scaleX(1)" },
-    { offset: .69,               transform: "scaleX(0.001)" },
-    { offset: 1,                 transform: "scaleX(0.001)" }
-  ], opt));
-  // the thin neck that joins the drop to the bar, then lets go
-  all.push(neck.animate([
-    { offset: 0, easing: e,   opacity: 1, transform: "translate3d(0,0,0) scale(.6, 0)" },
-    { offset: .06, easing: e, opacity: 1, transform: "translate3d(0,0,0) scale(1, .45)" },
-    { offset: .12, easing: e, opacity: 1, transform: "translate3d(0,0,0) scale(.55, 1)" },
-    { offset: .18,            opacity: 0, transform: `translate3d(0,${L * .8}px,0) scale(.3, .2)` },
-    { offset: 1,              opacity: 0, transform: `translate3d(0,${L * .8}px,0) scale(.3, .2)` }
-  ], opt));
-  // the end of the bar swells as the drop lands in it
-  all.push(well.animate([
-    { offset: 0,              opacity: 0, transform: "scale(0)" },
-    { offset: .83, easing: e, opacity: 0, transform: "scale(.2)" },
-    { offset: .89, easing: e, opacity: 1, transform: "scale(1.5, 1.15)" },
-    { offset: .95, easing: e, opacity: .85, transform: "scale(1.1, .8)" },
-    { offset: 1,              opacity: 0, transform: "scale(.5, .4)" }
-  ], opt));
-  // the words fade in on the pill (no scaling, so the text stays sharp) and out before it closes
-  all.push(label.animate([
-    { offset: 0,              opacity: 0, transform: "translate3d(-50%,calc(-50% + 4px),0)" },
-    { offset: .22, easing: e, opacity: 0, transform: "translate3d(-50%,calc(-50% + 4px),0)" },
-    { offset: .3, easing: e,  opacity: 1, transform: "translate3d(-50%,-50%,0)" },
-    { offset: .56, easing: e, opacity: 1, transform: "translate3d(-50%,-50%,0)" },
-    { offset: .63,            opacity: 0, transform: "translate3d(-50%,-50%,0)" },
-    { offset: 1,              opacity: 0, transform: "translate3d(-50%,-50%,0)" }
-  ], opt));
-  FEED.push(setTimeout(lift, dur * .9), setTimeout(() => { drip.remove(); label.remove(); }, dur + 60));
+  // 1 APPEAR: fades in and springs up to size in place. The text is drawn at full size and only ever shown
+  // at or below it, so it stays crisp.
+  const s = main.querySelector(".fx-s");
+  fxAnim(s, [{ opacity: 0, transform: "scale(.8)" }, { opacity: 1, transform: "scale(.94)", offset: .22 }, { opacity: 1, transform: "scale(.94)" }], { duration: 560, easing: EASE.appear });
+  // 2 BEAT: a slow swell while you read it, so it never sits frozen.
+  fxAnim(pill, [{ transform: "scale(1)" }, { transform: "scale(1.035)" }], { duration: 1300, easing: "cubic-bezier(.3,0,.5,1)" });
+  const BEAT = 860, FLY = 430;
+  FEED.push(setTimeout(() => fly(n, lvl, up, FLY, id), BEAT));
+}
+// 3 FLY: one accelerating swoop along an arc into the flame and count, shrinking as it goes, with a short comet tail.
+function fly(n, lvl, up, dur, id) {
+  const fx = FX_EL, slot = $(".heat"), dots = $(".dots"); if (!fx || !slot || !dots) return clearFeed();
+  const main = fx.querySelector(".fx-main"), sl = slot.getBoundingClientRect(), d = dots.getBoundingClientRect();
+  const px = innerWidth / 2, py = ($(".top.play") || dots).getBoundingClientRect().bottom + 44;
+  const tx = sl.width > 4 ? sl.left + sl.width / 2 : d.right - 6, ty = d.top + d.height / 2, dx = tx - px, dy = ty - py;
+  const x = el => fxAnim(el, [{ transform: `translate3d(${px}px,${py}px,0)` }, { transform: `translate3d(${tx}px,${py}px,0)` }], { duration: dur, easing: EASE.flyX, delay: el._lag || 0 });
+  const y = (el, lag) => fxAnim(el, [{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(0,${dy}px,0)` }], { duration: dur, easing: EASE.flyY, delay: lag || 0 });
+  const ax = x(main); y(main.firstElementChild);
+  fxAnim(main.querySelector(".fx-k"), [{ opacity: 1, transform: "scale(1)" }, { opacity: 1, transform: "scale(.16)", offset: .82 }, { opacity: 0, transform: "scale(.1)" }], { duration: dur, easing: EASE.flyS });
+  fx.querySelectorAll(".fx-tr").forEach((tr, i) => {
+    const lag = 40 + i * 38; tr._lag = lag; x(tr); y(tr.firstElementChild, lag);
+    fxAnim(tr.querySelector(".fx-dot"), [{ opacity: 0, transform: "scale(1.5)" }, { opacity: .75 - i * .2, transform: "scale(1.1)", offset: .45 }, { opacity: 0, transform: "scale(.35)" }], { duration: dur, easing: "linear", delay: lag });
+  });
+  ax.finished.then(() => land(n, lvl, up, tx, ty, id)).catch(() => {});
+}
+// The bar's real state: colour, count and flame/star for the new level.
+function landState(n, lvl, up) {
+  const dots = $(".dots"), slot = $(".heat"); if (!dots || !slot) return {};
+  dots.dataset.heat = lvl; slot.dataset.heat = lvl; slot.classList.add("on"); slot.classList.remove("pre");
+  const num = slot.querySelector(".n"); if (num && num.textContent !== String(n)) num.textContent = n;
+  const fl = slot.querySelector(".fl"); if (fl && up) fl.innerHTML = heatIcon(lvl);
+  return { dots, slot, num, fl };
+}
+// 4 LAND: the reward. The count ticks up with a pop, the flame pulses, a ring and sparks burst from it and one
+// light sweeps back along the bar. All of it grows a little with each streak level.
+function land(n, lvl, up, tx, ty, id) {
+  const fx = FX_EL; if (!fx) return;
+  const { dots, slot, fl } = landState(n, lvl, up); if (!dots) return clearFeed();
+  const k = Math.min(lvl, 8) / 8, done = [];
+  kick(slot, "scale", .14 + .1 * k, 520); kick(fl, "scale", .35 + .25 * k + (up ? .15 : 0), 600); kick(dots, "scaleY", .9 + .7 * k, 480);
+  const burst = fx.querySelector(".fx-burst");
+  burst.style.transform = `translate3d(${tx}px,${ty}px,0)`;
+  done.push(fxAnim(burst.querySelector(".fx-ring"), [{ opacity: .95, transform: "scale(.14)" }, { opacity: 0, transform: `scale(${.55 + .45 * k + (up ? .15 : 0)})` }], { duration: 560, easing: EASE.out }));
+  const sparks = burst.querySelectorAll("i"), ns = Math.min(12, 4 + lvl + (up ? 2 : 0));
+  sparks.forEach((sp, i) => {
+    if (i >= ns) return;
+    const a = -Math.PI * (.08 + .84 * (i + .5) / ns) + (i % 2 ? .12 : -.12), r = 16 + 14 * k + (i % 3) * 5;
+    done.push(fxAnim(sp, [{ opacity: 1, transform: "translate3d(0,0,0) scale(1)" }, { opacity: 0, transform: `translate3d(${(Math.cos(a) * r * 1.3).toFixed(1)}px,${(Math.sin(a) * r).toFixed(1)}px,0) scale(.3)` }], { duration: 480 + (i % 3) * 60, easing: EASE.out }));
+  });
+  const d = dots.getBoundingClientRect(), sw = fx.querySelector(".fx-sweep");
+  sw.style.transform = `translate3d(${d.left}px,${d.top - 5}px,0)`; sw.style.width = d.width + "px"; sw.style.height = d.height + 10 + "px";
+  done.push(fxAnim(sw.firstElementChild, [{ opacity: 0, transform: `translate3d(${d.width}px,0,0)` }, { opacity: .55 + .4 * k, transform: `translate3d(${d.width * .7}px,0,0)`, offset: .15 }, { opacity: 0, transform: "translate3d(-96px,0,0)" }], { duration: 620, easing: "cubic-bezier(.25,.55,.35,1)" }));
+  // Only after the landing has played: rebuild the sky for a new stage, then put everything away.
+  Promise.all(done.map(a => a.finished)).then(() => { if (id === FXID) clearFeed(); placeSky(lvl, up); placeGlint(lvl); }).catch(() => {});
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
