@@ -1,10 +1,10 @@
-/* Anthropic brand type: Poppins for headings and controls, Lora for reading text. Self-hosted so it works offline. */
+/* Type: Poppins everywhere (sans-serif is easier to read on a phone than the brand serif). Self-hosted so it works offline. */
+@font-face { font-family: "Poppins"; font-style: normal; font-weight: 400; font-display: swap; src: url("poppins-400.woff2") format("woff2"); }
+@font-face { font-family: "Poppins"; font-style: italic; font-weight: 400; font-display: swap; src: url("poppins-400-italic.woff2") format("woff2"); }
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 500; font-display: swap; src: url("poppins-500.woff2") format("woff2"); }
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 600; font-display: swap; src: url("poppins-600.woff2") format("woff2"); }
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 700; font-display: swap; src: url("poppins-700.woff2") format("woff2"); }
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 800; font-display: swap; src: url("poppins-800.woff2") format("woff2"); }
-@font-face { font-family: "Lora"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("lora.woff2") format("woff2"); }
-@font-face { font-family: "Lora"; font-style: italic; font-weight: 400 700; font-display: swap; src: url("lora-italic.woff2") format("woff2"); }
 /* Black theme on Anthropic's palette: Dark #141413, Light #faf9f5, Mid Gray #b0aea5, Light Gray #e8e6dc; accents Orange #d97757, Blue #6a9bcc, Green #788c5d. Always dark. */
 :root {
   --bg: #141413;
@@ -24,9 +24,9 @@
   --part-soft: #332b1a;
   --bad: #e5806f;
   --bad-soft: #3a1f1b;
-  --head: "Poppins", Arial, sans-serif;
-  --body: "Poppins", Arial, sans-serif;
-  --read: "Lora", Georgia, serif;
+  --head: "Poppins", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --body: "Poppins", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --read: var(--body);
   --mono: var(--body);
   --code: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --r: 12px;
@@ -514,7 +514,7 @@ details.more { scroll-margin-top: 72px; }
 body { font-family: var(--body); font-weight: 500; background: var(--bg); }
 body::before { background: var(--bg); }
 h1, h2, h3, .pick, .qtitle, .prompt, .endcard h2 { font-family: var(--head); }
-.model, .hint, details.more p, .yours, .donebox, .endcard p { font-family: var(--read); font-weight: 400; }
+.model, .hint, details.more p, .yours, .donebox, .endcard p { font-family: var(--read); font-weight: 400; letter-spacing: .005em; }
 .model { background: var(--surface2); font-size: 17px; line-height: 1.6; }
 .model .k { font-family: var(--head); color: var(--accent); }
 .hint { background: var(--hi); }
@@ -618,3 +618,34 @@ button.opt.dim, button.opt.wrong.dim { opacity: .28; }
 .ratio i.r { background: repeating-linear-gradient(135deg, #b5473c 0 8px, #9a3a30 8px 16px); }
 .ratio i.g { background: var(--ok); }
 .donebox { background: var(--good-soft); }
+
+/* ===== v7: right vs wrong in clearly different colours (off-brand on purpose), liquid streak ===== */
+:root {
+  --ok: #34c759; --ok-ink: #06210f;          /* right: solid bright green, dark text */
+  --no: #ff5a4f; --no-soft: #4a1517; --no-ink: #ffe1de;   /* not yet: red outline on a red tint */
+  --good: #34c759; --good-soft: #12301b;
+  --bad: #ff5a4f; --bad-soft: #4a1517;
+}
+button.opt.ok { background: var(--ok); border: 2px solid var(--ok); color: var(--ok-ink); font-weight: 700; }
+button.opt.ok .k { background: var(--ok-ink); border-color: var(--ok-ink); color: var(--ok); }
+button.opt.wrong { background: var(--no-soft); border: 2px solid var(--no); color: var(--no-ink); }
+button.opt.wrong .k, button.opt.wrong .k.box { background: var(--no); border-color: var(--no); color: #fff; }
+button.opt.wrong.dim { opacity: .55; }
+button.opt.missed { background: var(--good-soft); border: 2px dashed var(--ok); color: var(--ink); font-weight: 700; }
+.order.done li.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
+.order.done li.ok .p { background: var(--ok-ink); color: var(--ok); }
+.order.done li.wrong { background: var(--no-soft); border: 2px solid var(--no); color: var(--no-ink); }
+.order.done li.wrong .p { background: var(--no); color: #fff; }
+.ratio i.r { background: repeating-linear-gradient(135deg, #e0453b 0 8px, #b8352d 8px 16px); }
+
+/* liquid streak: the bubble and the bar are drawn through a goo filter so they melt together */
+.goo { position: fixed; left: 0; right: 0; z-index: 25; pointer-events: none; filter: url(#kgoo); -webkit-filter: url(#kgoo); }
+.goo i { position: absolute; display: block; border-radius: 999px; will-change: transform, opacity; }
+.streak-label { position: fixed; z-index: 26; pointer-events: none; font: 700 16px var(--head); color: var(--accent-ink); white-space: nowrap; transform: translate(-50%, -50%); }
+@media (prefers-reduced-motion: no-preference) {
+  .dots.fed { animation: wobble .9s cubic-bezier(.3,1.4,.5,1); transform-origin: 50% 50%; }
+  @keyframes wobble { 0% { transform: scaleY(1); } 25% { transform: scaleY(2.4); filter: brightness(1.25) drop-shadow(0 0 10px rgba(227,176,75,.9)); } 45% { transform: scaleY(.7); } 65% { transform: scaleY(1.35); } 85% { transform: scaleY(.92); } 100% { transform: scaleY(1); } }
+}
+/* hint sits under the options so they never jump; keep it clear of the bottom bar when it scrolls in */
+.hint { scroll-margin-bottom: calc(118px + env(safe-area-inset-bottom, 0px)); scroll-margin-top: 80px; }
+@media (prefers-reduced-motion: no-preference) { .qcardp .hint.fresh { animation: hintin .25s ease-out; } @keyframes hintin { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } } }
