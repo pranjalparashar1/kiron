@@ -519,7 +519,8 @@ function renderPlay(keepScroll) {
     const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
     input = `<div class="opts" role="group" aria-label="Options">` + ord.map((oi, pos) => {
       let cls = "opt", ic = "";
-      if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
+      // Once answered, only the right answer (and your pick, if it was off) stay. The rest fold away so the explanation fits on screen.
+      if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim" + (fx ? "" : " away"); }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
       return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}><span class="k${ic ? " ic" : ""}">${ic || pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
@@ -598,23 +599,40 @@ function renderPlay(keepScroll) {
     const el = app().querySelector(".fb");
     if (keepScroll === "fb" && el) {
       const wrong = status && status !== "right";
-      // let the shake play first on a wrong answer, then peek the explanation in (never pushing the question off the top)
-      setTimeout(() => reveal(el), wrong && !reduceMotion() ? 480 : 60);
+      // let the pop (or the shake) play, fold the other options away, then bring the explanation into view
+      setTimeout(() => foldAway(() => reveal(el, app().querySelector(".opt.ok, .opt.wrong, .order") || el)), wrong && !reduceMotion() ? 480 : 380);
     }
   }
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
   if (feeding) streakFeed(stk);
 }
-/* Gentle auto-scroll: bring the first `peek` px of el above the action bar, but never scroll the question
-   off the top of the screen. If there is still more below, the reader scrolls by hand. */
-function reveal(el, peek) {
+/* Fold the faded options away (height to zero), then call done. */
+function foldAway(done) {
+  const els = [...app().querySelectorAll(".opt.dim:not(.away)")];
+  if (!els.length) return done();
+  if (reduceMotion() || !document.body.animate) { els.forEach(o => o.classList.add("away")); return done(); }
+  const gap = parseFloat(getComputedStyle(els[0].parentElement).rowGap) || 0;
+  let left = els.length;
+  els.forEach(o => {
+    const h = o.offsetHeight;
+    const an = o.animate([
+      { height: h + "px", opacity: .45, marginBottom: "0px" },
+      { height: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", borderTopWidth: "0px", borderBottomWidth: "0px", marginBottom: -gap + "px" }
+    ], { duration: 340, easing: "cubic-bezier(.3,.7,.2,1)" });
+    o.style.overflow = "hidden";
+    an.onfinish = an.oncancel = () => { o.classList.add("away"); o.style.overflow = ""; if (!--left) done(); };
+  });
+}
+/* Auto-scroll after an answer or a hint: show as much of el as fits above the action bar (whole, if it can),
+   but never scroll `keep` (the answer you picked, or the question) up under the top bar. */
+function reveal(el, keep) {
   if (!el || !el.isConnected) return;
-  const hdr = $(".top.play"), bar = $(".actionbar"), p = $("#qprompt");
-  const topY = (hdr ? hdr.getBoundingClientRect().bottom : 0) + 10, botY = (bar ? bar.getBoundingClientRect().top : innerHeight) - 14;
-  const b = el.getBoundingClientRect(), want = Math.min(b.bottom, b.top + (peek || 110)) - botY;
+  const hdr = $(".top.play"), bar = $(".actionbar");
+  const topY = (hdr ? hdr.getBoundingClientRect().bottom : 0) + 8, botY = (bar ? bar.getBoundingClientRect().top : innerHeight) - 12;
+  const b = el.getBoundingClientRect(), want = b.bottom - botY;
   if (want <= 0) return;
-  const room = p ? Math.max(0, p.getBoundingClientRect().top - topY) : want;
-  const by = Math.min(want, room); if (by < 4) return;
+  const k = keep && keep.isConnected ? keep.getBoundingClientRect().top - topY : want;
+  const by = Math.min(want, Math.max(0, k)); if (by < 4) return;
   window.scrollBy({ top: by, behavior: reduceMotion() ? "auto" : "smooth" });
 }
 function burst(el) {
@@ -783,7 +801,7 @@ function playAct(act, el) {
   const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q, current.mode);
   if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
-  if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) reveal(h, 400); return; }
+  if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) reveal(h, $(".opts, .order") || $("#qprompt")); return; }
   if (act === "pause") { PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
   if (act === "back") return nav(-1);
   if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
