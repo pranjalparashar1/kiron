@@ -371,6 +371,7 @@ function route() {
     if (current && current.P.round && current.P.round.streak) { current.P.round.streak = 0; saveProg(); }
   }
   applyView();
+  document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (DEEP_ON && !SET.mode) return renderChooser();
   if (h === "import") return renderImport();
@@ -668,9 +669,10 @@ function reveal(el, keep) { smoothScrollTo(revealTarget(el, keep)); }
    Next button's ring hold still, so the phone spends every frame on the scroll. They carry on when it stops.
    The timer is never paused. */
 let SCROLLING = 0;
+// The class goes on the two bars only (not the whole page), so starting and stopping a scroll restyles just them.
 addEventListener("scroll", () => {
-  if (!SCROLLING) document.documentElement.classList.add("scrolling"); else clearTimeout(SCROLLING);
-  SCROLLING = setTimeout(() => { SCROLLING = 0; document.documentElement.classList.remove("scrolling"); }, 160);
+  if (!SCROLLING) document.querySelectorAll(".top.play, .actionbar").forEach(el => el.classList.add("scrolling")); else clearTimeout(SCROLLING);
+  SCROLLING = setTimeout(() => { SCROLLING = 0; document.querySelectorAll(".scrolling").forEach(el => el.classList.remove("scrolling")); }, 160);
 }, { passive: true });
 /* After an answer: the other options have already faded and shrunk (a short CSS transition while the pick pops),
    so the layout is final by now. The explanation fades up (opacity + transform only) and the page glides once. */
@@ -732,7 +734,8 @@ function placeSky(lvl, fresh) {
   gooDefs();
   const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect(), W = Math.round(d.width + 40), H = 56;
   if (!sky) { sky = document.createElement("span"); sky.className = "sky"; sky.setAttribute("aria-hidden", "true"); sky.dataset.keep = "1"; top.prepend(sky); }
-  sky.style.cssText = `left:${d.left - t.left - 20}px;top:${d.top - t.top + d.height / 2 - H / 2}px;width:${W}px;height:${H}px`;
+  const css = `left:${d.left - t.left - 20}px;top:${d.top - t.top + d.height / 2 - H / 2}px;width:${W}px;height:${H}px`;
+  if (sky._css !== css) { sky._css = css; sky.style.cssText = css; }   // skip the write when nothing moved
   // Same stage, same size: leave the stars where they are (rebuilding would make them jump back every question).
   if (!fresh && sky.dataset.key === lvl + ":" + W) return;
   sky.dataset.key = lvl + ":" + W; sky.dataset.heat = lvl; sky.classList.toggle("fresh", !!fresh);
@@ -762,7 +765,9 @@ function placeGlint(lvl) {
   if (lvl !== 5 && lvl !== 8) { if (g) g.remove(); return; }
   if (!g) { g = document.createElement("span"); g.className = "glint"; g.setAttribute("aria-hidden", "true"); g.dataset.keep = "1"; g.innerHTML = "<b></b>"; top.append(g); }
   const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect();
-  g.dataset.heat = lvl; g.style.cssText = `left:${d.left - t.left}px;top:${d.top - t.top}px;width:${d.width}px;height:${d.height}px;--w:${d.width}px`;
+  const css = `left:${d.left - t.left}px;top:${d.top - t.top}px;width:${d.width}px;height:${d.height}px;--w:${d.width}px`;
+  if (g.dataset.heat !== String(lvl)) g.dataset.heat = lvl;
+  if (g._css !== css) { g._css = css; g.style.cssText = css; }
 }
 addEventListener("resize", () => { const s = $(".sky"), d = $(".dots"); if (s && d) placeSky(+d.dataset.heat || 0); if (d) placeGlint(+d.dataset.heat || 0); });
 /* ---------- The streak reward: appear, beat, fly to the counter, land ----------
@@ -976,20 +981,34 @@ function arrowMove(btn) {
 document.addEventListener("pointerdown", e => {
   const g = e.target.closest && e.target.closest(".order .grip"); if (!g || !current) return;
   const li = g.closest("li"), ol = li.parentElement; e.preventDefault();
-  const startY = e.clientY, startTop = li.offsetTop; dragging = li; li.classList.add("drag");
+  const startY = e.clientY; dragging = li; li.classList.add("drag");
   try { g.setPointerCapture(e.pointerId); } catch (_) {}
-  const place = ev => {
+  // Read the rows once, at the start: their heights and the gap. Every position during the drag is worked out from
+  // these, so moving the finger never makes the phone measure the page again.
+  const order = [...ol.children], h = new Map(order.map(r => [r, r.offsetHeight])), top0 = order[0].offsetTop, startTop = li.offsetTop;
+  const gap = order.length > 1 ? order[1].offsetTop - top0 - h.get(order[0]) : 0;
+  const topOf = el => { let y = top0; for (const r of order) { if (r === el) return y; y += h.get(r) + gap; } return y; };
+  const swap = to => {
+    const from = order.indexOf(li), other = order[to], shift = (h.get(li) + gap) * (to < from ? -1 : 1);
+    ol.insertBefore(li, to > from ? other.nextSibling : other);
+    order.splice(from, 1); order.splice(to, 0, li);
+    if (!reduceMotion()) other.animate([{ transform: `translateY(${shift}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.3,.7,.2,1)" });
+    buzz(6);
+  };
+  let lastY = startY, raf = 0;
+  const place = () => {
+    raf = 0; const dy = lastY - startY, cy = startTop + h.get(li) / 2 + dy;
     for (let n = 0; n < 6; n++) {
-      const dy = ev.clientY - startY - (li.offsetTop - startTop), cy = li.offsetTop + li.offsetHeight / 2 + dy;
-      const prev = li.previousElementSibling, next = li.nextElementSibling, idx = [...ol.children].indexOf(li);
-      if (prev && cy < prev.offsetTop + prev.offsetHeight / 2) { moveLi(ol, li, idx - 1); buzz(6); continue; }
-      if (next && cy > next.offsetTop + next.offsetHeight / 2) { moveLi(ol, li, idx + 1); buzz(6); continue; }
+      const idx = order.indexOf(li), prev = order[idx - 1], next = order[idx + 1];
+      if (prev && cy < topOf(prev) + h.get(prev) / 2) { swap(idx - 1); continue; }
+      if (next && cy > topOf(next) + h.get(next) / 2) { swap(idx + 1); continue; }
       break;
     }
-    li.style.transform = `translateY(${ev.clientY - startY - (li.offsetTop - startTop)}px)`;
+    li.style.transform = `translateY(${dy - (topOf(li) - startTop)}px)`;
   };
-  const move = ev => place(ev);
-  const up = () => { g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up); dragging = null; li.classList.remove("drag"); li.style.transform = ""; syncOrder(ol, true); flash(li); };
+  // At most one move per frame, however often the finger reports.
+  const move = ev => { lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
+  const up = () => { if (raf) { cancelAnimationFrame(raf); place(); } g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up); dragging = null; li.classList.remove("drag"); li.style.transform = ""; syncOrder(ol, true); flash(li); };
   g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
 });
 
@@ -1015,6 +1034,7 @@ document.addEventListener("pointerup", e => {
 });
 document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 
+const slid = v => `translateX(${(v - 100).toFixed(3)}%)`;   // a full-width fill showing v% of the bar
 function renderRoundEnd() {
   const { quiz, P } = current, r = P.round;
   clearTimer(); r.ended = true;
@@ -1034,12 +1054,19 @@ function renderRoundEnd() {
   app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" data-replace="1" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
     <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
-    <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="width:${prev.g}%"><b aria-hidden="true">✓</b></i><i class="r" id="rr" style="width:${prev.r}%"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
+    <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="transform:${slid(gNow)}"><b aria-hidden="true" style="margin-left:${100 - gNow}%">✓</b></i><i class="r" id="rr" style="transform:${slid(gNow + rNow)}"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
     ${bestRun}
     ${allDone ? `<p>Come back in a few days and see what stuck.</p>` : ""}
     <div class="cta">${keep}${rev}</div>
   </div></main>`;
-  const rg = $("#rg"), rr = $("#rr"); if (rg && rr) { rg.getBoundingClientRect(); requestAnimationFrame(() => requestAnimationFrame(() => { rg.style.width = gNow + "%"; rr.style.width = rNow + "%"; })); }
+  // Grow from last time's split to this one: the fills slide (transform), the ✓ is held still by an equal and opposite slide.
+  const rg = $("#rg"), rr = $("#rr");
+  if (rg && rr && rg.animate && !reduceMotion() && (prev.g !== gNow || prev.r !== rNow)) {
+    const W = rg.parentNode.getBoundingClientRect().width, e = { duration: 1200, easing: "cubic-bezier(.22,.8,.24,1)" };
+    rg.animate([{ transform: slid(prev.g) }, { transform: slid(gNow) }], e);
+    rg.firstElementChild.animate([{ transform: `translateX(${((gNow - prev.g) / 100 * W).toFixed(1)}px)` }, { transform: "none" }], e);
+    rr.animate([{ transform: slid(prev.g + prev.r) }, { transform: slid(gNow + rNow) }], e);
+  }
 }
 
 /* ---------------- activity ---------------- */
@@ -1143,17 +1170,14 @@ function renderMake() {
 }
 
 /* ---------------- events ---------------- */
-// Dropdowns open by animating their real height (smooth on iPhone), then rest at "auto" so nested parts can grow.
+// Dropdowns open in one layout step (no height animation) and their contents fade and slide in (opacity and
+// transform, see .unfurl-in). Closing lets the contents fade out first, then folds the space away.
 function unfurl(box, open) {
   const u = box.querySelector(":scope > .unfurl"); if (!u) return;
-  const start = u.getBoundingClientRect().height;
-  if (u._a) { u._a.cancel(); u._a = null; }
+  clearTimeout(u._t);
   box.classList.toggle("open", open); u.inert = !open;
-  u.style.height = open ? "auto" : "0px";
-  const end = open ? u.getBoundingClientRect().height : 0;
-  if (reduceMotion() || !u.animate || Math.abs(start - end) < 1) return;
-  u._a = u.animate([{ height: start + "px" }, { height: end + "px" }], { duration: open ? 460 : 340, easing: "cubic-bezier(.32,.72,0,1)" });
-  u._a.onfinish = () => { u._a = null; };
+  if (open || reduceMotion()) u.style.height = open ? "auto" : "0px";
+  else u._t = setTimeout(() => { if (!box.classList.contains("open")) u.style.height = "0px"; }, 220);
 }
 let armed = { el: null, t: 0 };
 function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000) { armed = { el: null, t: 0 }; return true; } armed = { el, t: Date.now() }; el.dataset.label = el.textContent; el.textContent = label; setTimeout(() => { if (el.isConnected && armed.el === el) { el.textContent = el.dataset.label; armed = { el: null, t: 0 }; } }, 4000); return false; }
@@ -1200,7 +1224,9 @@ document.addEventListener("click", e => {
    the Next bar, without pushing the "Full answer" line up under the top bar. (scrollIntoView ignored the fixed
    Next bar, so the answer stopped underneath it.) */
 document.addEventListener("toggle", e => {
-  const d = e.target; if (!d || !d.classList || !d.classList.contains("more") || !d.open) return;
+  const d = e.target; if (!d || !d.classList || !d.classList.contains("more")) return;
+  const w = d.closest(".wrap.play"); if (w) w.classList.toggle("more-open", d.open);   // room to scroll the full answer up
+  if (!d.open) return;
   cancelScroll();
   requestAnimationFrame(() => requestAnimationFrame(() => reveal(d, d.querySelector("summary"))));
 }, true);
