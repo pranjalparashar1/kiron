@@ -850,3 +850,27 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
   @keyframes inr { from { opacity: 0; transform: translate3d(24px,0,0); } to { opacity: 1; transform: none; } }
   @keyframes inl { from { opacity: 0; transform: translate3d(-24px,0,0); } to { opacity: 1; transform: none; } }
 }
+
+/* ===== v12: faded options are back; smoother scrolling ===== */
+/* After answering, the other options stay where they were, faded and a little smaller, so a mis-tap is easy to see
+   and the explanation still fits without a long scroll. The answer you picked and the right answer stay full size. */
+button.opt.dim:not(.wrong):not(.ok) {
+  opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; font-weight: 500; border-width: 1px; gap: 10px;
+  transition: opacity .28s ease, min-height .28s ease, padding .28s ease, font-size .28s ease, background-color .2s, border-color .2s;
+}
+button.opt.dim:not(.wrong):not(.ok) .k { width: 22px; height: 22px; font-size: 11px; transition: width .28s ease, height .28s ease; }
+/* Steady page height: svh does not change while Safari's toolbar slides in and out, so the page is not
+   re-laid out in the middle of a scroll (dvh was). */
+.wrap.play { min-height: calc(100vh - 52px); min-height: calc(100svh - 52px); }
+.home, .lib { min-height: calc(100vh - 72px); min-height: calc(100svh - 72px); }
+/* No rubber-band bounce on the quiz screen: the fixed bars no longer wobble against the page at the ends. */
+html:has(.top.play), html:has(.top.play) body { overscroll-behavior-y: none; }
+/* Flame glow: a soft static halo behind it instead of a drop-shadow filter on the flickering SVG
+   (the filter had to be repainted on every frame of the flicker). */
+.heat .kf { filter: none; }
+.heat .fl { background: radial-gradient(closest-side, var(--glow, transparent), transparent 75%); border-radius: 50%; }
+.heat[data-heat="5"] .kf { filter: none; }
+/* Hold the decorative loops still while scrolling (see app.js). */
+.scrolling .kf .o, .scrolling .kf .c, .scrolling .heat .n, .scrolling .heat .fl::before, .scrolling .heat .fl::after,
+.scrolling .kstar, .scrolling .kstar *, .scrolling .sky *, .scrolling .btn.pulse, .scrolling .actionbar .btn.primary,
+.scrolling .btn.pulse::after, .scrolling .actionbar .btn.primary::after { animation-play-state: paused !important; }

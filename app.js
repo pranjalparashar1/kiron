@@ -519,8 +519,9 @@ function renderPlay(keepScroll) {
     const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
     input = `<div class="opts" role="group" aria-label="Options">` + ord.map((oi, pos) => {
       let cls = "opt", ic = "";
-      // Once answered, only the right answer (and your pick, if it was off) stay. The rest fold away so the explanation fits on screen.
-      if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim" + (fx ? "" : " away"); }
+      // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
+      // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
+      if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
       return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}><span class="k${ic ? " ic" : ""}">${ic || pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
@@ -607,8 +608,8 @@ function renderPlay(keepScroll) {
     const el = app().querySelector(".fb");
     if (keepScroll === "fb" && el) {
       const wrong = status && status !== "right", picked = fx && fx.oi !== undefined;
-      // let the pop (or the shake) play, then fold the other options away, fade the explanation in and glide down to it, all in one motion
-      settle(el, !picked ? 60 : wrong && !reduceMotion() ? 460 : 340);
+      // let the pop (or the shake) play while the other options fade and shrink, then fade the explanation in and glide down to it
+      settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
@@ -635,28 +636,15 @@ function morph(a, b) {
   for (const { name, value } of [...b.attributes]) if (a.getAttribute(name) !== value) a.setAttribute(name, value);
   patchKids(a, b, true);
 }
-/* Our own eased scroll. The browser's smooth scroll on iPhone is short and abrupt; this one starts and stops
-   gently (ease-in-out sine) and stops the moment you touch the screen. */
-let SCROLL = 0;
-const easeSine = t => (1 - Math.cos(Math.PI * t)) / 2, EASE_SINE = "cubic-bezier(.37,0,.63,1)";
-const glideMs = d => Math.round(Math.min(760, Math.max(460, 320 + Math.abs(d) * .8)));
-function cancelScroll() { if (SCROLL) { cancelAnimationFrame(SCROLL); SCROLL = 0; } }
-function smoothScrollTo(y, dur) {
-  cancelScroll();
-  const y0 = window.scrollY, d = y - y0;
-  if (Math.abs(d) < 2) return;
-  if (reduceMotion()) return window.scrollTo(0, y);
-  dur = dur || glideMs(d);
-  let t0 = 0;
-  const step = now => {
-    if (!t0) t0 = now;
-    const t = Math.min(1, (now - t0) / dur);
-    window.scrollTo(0, y0 + d * easeSine(t));
-    SCROLL = t < 1 ? requestAnimationFrame(step) : 0;
-  };
-  SCROLL = requestAnimationFrame(step);
+/* Scrolling for the answer: one native smooth scroll. On iPhone it runs on the compositor (off the main thread),
+   so it stays smooth even while the flame and timer animate, and a touch stops it straight away.
+   (Our old rAF loop called scrollTo every frame on the main thread and stuttered whenever anything else ran.) */
+let SETTLE = 0;
+function cancelScroll() { if (SETTLE) { clearTimeout(SETTLE); SETTLE = 0; } }
+function smoothScrollTo(y) {
+  if (Math.abs(y - window.scrollY) < 2) return;
+  window.scrollTo({ top: y, behavior: reduceMotion() ? "auto" : "smooth" });
 }
-["touchstart", "wheel"].forEach(ev => addEventListener(ev, cancelScroll, { passive: true }));
 /* Where to scroll so as much of el as fits sits above the action bar (whole, if it can), without pushing
    `keep` (the answer you picked, or the question) up under the top bar. Never past the end of the page. */
 function revealTarget(el, keep) {
@@ -674,32 +662,25 @@ function revealTarget(el, keep) {
   return Math.min(max, Math.max(0, y + by));
 }
 function reveal(el, keep) { smoothScrollTo(revealTarget(el, keep)); }
-/* After an answer: the faded options fold away (height and opacity), the explanation fades up, and the page
-   glides to it. All three share one duration and one gentle ease, so they read as a single movement. The end
-   position is measured up front (options hidden for an instant, before anything is drawn). */
+/* While the page is moving (your finger, or the glide to the answer), the decorative loops in the top bar and the
+   Next button's ring hold still, so the phone spends every frame on the scroll. They carry on when it stops.
+   The timer is never paused. */
+let SCROLLING = 0;
+addEventListener("scroll", () => {
+  if (!SCROLLING) document.documentElement.classList.add("scrolling"); else clearTimeout(SCROLLING);
+  SCROLLING = setTimeout(() => { SCROLLING = 0; document.documentElement.classList.remove("scrolling"); }, 160);
+}, { passive: true });
+/* After an answer: the other options have already faded and shrunk (a short CSS transition while the pick pops),
+   so the layout is final by now. The explanation fades up (opacity + transform only) and the page glides once. */
 function settle(fb, delay) {
-  setTimeout(() => {
+  cancelScroll();
+  SETTLE = setTimeout(() => {
+    SETTLE = 0;
     if (!fb.isConnected) return;
-    const els = [...app().querySelectorAll(".opt.dim:not(.away)")];
-    const keepEl = () => app().querySelector(".opt.ok, .opt.wrong, .order") || fb;
-    if (reduceMotion() || !document.body.animate) { els.forEach(o => o.classList.add("away")); fb.classList.remove("wait"); return reveal(fb, keepEl()); }
-    const from = els.map(o => ({ h: o.offsetHeight, op: getComputedStyle(o).opacity }));
-    const gap = els.length ? parseFloat(getComputedStyle(els[0].parentElement).rowGap) || 0 : 0;
-    els.forEach(o => o.classList.add("away"));
-    const y1 = revealTarget(fb, keepEl());
-    els.forEach(o => o.classList.remove("away"));
-    const D = glideMs(y1 - window.scrollY);
-    els.forEach((o, i) => {
-      o.style.overflow = "hidden";
-      const an = o.animate([
-        { height: from[i].h + "px", minHeight: from[i].h + "px", opacity: from[i].op, marginBottom: "0px" },
-        { height: "0px", minHeight: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", borderTopWidth: "0px", borderBottomWidth: "0px", marginBottom: -gap + "px" }
-      ], { duration: D * .9, easing: EASE_SINE, fill: "forwards" });
-      an.onfinish = () => { o.classList.add("away"); o.style.overflow = ""; an.cancel(); };
-    });
+    const keepEl = app().querySelector(".opt.ok, .opt.wrong, .order") || fb;
     fb.style.animation = "none"; fb.classList.remove("wait");
-    fb.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], { duration: D, easing: "cubic-bezier(.25,.6,.3,1)", fill: "backwards" });
-    smoothScrollTo(y1, D);
+    if (!reduceMotion() && fb.animate) fb.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.25,.6,.3,1)", fill: "backwards" });
+    reveal(fb, keepEl);
   }, delay);
 }
 function burst(el) {
