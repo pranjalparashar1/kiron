@@ -221,7 +221,8 @@ const getImported = () => LS.get(K_IMPORTED, []);
 function allQuizzes() {
   const imp = getImported().map(q => ({ quiz: q, mine: true }));
   const ids = new Set(imp.map(x => x.quiz.id));
-  return imp.concat(SAMPLES.filter(s => !ids.has(s.quiz.id)).map(s => ({ quiz: s.quiz, mine: false })));
+  return imp.concat(SAMPLES.filter(s => !ids.has(s.quiz.id)).map(s => ({ quiz: s.quiz, mine: false })))
+    .sort((a, b) => a.quiz.title.localeCompare(b.quiz.title, undefined, { sensitivity: "base", numeric: true }));
 }
 function findQuiz(id) { return allQuizzes().find(x => x.quiz.id === id); }
 async function loadSamples() {
@@ -362,7 +363,7 @@ function openQuiz(id) {
 }
 function route() {
   clearTimer();
-  if (!/^#play-/.test(location.hash)) { const h = $("#heat"); if (h) h.remove(); }
+  if (!/^#play-/.test(location.hash)) { const p = $("#streak"); if (p) p.remove(); }
   applyView();
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (DEEP_ON && !SET.mode) return renderChooser();
@@ -405,6 +406,7 @@ function renderLibrary() {
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
     <div class="grid">${list.length ? list.map(x => `<button class="card qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
+    <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
 function segBar(c) {
@@ -429,13 +431,13 @@ function renderHome() {
     const pc = counts(quiz, P, i), st = stateOf(pc), answered = pc.right + pc.revisit > 0;
     const acts = st[0] === "none" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Start</button>`
       : `${st[0] === "some" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Continue</button>` : ""}${answered ? `<button class="btn" data-act="partreview" data-pi="${i}" type="button">Review</button>` : ""}<button class="btn ghost" data-act="partredo" data-pi="${i}" type="button">Redo</button>`;
-    return `<div class="part"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button><div class="unfurl"><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div>`;
+    return `<div class="part"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button><div class="unfurl" inert><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div>`;
   }).join("");
   app().innerHTML = topBar(backBtn(), `<span class="grow"></span>`, viewBtn()) + `
   <main class="wrap home">
     <h1 class="qtitle">${esc(quiz.title)}</h1>
     <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
-    ${quiz.sections.length > 1 ? `<div class="jump"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button><div class="unfurl"><div class="unfurl-in"><div class="parts">${parts}</div></div></div></div>` : ""}
+    ${quiz.sections.length > 1 ? `<div class="jump"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button><div class="unfurl" inert><div class="unfurl-in"><div class="parts">${parts}</div></div></div></div>` : ""}
     <div class="foot">${started || inRound ? `<button class="btn ghost danger" data-act="reset" type="button">Reset quiz</button>` : ""}${mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
   </main>`;
 }
@@ -463,7 +465,8 @@ function clearTimer() { if (TIMER) { clearTimeout(TIMER.to); TIMER = null; } }
 function timerElapsed() { return TIMER ? (TIMER.pausedAt || Date.now()) - TIMER.t0 : 0; }
 function armTimer() {
   if (!TIMER) return; clearTimeout(TIMER.to);
-  if (document.hidden) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); return; }
+  if (document.hidden || SET.paused) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); return; }
+  if (TIMER.pausedAt) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; }
   TIMER.to = setTimeout(() => {
     if (!current || !current.P.round || !TIMER) return;
     const r = current.P.round, id = TIMER.id;
@@ -474,7 +477,7 @@ function armTimer() {
 document.addEventListener("visibilitychange", () => {
   if (!TIMER) return; const dots = document.querySelector(".dots");
   if (document.hidden) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); clearTimeout(TIMER.to); if (dots) dots.classList.add("paused"); }
-  else { if (TIMER.pausedAt) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } if (dots) dots.classList.remove("paused"); armTimer(); }
+  else if (!SET.paused) { if (TIMER.pausedAt) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } if (dots) dots.classList.remove("paused"); armTimer(); }
 });
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
@@ -494,8 +497,9 @@ function renderPlay(keepScroll) {
   }
   const cur = P.cur, f = formOf(q, current.mode);
   const fx = FX && FX.id === id ? FX : null; FX = null;
-  const timedDur = !SET.paused && !cur.done && !r.review && !cur.revealed ? durFor(q, f) : 0;
-  if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); TIMER = { id, dur: timedDur, t0: Date.now(), pausedAt: 0, to: null }; } } else clearTimer();
+  // Pause keeps the timer where it is: the bar freezes and Play carries on from the same spot.
+  const timedDur = !cur.done && !r.review && !cur.revealed ? durFor(q, f) : 0;
+  if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); const now = Date.now(); TIMER = { id, dur: timedDur, t0: now, pausedAt: SET.paused ? now : 0, to: null }; } } else clearTimer();
   const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
   let input = "", primary = "";
@@ -512,13 +516,14 @@ function renderPlay(keepScroll) {
     const sel = a || [];
     input = `<p class="lead">Pick all that apply.</p><div class="opts" role="group" aria-label="Options">` + q.options.map((o, i) => {
       let cls = "opt" + (sel.includes(i) ? " sel" : ""), ic = sel.includes(i) ? "✓" : "";
-      if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong" : right ? " missed" : " dim"); ic = ch && right ? "✓" : ch ? "✕" : right ? "✓" : ""; }
-      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}><span class="k box${cur.done && ic ? " ic" : ""}">${ic}</span><span>${fmt(o)}</span></button>`;
+      // Once checked, only the right options stay bright; everything else fades back. No tick boxes then.
+      if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong dim" : right ? " missed" : " dim"); }
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${cur.done ? "" : `<span class="k box">${ic}</span>`}<span>${fmt(o)}</span></button>`;
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
     const ord = a || orderStart(id, q.items.length);
-    input = `<p class="lead">${cur.done ? "Your order:" : "Drag the handle, or tap the arrows."}</p><ol class="order${cur.done ? " done" : ""}">` + ord.map((it, pos) => {
+    input = `<p class="lead">${cur.done ? "Your order:" : "Drag, or tap the arrows."}</p><ol class="order${cur.done ? " done" : ""}">` + ord.map((it, pos) => {
       const ok = cur.done && it === pos;
       return `<li data-it="${it}" class="${cur.done ? (ok ? "ok" : "wrong") : ""}">${cur.done ? "" : `<span class="grip" aria-hidden="true">⠿</span>`}<span class="p">${cur.done ? (ok ? "✓" : "✕") : pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv up" type="button" data-mv="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>▲</button><button class="mv dn" type="button" data-mv="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>▼</button>`}</li>`;
     }).join("") + `</ol>`;
@@ -559,7 +564,9 @@ function renderPlay(keepScroll) {
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : needsSelf ? `<span class="grow note">Mark yourself to continue</span>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}">${dots}</div>${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
+  const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", on a streak" : ""}">${dots}</div><span class="flame${heatNow ? " on" : ""}" aria-hidden="true">🔥</span>${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -583,12 +590,12 @@ function renderPlay(keepScroll) {
       setTimeout(() => { if (el.isConnected) el.scrollIntoView({ block: wrong ? "start" : "nearest", behavior: reduceMotion() ? "auto" : "smooth" }); }, wrong && !reduceMotion() ? 480 : 60);
     }
   }
-  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); if (r.streak >= 3) streakPill(r.streak); }
-  heat(r.review ? 0 : r.streak || 0);
+  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
+  if (feeding) streakFeed(stk);
 }
 function burst(el) {
   if (reduceMotion()) return;
-  const b = el.getBoundingClientRect(), cols = ["#f5b700", "#ff6b6b", "#3a4fd0", "#1fa463", "#b46bff"];
+  const b = el.getBoundingClientRect(), cols = ["#d97757", "#faf9f5", "#6a9bcc", "#788c5d", "#e3b04b"];
   for (let i = 0; i < 16; i++) {
     const p = document.createElement("i"); p.className = "conf";
     const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = 50 + Math.random() * 70;
@@ -596,19 +603,26 @@ function burst(el) {
     document.body.append(p); setTimeout(() => p.remove(), 800);
   }
 }
-/* Streak: from 3 in a row a "🔥 n in a row" pill drops in on each right answer, and the screen heats up as the run grows. A wrong answer quietly cools it. */
-function streakPill(n) {
+/* Streak: from 3 in a row, a "🔥 n in a row" counter pops up under the bar, then shrinks and flies into it.
+   The bar then changes colour as the run grows (gold, orange, flame) and a small flame sits at its end. A wrong answer quietly cools it back. */
+const heatLevel = n => n >= 10 ? 4 : n >= 7 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
+function streakFeed(n) {
   const old = $("#streak"); if (old) old.remove();
-  const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.textContent = "🔥 " + n + " in a row";
-  document.body.append(el); setTimeout(() => el.remove(), 1700);
-}
-// Heat: warm gradients creep in from the bottom and the edges, stronger every answer, from 3 in a row up to about 15.
-function heat(n) {
-  let h = $("#heat");
-  const lv = Math.min(1, Math.max(0, (n - 2) / 13));
-  if (!lv) { if (h) h.remove(); return; }
-  if (!h) { h = document.createElement("div"); h.id = "heat"; h.className = "heat"; h.setAttribute("aria-hidden", "true"); document.body.append(h); }
-  h.style.setProperty("--h", lv.toFixed(2));
+  const dots = $(".dots"), flame = $(".flame"); if (!dots) return;
+  const lift = () => { if (!dots.isConnected) return; dots.dataset.heat = heatLevel(n); if (flame) flame.classList.add("on"); flash(dots, "fed"); if (flame) flash(flame, "fed"); };
+  const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.setAttribute("role", "status"); el.textContent = "🔥 " + n + " in a row";
+  document.body.append(el);
+  if (reduceMotion() || !el.animate) { lift(); setTimeout(() => el.remove(), 1400); return; }
+  const a = el.getBoundingClientRect(), t = dots.getBoundingClientRect();
+  const dx = (t.left + t.width / 2) - (a.left + a.width / 2), dy = (t.top + t.height / 2) - (a.top + a.height / 2);
+  const anim = el.animate([
+    { opacity: 0, transform: "translate(-50%, 14px) scale(.7)" },
+    { opacity: 1, transform: "translate(-50%, 0) scale(1.08)", offset: .14 },
+    { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: .22 },
+    { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: .62 },
+    { opacity: 0, transform: `translate(calc(-50% + ${dx}px), ${dy}px) scale(.25)` }
+  ], { duration: 1500, easing: "cubic-bezier(.45,0,.25,1)", fill: "forwards" });
+  anim.onfinish = () => { el.remove(); lift(); };
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
@@ -639,7 +653,7 @@ function playAct(act, el) {
   if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
   if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.scrollIntoView({ block: "nearest" }); return; }
-  if (act === "pause") { SET.paused = !SET.paused; saveSet(); if (SET.paused) clearTimer(); return renderPlay(true); }
+  if (act === "pause") { SET.paused = !SET.paused; saveSet(); if (TIMER) { clearTimeout(TIMER.to); if (SET.paused) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
   if (act === "back") return nav(-1);
   if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
   if (act === "self") { finalize(el.dataset.self); return renderPlay(true); }
@@ -666,19 +680,24 @@ function syncOrder(ol, save) {
   kids.forEach((li, i) => { li.querySelector(".p").textContent = i + 1; li.querySelector(".up").disabled = i === 0; li.querySelector(".dn").disabled = i === kids.length - 1; });
   if (save && current && current.P.cur) { current.P.a[current.P.cur.id] = kids.map(li => +li.dataset.it); saveProg(); }
 }
-function moveLi(ol, li, to) {
+// lift = the row the person moved with an arrow: it rises a little, glides to its new place and settles, so the swap is easy to follow.
+function moveLi(ol, li, to, lift) {
   const kids = [...ol.children], from = kids.indexOf(li);
   if (to < 0 || to >= kids.length || to === from) return false;
   const before = new Map(kids.map(k => [k, k.getBoundingClientRect().top]));
   ol.insertBefore(li, to > from ? kids[to].nextSibling : kids[to]);
-  if (!reduceMotion()) kids.forEach(k => { if (k === dragging) return; const d = before.get(k) - k.getBoundingClientRect().top; if (d) k.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.8,.2,1)" }); });
+  if (!reduceMotion()) kids.forEach(k => {
+    if (k === dragging) return; const d = before.get(k) - k.getBoundingClientRect().top; if (!d) return;
+    if (k === lift) { k.classList.add("lift"); const a = k.animate([{ transform: `translateY(${d}px) scale(1)` }, { transform: `translateY(${d * .55}px) scale(1.045)`, offset: .35 }, { transform: "translateY(0) scale(1.045)", offset: .8 }, { transform: "none" }], { duration: 520, easing: "cubic-bezier(.3,.7,.2,1)" }); a.onfinish = a.oncancel = () => k.classList.remove("lift"); }
+    else k.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: lift ? 520 : 240, easing: "cubic-bezier(.3,.7,.2,1)" });
+  });
   return true;
 }
-function flash(li) { li.classList.remove("moved"); void li.offsetWidth; li.classList.add("moved"); }
+function flash(li, cls) { cls = cls || "moved"; li.classList.remove(cls); void li.offsetWidth; li.classList.add(cls); }
 function arrowMove(btn) {
-  const li = btn.closest("li"), ol = li.parentElement, dir = +btn.dataset.mv, i = [...ol.children].indexOf(li);
-  if (!moveLi(ol, li, i + dir)) return;
-  syncOrder(ol, true); flash(li); buzz(8);
+  const li = btn.closest("li"), ol = li.parentElement, dir = +btn.dataset.mv, i = [...ol.children].indexOf(li), other = ol.children[i + dir];
+  if (!moveLi(ol, li, i + dir, li)) return;
+  syncOrder(ol, true); flash(li); if (other) flash(other, "nudged"); buzz(8);
   const nb = li.querySelector(btn.classList.contains("up") ? ".up" : ".dn"); (nb && !nb.disabled ? nb : li.querySelector(".mv:not(:disabled)")) ?.focus({ preventScroll: true });
 }
 document.addEventListener("pointerdown", e => {
@@ -701,7 +720,7 @@ document.addEventListener("pointerdown", e => {
   g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
 });
 
-/* ---- story-style side taps and swipes: left = back, right = next (or "do this later" if unanswered) ---- */
+/* ---- story-style side taps: left = back, right = next (or "do this later" if unanswered). No swipes. ---- */
 let tapDown = null, ghostUntil = 0;
 document.addEventListener("pointerdown", e => { tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
 document.addEventListener("pointerup", e => {
@@ -710,9 +729,8 @@ document.addEventListener("pointerup", e => {
   const t = e.target && e.target.closest ? e.target : null; if (!t) return;
   if (t.closest("a, input, textarea, label, summary, .actionbar, .top, .toast, .kp, .selfmark, .grip, .mv, [data-act], [data-self], [data-kp], [data-go]")) return;
   const done = !!(current.P.cur && current.P.cur.done);
-  if (!done && t.closest(".opt, .order, .hint")) { /* answering, not navigating */ if (Math.abs(e.clientX - d.x) < 60) return; }
+  if (!done && t.closest(".opt, .order, .hint")) return; // answering, not navigating
   const dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Date.now() - d.t;
-  if (Math.abs(dx) >= 60 && Math.abs(dy) < 45 && dt < 700) { ghostUntil = Date.now() + 250; return nav(dx < 0 ? 1 : -1); } // swipe
   if (Math.abs(dx) > 10 || Math.abs(dy) > 10 || dt > 450) return;
   if (String(getSelection && getSelection())) return;
   ghostUntil = Date.now() + 250; // the browser sends a click after this tap: swallow it so it can't hit the next screen's option
@@ -842,6 +860,18 @@ function renderMake() {
 }
 
 /* ---------------- events ---------------- */
+// Dropdowns open by animating their real height (smooth on iPhone), then rest at "auto" so nested parts can grow.
+function unfurl(box, open) {
+  const u = box.querySelector(":scope > .unfurl"); if (!u) return;
+  const start = u.getBoundingClientRect().height;
+  if (u._a) { u._a.cancel(); u._a = null; }
+  box.classList.toggle("open", open); u.inert = !open;
+  u.style.height = open ? "auto" : "0px";
+  const end = open ? u.getBoundingClientRect().height : 0;
+  if (reduceMotion() || !u.animate || Math.abs(start - end) < 1) return;
+  u._a = u.animate([{ height: start + "px" }, { height: end + "px" }], { duration: open ? 460 : 340, easing: "cubic-bezier(.32,.72,0,1)" });
+  u._a.onfinish = () => { u._a = null; };
+}
 let armed = { el: null, t: 0 };
 function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000) { armed = { el: null, t: 0 }; return true; } armed = { el, t: Date.now() }; el.dataset.label = el.textContent; el.textContent = label; setTimeout(() => { if (el.isConnected && armed.el === el) { el.textContent = el.dataset.label; armed = { el: null, t: 0 }; } }, 4000); return false; }
 document.addEventListener("click", e => {
@@ -856,8 +886,8 @@ document.addEventListener("click", e => {
   if (d.mv !== undefined) return arrowMove(t);
   if (d.kp !== undefined) return playAct("kp", t);
   if (d.self) return playAct("self", t);
-  if (d.act === "jump") { const j = t.closest(".jump"); const o = j.classList.toggle("open"); t.setAttribute("aria-expanded", o); return; }
-  if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"); app().querySelectorAll(".part.open").forEach(x => { x.classList.remove("open"); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); }); if (o) { p.classList.add("open"); t.setAttribute("aria-expanded", "true"); } return; }
+  if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); unfurl(j, o); t.setAttribute("aria-expanded", o); return; }
+  if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"); app().querySelectorAll(".part.open").forEach(x => { if (x !== p) { unfurl(x, false); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); } }); unfurl(p, o); t.setAttribute("aria-expanded", o); return; }
   if (d.act === "partstart") return startRound({ only: +d.pi });
   if (d.act === "partreview") { const { quiz, P } = current, r = buildReview(quiz, P, +d.pi); if (!r) return toast("Nothing answered here yet."); P.round = r; P.cur = null; saveProg(); return go("play-" + quiz.id, true); }
   if (d.act === "partredo") { if (!twoTap(t, "Tap again to redo")) return; const { quiz, P } = current; eachQ(quiz, (q, id, si) => { if (si === +d.pi) { delete P.st[id]; delete P.a[id]; delete P.h[id]; } }); P.round = null; P.cur = null; saveProg(); return startRound({ only: +d.pi }); }
