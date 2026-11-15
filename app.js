@@ -730,9 +730,9 @@ function placeSky(lvl, fresh) {
   let sky = top.querySelector(".sky");
   if (lvl < 6) { if (sky) sky.remove(); return; }
   gooDefs();
-  const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect(), W = Math.round(d.width + 16), H = 40;
+  const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect(), W = Math.round(d.width + 40), H = 56;
   if (!sky) { sky = document.createElement("span"); sky.className = "sky"; sky.setAttribute("aria-hidden", "true"); sky.dataset.keep = "1"; top.prepend(sky); }
-  sky.style.cssText = `left:${d.left - t.left - 8}px;top:${d.top - t.top + d.height / 2 - H / 2}px;width:${W}px;height:${H}px`;
+  sky.style.cssText = `left:${d.left - t.left - 20}px;top:${d.top - t.top + d.height / 2 - H / 2}px;width:${W}px;height:${H}px`;
   // Same stage, same size: leave the stars where they are (rebuilding would make them jump back every question).
   if (!fresh && sky.dataset.key === lvl + ":" + W) return;
   sky.dataset.key = lvl + ":" + W; sky.dataset.heat = lvl; sky.classList.toggle("fresh", !!fresh);
@@ -741,7 +741,7 @@ function placeSky(lvl, fresh) {
   if (lvl !== 7) h += `<b class="neb n1"></b><b class="neb n2"></b><b class="neb n3"></b>`;
   if (lvl >= 7) {
     const n = Math.max(5, Math.min(9, Math.round(W / 34))), pts = [];
-    for (let i = 0; i < n; i++) { const up = i % 2 ? -1 : 1; pts.push([Math.round(8 + (W - 16) * (i + .15 + rnd() * .7) / n), Math.round(H / 2 + up * (7 + rnd() * 9))]); }
+    for (let i = 0; i < n; i++) { const up = i % 2 ? -1 : 1; pts.push([Math.round(W * .12 + W * .76 * (i + .15 + rnd() * .7) / n), Math.round(H / 2 + up * (5 + rnd() * 7))]); }
     const line = pts.map(p => p.join(",")).join(" "), len = Math.round(pts.reduce((a, p, i) => i ? a + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0));
     h += `<svg class="cons" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><polyline points="${line}" style="--len:${len}"/>${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i % 3 ? 1.3 : 1.9}" style="--i:${i}"/>`).join("")}</svg>`;
   }

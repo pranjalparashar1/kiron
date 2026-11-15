@@ -774,12 +774,17 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
 
 /* celestial sky: only inside the top bar, behind the timer */
 .top.play .top-in { position: relative; }
-.sky { position: absolute; z-index: 0; pointer-events: none; overflow: hidden; border-radius: 20px; }
-.sky .neb { position: absolute; border-radius: 50%; filter: blur(9px); opacity: .55; }
-.sky .n1 { width: 45%; height: 160%; left: 2%; top: -30%; background: radial-gradient(closest-side, #7c5cff, transparent); }
-.sky .n2 { width: 40%; height: 150%; left: 34%; top: -25%; background: radial-gradient(closest-side, #c86bd1, transparent); }
-.sky .n3 { width: 42%; height: 160%; right: 0; top: -30%; background: radial-gradient(closest-side, #4fb6c9, transparent); }
-.sky[data-heat="8"] .n2 { background: radial-gradient(closest-side, #ffd98a, transparent); opacity: .4; }
+/* No box: nothing is clipped to a rounded rectangle. A static feathered mask fades clouds, stars and lines out
+   on every side, so the sky dissolves into the dark bar. Clouds are plain soft gradients (no blur filter);
+   only transform and opacity animate. */
+.sky { position: absolute; z-index: 0; pointer-events: none;
+  -webkit-mask-image: radial-gradient(closest-side, #000 45%, rgba(0,0,0,.6) 70%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 45%, rgba(0,0,0,.6) 70%, transparent 100%); }
+.sky .neb { position: absolute; border-radius: 50%; opacity: .55; }
+.sky .n1 { width: 45%; height: 130%; left: 4%; top: -15%; background: radial-gradient(closest-side, rgba(124,92,255,.9), rgba(124,92,255,.35) 55%, rgba(124,92,255,0)); }
+.sky .n2 { width: 40%; height: 125%; left: 32%; top: -12%; background: radial-gradient(closest-side, rgba(200,107,209,.9), rgba(200,107,209,.35) 55%, rgba(200,107,209,0)); }
+.sky .n3 { width: 42%; height: 130%; right: 4%; top: -15%; background: radial-gradient(closest-side, rgba(79,182,201,.9), rgba(79,182,201,.35) 55%, rgba(79,182,201,0)); }
+.sky[data-heat="8"] .n2 { background: radial-gradient(closest-side, rgba(255,217,138,.9), rgba(255,217,138,.35) 55%, rgba(255,217,138,0)); opacity: .4; }
 .sky i { position: absolute; width: var(--s); height: var(--s); border-radius: 50%; background: #fff; box-shadow: 0 0 4px rgba(200,215,255,.9); opacity: .8; }
 .sky .cons { position: absolute; inset: 0; overflow: visible; }
 .sky .cons polyline { fill: none; stroke: rgba(205,220,255,.55); stroke-width: .8; stroke-linejoin: round; }
