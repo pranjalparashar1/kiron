@@ -894,3 +894,22 @@ html:has(.top.play), html:has(.top.play) body { overscroll-behavior-y: none; }
 .scrolling .kf .o, .scrolling .kf .c, .scrolling .heat .n, .scrolling .heat .fl::before, .scrolling .heat .fl::after,
 .scrolling .kstar, .scrolling .kstar *, .scrolling .sky *, .scrolling .btn.pulse, .scrolling .actionbar .btn.primary,
 .scrolling .btn.pulse::after, .scrolling .actionbar .btn.primary::after { animation-play-state: paused !important; }
+
+/* ===== v13: a smooth streak bubble ===== */
+/* The bubble is plain coloured shapes that only move, scale and fade. No filter over it (the old blur + threshold
+   "goo" filter was redrawn by the CPU on every frame on iPhone, which is what made it choppy). Each moving piece
+   gets its own GPU layer only while the bubble exists (the whole thing is removed when it ends). */
+.drip { position: fixed; inset: 0; z-index: 25; pointer-events: none; contain: strict; }
+.drip i, .drip b { position: absolute; display: block; will-change: transform, opacity; backface-visibility: hidden; }
+.drip .blob { transform-origin: 50% 50%; opacity: 0; }
+.drip .cap { top: 0; border-radius: 50%; }
+.drip .mid { top: 0; border-radius: 0; transform-origin: 50% 50%; }
+.drip .neck { width: 8px; border-radius: 4px; transform-origin: 50% 0; opacity: 0; }
+.drip .well { width: 20px; height: 16px; border-radius: 50%; opacity: 0; }
+.rowlabel { will-change: transform, opacity; }
+/* The bar's little wobble when the drop lands: transform only (it used to also flash a brightness + drop-shadow
+   filter, which redraws the whole bar each frame). */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes wobble { 0% { transform: scaleY(1); } 25% { transform: scaleY(2.4); } 45% { transform: scaleY(.7); } 65% { transform: scaleY(1.35); } 85% { transform: scaleY(.92); } 100% { transform: scaleY(1); } }
+  @keyframes fed { 0% { transform: scaleY(1); } 35% { transform: scaleY(2.2); } 100% { transform: scaleY(1); } }
+}
