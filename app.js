@@ -366,7 +366,7 @@ function openQuiz(id) {
 function route() {
   clearTimer();
   if (!/^#play-/.test(location.hash)) {
-    ["#streak", ".goo", ".fly", ".rowlabel"].forEach(s => document.querySelectorAll(s).forEach(p => p.remove()));
+    clearFeed();
     // Leaving the quiz ends the streak.
     if (current && current.P.round && current.P.round.streak) { current.P.round.streak = 0; saveProg(); }
   }
@@ -615,7 +615,7 @@ function renderPlay(keepScroll) {
     }
   }
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
-  if (feeding) streakFeed(stk);
+  if (feeding) streakFeed(stk, 420);
 }
 /* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
    and transitions carry on). Nodes marked data-keep (the sky) are left alone. The timer bar is always swapped
@@ -717,7 +717,7 @@ function gooDefs() {
   if ($("#kgoo-svg")) return;
   const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
   svg.id = "kgoo-svg"; svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.setAttribute("aria-hidden", "true"); svg.style.position = "absolute";
-  svg.innerHTML = `<defs><filter id="kgoo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter>
+  svg.innerHTML = `<defs>
     <linearGradient id="kneb" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4fb6c9"/><stop offset=".5" stop-color="#c86bd1"/><stop offset="1" stop-color="#7c5cff"/></linearGradient>
     <linearGradient id="kgold" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#c9b8ff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient></defs>`;
   document.body.append(svg);
@@ -751,8 +751,14 @@ function placeSky(lvl, fresh) {
   if (still) sky.classList.add("still");
 }
 addEventListener("resize", () => { const s = $(".sky"), d = $(".dots"); if (s && d) placeSky(+d.dataset.heat || 0); });
-function streakFeed(n) {
-  ["#streak", ".goo", ".fly", ".rowlabel"].forEach(s => document.querySelectorAll(s).forEach(o => o.remove()));
+/* Timers for a streak bubble that is waiting or playing, so moving on cancels it cleanly. */
+let FEED = [];
+function clearFeed() { FEED.forEach(clearTimeout); FEED = []; [".drip", ".goo", ".fly", ".rowlabel"].forEach(s => document.querySelectorAll(s).forEach(o => o.remove())); }
+// Wait for the answer's pop, the confetti and the options folding away to finish first, so the phone
+// is not doing all of them in the same frames.
+function streakFeed(n, wait) {
+  clearFeed();
+  if (wait && !reduceMotion()) { FEED.push(setTimeout(() => { FEED = []; streakFeed(n); }, wait)); return; }
   const dots = $(".dots"), slot = $(".heat"); if (!dots || !slot) return;
   const lvl = heatLevel(n), was = heatLevel(n - 1), up = lvl !== was;
   const lift = () => {
@@ -772,60 +778,90 @@ function streakFeed(n) {
   if (reduceMotion() || !document.body.animate) {
     lift(); label.classList.add("calm"); setTimeout(() => label.remove(), 1500); return;
   }
-  gooDefs();
-  const W = Math.max(label.offsetWidth + 8, 120), H = label.offsetHeight || 42;
+  /* No filter here. The old version drew the bubble through an SVG blur + threshold ("goo") filter, which iPhone
+     Safari runs on the CPU and redraws on every frame, so it stuttered badly. Now every piece is a plain coloured
+     shape that only moves, scales and fades (transform and opacity), which the GPU does on its own at full speed.
+     Same-coloured shapes that overlap read as one blob, so the drip, the pill and the bar still look joined. */
+  const W = Math.max(label.offsetWidth + 8, 120), H = label.offsetHeight || 42, hw = (W - H) / 2;
   const bx = t.left + t.width / 2, by = t.top + t.height / 2;
   const tx = s.width > 4 ? s.left + 10 : t.right - 4, ty = t.top + t.height / 2;
-  const bg = PILL_BG[lvl], k = H / W, e = "cubic-bezier(.45,0,.4,1)";
-  const goo = document.createElement("div"); goo.className = "goo";
-  const pill = document.createElement("i"), neck = document.createElement("i"), well = document.createElement("i");
-  pill.style.cssText = `width:${W}px;height:${H}px;left:${px - W / 2}px;top:${py - H / 2}px;background:${bg}`;
-  neck.style.cssText = `width:18px;height:18px;left:${bx - 9}px;top:${by - 9}px;background:${bg}`;
-  well.style.cssText = `width:22px;height:14px;left:${tx - 11}px;top:${ty - 7}px;background:${bg}`;
-  goo.append(neck, well, pill);
-  // The goo filter is costly: run it over a band at the top only, not the whole screen.
-  goo.style.cssText = `top:0;bottom:auto;height:${Math.ceil(Math.max(py + H, by) + 36)}px`;
-  document.body.append(goo);
-  const dur = 2100, fromBar = `translate(${bx - px}px, ${by - py}px)`, dx = tx - px, dy = ty - py;
-  pill.animate([
-    { offset: 0, easing: e,    opacity: 0, transform: `${fromBar} scale(${k * .25}, .25)` },
-    { offset: .05, easing: e,  opacity: 1, transform: `${fromBar} scale(${k * .45}, .45)` },
-    { offset: .15, easing: e,  opacity: 1, transform: `translate(0, -10px) scale(${k * .8}, .95)` },
-    { offset: .23, easing: e,  opacity: 1, transform: `translate(0, 3px) scale(1.06, .9)` },
-    { offset: .3, easing: e,   opacity: 1, transform: `translate(0, 0) scale(.98, 1.03)` },
-    { offset: .36, easing: e,  opacity: 1, transform: `translate(0, 0) scale(1)` },
-    { offset: .6, easing: e,   opacity: 1, transform: `translate(0, 0) scale(1)` },
-    { offset: .68, easing: e,  opacity: 1, transform: `translate(0, 4px) scale(${k * 1.05}, .95)` },
-    { offset: .78, easing: e,  opacity: 1, transform: `translate(${dx * .55}px, ${dy * .45}px) scale(${k * .7}, .8)` },
-    { offset: .87, easing: e,  opacity: 1, transform: `translate(${dx}px, ${dy}px) scale(${k * .55}, .45)` },
-    { offset: 1,               opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(${k * .15}, .12)` }
-  ], { duration: dur, easing: "linear", fill: "forwards" });
-  neck.animate([
-    { offset: 0, easing: e,   opacity: 0, transform: "scale(0)" },
-    { offset: .04, easing: e, opacity: 1, transform: "scale(1.5, .8)" },
-    { offset: .1, easing: e,  opacity: 1, transform: "translateY(10px) scale(.7, 1.6)" },
-    { offset: .18,            opacity: 0, transform: "translateY(16px) scale(0)" },
-    { offset: 1,              opacity: 0, transform: "scale(0)" }
-  ], { duration: dur, easing: "linear", fill: "forwards" });
-  well.animate([
+  const bg = PILL_BG[lvl], grad = /gradient/.test(bg), e = "cubic-bezier(.45,0,.4,1)", soft = "cubic-bezier(.3,1.35,.5,1)";
+  const drip = document.createElement("div"); drip.className = "drip";
+  // The pill is built from two round end caps and a middle strip, so it is a true pill at every width
+  // (stretching one rounded box squashes its ends into flat-sided blocks).
+  const blob = document.createElement("b"), capL = document.createElement("i"), mid = document.createElement("i"), capR = document.createElement("i");
+  const neck = document.createElement("i"), well = document.createElement("i");
+  blob.className = "blob"; capL.className = "cap"; capR.className = "cap"; mid.className = "mid"; neck.className = "neck"; well.className = "well";
+  blob.style.cssText = `left:${px - W / 2}px;top:${py - H / 2}px;width:${W}px;height:${H}px`;
+  const paint = (el, x) => el.style.background = grad ? `${bg} ${-x}px 0 / ${W}px ${H}px no-repeat` : bg;
+  capL.style.cssText = capR.style.cssText = `width:${H}px;height:${H}px;left:${hw}px`;
+  mid.style.cssText = `width:${W - H}px;height:${H}px;left:${H / 2}px`;
+  paint(capL, 0); paint(capR, W - H); paint(mid, H / 2);
+  const L = Math.max(8, py - by);
+  neck.style.cssText = `left:${bx - 4}px;top:${by}px;height:${L}px;background:${grad ? bg.match(/#[0-9a-f]{6}/gi).pop() : bg}`;
+  well.style.cssText = `left:${tx - 10}px;top:${ty - 8}px;background:${grad ? "#9b7bff" : bg}`;
+  blob.append(mid, capL, capR);
+  drip.append(neck, well, blob);
+  document.body.append(drip);
+  const dur = 1900, opt = { duration: dur, easing: "linear", fill: "forwards" }, dx = tx - px, dy = ty - py, up0 = by - py;
+  const all = [];
+  // the whole blob: falls out of the bar, sits as the pill, then rolls up into the end of the bar
+  all.push(blob.animate([
+    { offset: 0, easing: e,   opacity: 0, transform: `translate3d(0,${up0}px,0) scale(.16)` },
+    { offset: .04, easing: e, opacity: 1, transform: `translate3d(0,${up0 + 6}px,0) scale(.3)` },
+    { offset: .14, easing: e, opacity: 1, transform: `translate3d(0,6px,0) scale(.62, .7)` },
+    { offset: .2, easing: e,  opacity: 1, transform: `translate3d(0,-2px,0) scale(1.03, .95)` },
+    { offset: .27, easing: e, opacity: 1, transform: `translate3d(0,0,0) scale(1)` },
+    { offset: .6, easing: e,  opacity: 1, transform: `translate3d(0,0,0) scale(1)` },
+    { offset: .7, easing: e,  opacity: 1, transform: `translate3d(0,3px,0) scale(.7)` },
+    { offset: .8, easing: e,  opacity: 1, transform: `translate3d(${dx * .55}px,${dy * .45}px,0) scale(.48, .44)` },
+    { offset: .89, easing: e, opacity: 1, transform: `translate3d(${dx}px,${dy}px,0) scale(.3, .26)` },
+    { offset: 1,              opacity: 0, transform: `translate3d(${dx}px,${dy}px,0) scale(.08)` }
+  ], opt));
+  // the pill opens out of the round drop, then closes back into one
+  const spread = x => [
+    { offset: 0,               transform: "translate3d(0,0,0)" },
+    { offset: .15, easing: soft, transform: "translate3d(0,0,0)" },
+    { offset: .27, easing: e,  transform: `translate3d(${x}px,0,0)` },
+    { offset: .6, easing: e,   transform: `translate3d(${x}px,0,0)` },
+    { offset: .69,             transform: "translate3d(0,0,0)" },
+    { offset: 1,               transform: "translate3d(0,0,0)" }
+  ];
+  all.push(capL.animate(spread(-hw), opt), capR.animate(spread(hw), opt));
+  all.push(mid.animate([
+    { offset: 0,                 transform: "scaleX(0.001)" },
+    { offset: .15, easing: soft, transform: "scaleX(0.001)" },
+    { offset: .27, easing: e,    transform: "scaleX(1)" },
+    { offset: .6, easing: e,     transform: "scaleX(1)" },
+    { offset: .69,               transform: "scaleX(0.001)" },
+    { offset: 1,                 transform: "scaleX(0.001)" }
+  ], opt));
+  // the thin neck that joins the drop to the bar, then lets go
+  all.push(neck.animate([
+    { offset: 0, easing: e,   opacity: 1, transform: "translate3d(0,0,0) scale(.6, 0)" },
+    { offset: .06, easing: e, opacity: 1, transform: "translate3d(0,0,0) scale(1, .45)" },
+    { offset: .12, easing: e, opacity: 1, transform: "translate3d(0,0,0) scale(.55, 1)" },
+    { offset: .18,            opacity: 0, transform: `translate3d(0,${L * .8}px,0) scale(.3, .2)` },
+    { offset: 1,              opacity: 0, transform: `translate3d(0,${L * .8}px,0) scale(.3, .2)` }
+  ], opt));
+  // the end of the bar swells as the drop lands in it
+  all.push(well.animate([
     { offset: 0,              opacity: 0, transform: "scale(0)" },
-    { offset: .74, easing: e, opacity: 0, transform: "scale(0)" },
-    { offset: .82, easing: e, opacity: 1, transform: "translateY(5px) scale(.9, 1.9)" },
-    { offset: .9, easing: e,  opacity: 1, transform: "scale(1.9, 1.1)" },
-    { offset: .96, easing: e, opacity: .8, transform: "scale(1.3, .7)" },
-    { offset: 1,              opacity: 0, transform: "scale(.6, .4)" }
-  ], { duration: dur, easing: "linear", fill: "forwards" });
-  label.animate([
-    { offset: 0,              opacity: 0, transform: "translate(-50%, -50%) scale(.7)" },
-    { offset: .18, easing: e, opacity: 0, transform: "translate(-50%, -50%) scale(.7)" },
-    { offset: .28, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1.04)" },
-    { offset: .34, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
-    { offset: .58, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
-    { offset: .66,            opacity: 0, transform: "translate(-50%, -50%) scale(.6)" },
-    { offset: 1,              opacity: 0, transform: "translate(-50%, -50%) scale(.6)" }
-  ], { duration: dur, easing: "linear", fill: "forwards" });
-  setTimeout(lift, dur * .88);
-  setTimeout(() => { goo.remove(); label.remove(); }, dur + 60);
+    { offset: .83, easing: e, opacity: 0, transform: "scale(.2)" },
+    { offset: .89, easing: e, opacity: 1, transform: "scale(1.5, 1.15)" },
+    { offset: .95, easing: e, opacity: .85, transform: "scale(1.1, .8)" },
+    { offset: 1,              opacity: 0, transform: "scale(.5, .4)" }
+  ], opt));
+  // the words fade in on the pill (no scaling, so the text stays sharp) and out before it closes
+  all.push(label.animate([
+    { offset: 0,              opacity: 0, transform: "translate3d(-50%,calc(-50% + 4px),0)" },
+    { offset: .22, easing: e, opacity: 0, transform: "translate3d(-50%,calc(-50% + 4px),0)" },
+    { offset: .3, easing: e,  opacity: 1, transform: "translate3d(-50%,-50%,0)" },
+    { offset: .56, easing: e, opacity: 1, transform: "translate3d(-50%,-50%,0)" },
+    { offset: .63,            opacity: 0, transform: "translate3d(-50%,-50%,0)" },
+    { offset: 1,              opacity: 0, transform: "translate3d(-50%,-50%,0)" }
+  ], opt));
+  FEED.push(setTimeout(lift, dur * .9), setTimeout(() => { drip.remove(); label.remove(); }, dur + 60));
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
