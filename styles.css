@@ -804,7 +804,7 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
   @keyframes starin { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
   .sky.fresh { animation: skyin .9s ease-out; }
   @keyframes skyin { from { opacity: 0; } to { opacity: 1; } }
-  .bestrun.rec { animation: recin .6s cubic-bezier(.3,1.5,.5,1) .5s both; }
+  .bestrun.rec { animation: recin .6s cubic-bezier(.3,1.5,.5,1) .15s both; }
   @keyframes recin { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
 }
 .sky.still * { animation: none !important; }
@@ -816,3 +816,6 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
 .bestrun[data-heat="0"] .fl { opacity: .5; }
 .bestrun .fl { display: inline-flex; align-items: flex-end; }
 .bestrun em { color: var(--accent); font-size: 14px; font-weight: 600; }
+
+/* v10: answered questions fold the faded options away so question, answer and explanation fit on one screen */
+.opt.away { display: none; }
