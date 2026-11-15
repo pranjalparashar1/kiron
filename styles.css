@@ -202,7 +202,6 @@ pre.prompt-text { margin: 0; max-height: 260px; overflow: auto; background: var(
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 15px; z-index: 20; max-width: calc(100% - 32px); }
 
 @media (max-width: 380px) { .actions2 { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: no-preference) { .fb { animation: drop .18s ease-out; } @keyframes drop { from { transform: translateY(-4px); opacity: .6; } to { transform: none; opacity: 1; } } }
 
 /* ===== v2: one question per screen, phone layout ===== */
 :root { --w: 560px; }
@@ -321,7 +320,6 @@ table.log td { padding: 7px 6px 7px 0; border-top: 1px solid var(--line); }
 .card:has(table.log) { overflow-x: auto; }
 
 @media (max-width: 380px) { .modes { grid-template-columns: 1fr; } }
-@media (prefers-reduced-motion: no-preference) { button.opt.ok { animation: pop .22s ease-out; } @keyframes pop { 50% { transform: scale(1.015); } } }
 
 .fb { scroll-margin-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); scroll-margin-top: 80px; }
 details.how summary { min-height: 44px; display: flex; align-items: center; }
@@ -874,11 +872,17 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
 /* ===== v12: faded options are back; smoother scrolling ===== */
 /* After answering, the other options stay where they were, faded and a little smaller, so a mis-tap is easy to see
    and the explanation still fits without a long scroll. The answer you picked and the right answer stay full size. */
+/* They take their compact size in one step and only the fade is animated: the fade hides the size change, and
+   nothing re-lays out the page frame by frame (animating font size re-shaped the text on every frame). */
 button.opt.dim:not(.wrong):not(.ok) {
   opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; font-weight: 500; border-width: 1px; gap: 10px;
-  transition: opacity .28s ease, min-height .28s ease, padding .28s ease, font-size .28s ease, background-color .2s, border-color .2s;
+  transition: opacity .28s ease, background-color .2s, border-color .2s;
 }
-button.opt.dim:not(.wrong):not(.ok) .k { width: 22px; height: 22px; font-size: 11px; transition: width .28s ease, height .28s ease; }
+button.opt.dim:not(.wrong):not(.ok) .k { width: 22px; height: 22px; font-size: 11px; transition: none; }
+/* Once answered the timer has stopped, so the pause button steps out. Its space stays, so the bar does not move. */
+.icon-btn.pause.gone { visibility: hidden; }
+/* Confetti: 16 pieces made once and reused; each shot only moves them (transform and opacity). */
+.cfp { position: fixed; left: 0; top: 0; width: 8px; height: 8px; border-radius: 2px; z-index: 30; pointer-events: none; opacity: 0; }
 /* Steady page height: svh does not change while Safari's toolbar slides in and out, so the page is not
    re-laid out in the middle of a scroll (dvh was). */
 .wrap.play { min-height: calc(100vh - 52px); min-height: calc(100svh - 52px); }
