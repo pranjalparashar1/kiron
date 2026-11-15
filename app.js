@@ -363,7 +363,7 @@ function openQuiz(id) {
 }
 function route() {
   clearTimer();
-  if (!/^#play-/.test(location.hash)) { const p = $("#streak"); if (p) p.remove(); }
+  if (!/^#play-/.test(location.hash)) { ["#streak", ".goo", ".streak-label"].forEach(s => { const p = $(s); if (p) p.remove(); }); }
   applyView();
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (DEEP_ON && !SET.mode) return renderChooser();
@@ -461,11 +461,14 @@ function durFor(q, f) {
   return Math.round(ms * (TIME.mult[f.kind] || 1));
 }
 let TIMER = null;   // { id, dur, t0, pausedAt, to }
+// The timer always plays by default. Pause holds only the question you are on; the next question starts playing again.
+let PAUSED = false;
+if ("paused" in SET) { delete SET.paused; saveSet(); }
 function clearTimer() { if (TIMER) { clearTimeout(TIMER.to); TIMER = null; } }
 function timerElapsed() { return TIMER ? (TIMER.pausedAt || Date.now()) - TIMER.t0 : 0; }
 function armTimer() {
   if (!TIMER) return; clearTimeout(TIMER.to);
-  if (document.hidden || SET.paused) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); return; }
+  if (document.hidden || PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); return; }
   if (TIMER.pausedAt) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; }
   TIMER.to = setTimeout(() => {
     if (!current || !current.P.round || !TIMER) return;
@@ -477,7 +480,7 @@ function armTimer() {
 document.addEventListener("visibilitychange", () => {
   if (!TIMER) return; const dots = document.querySelector(".dots");
   if (document.hidden) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); clearTimeout(TIMER.to); if (dots) dots.classList.add("paused"); }
-  else if (!SET.paused) { if (TIMER.pausedAt) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } if (dots) dots.classList.remove("paused"); armTimer(); }
+  else if (!PAUSED) { if (TIMER.pausedAt) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } if (dots) dots.classList.remove("paused"); armTimer(); }
 });
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
@@ -499,7 +502,7 @@ function renderPlay(keepScroll) {
   const fx = FX && FX.id === id ? FX : null; FX = null;
   // Pause keeps the timer where it is: the bar freezes and Play carries on from the same spot.
   const timedDur = !cur.done && !r.review && !cur.revealed ? durFor(q, f) : 0;
-  if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); const now = Date.now(); TIMER = { id, dur: timedDur, t0: now, pausedAt: SET.paused ? now : 0, to: null }; } } else clearTimer();
+  if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); const now = Date.now(); PAUSED = false; TIMER = { id, dur: timedDur, t0: now, pausedAt: 0, to: null }; } } else clearTimer();
   const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
   let input = "", primary = "";
@@ -566,14 +569,14 @@ function renderPlay(keepScroll) {
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${SET.paused ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", on a streak" : ""}">${dots}</div><span class="flame${heatNow ? " on" : ""}" aria-hidden="true">🔥</span>${r.review ? "" : `<button class="icon-btn pause${SET.paused ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!SET.paused}" aria-label="${SET.paused ? "Resume timer" : "Pause timer"}">${SET.paused ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", on a streak" : ""}">${dots}</div><span class="flame${heatNow ? " on" : ""}" aria-hidden="true">🔥</span>${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
         ${isNum ? `<span class="numtag">Numbers</span>` : ""}
         <h2 class="prompt${long}" id="qprompt" tabindex="-1">${fmt(f.prompt)}</h2>
         ${f.setup ? `<p class="lead setup">No calculating. Pick the setup that gives the answer.</p>` : ""}
-        ${hint}${input}${fb}
+        ${input}${cur.done ? "" : hint}${fb}
       </article>
     </div>
   </main>
@@ -606,23 +609,70 @@ function burst(el) {
 /* Streak: from 3 in a row, a "🔥 n in a row" counter pops up under the bar, then shrinks and flies into it.
    The bar then changes colour as the run grows (gold, orange, flame) and a small flame sits at its end. A wrong answer quietly cools it back. */
 const heatLevel = n => n >= 10 ? 4 : n >= 7 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
+const HEAT_COL = ["#faf9f5", "#e3b04b", "#d97757", "#e08a52", "#e08a52"];
+function gooDefs() {
+  if ($("#kgoo-svg")) return;
+  const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
+  svg.id = "kgoo-svg"; svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.setAttribute("aria-hidden", "true"); svg.style.position = "absolute";
+  svg.innerHTML = `<defs><filter id="kgoo" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter></defs>`;
+  document.body.append(svg);
+}
+/* Liquid merge: the "🔥 n in a row" bubble wells up under the bar, then stretches into a drop,
+   reaches up, and melts into the bar, which ripples and takes the new streak colour. */
 function streakFeed(n) {
-  const old = $("#streak"); if (old) old.remove();
+  ["#streak", ".goo", ".streak-label"].forEach(s => { const o = $(s); if (o) o.remove(); });
   const dots = $(".dots"), flame = $(".flame"); if (!dots) return;
   const lift = () => { if (!dots.isConnected) return; dots.dataset.heat = heatLevel(n); if (flame) flame.classList.add("on"); flash(dots, "fed"); if (flame) flash(flame, "fed"); };
-  const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.setAttribute("role", "status"); el.textContent = "🔥 " + n + " in a row";
-  document.body.append(el);
-  if (reduceMotion() || !el.animate) { lift(); setTimeout(() => el.remove(), 1400); return; }
-  const a = el.getBoundingClientRect(), t = dots.getBoundingClientRect();
-  const dx = (t.left + t.width / 2) - (a.left + a.width / 2), dy = (t.top + t.height / 2) - (a.top + a.height / 2);
-  const anim = el.animate([
-    { opacity: 0, transform: "translate(-50%, 14px) scale(.7)" },
-    { opacity: 1, transform: "translate(-50%, 0) scale(1.08)", offset: .14 },
-    { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: .22 },
-    { opacity: 1, transform: "translate(-50%, 0) scale(1)", offset: .62 },
-    { opacity: 0, transform: `translate(calc(-50% + ${dx}px), ${dy}px) scale(.25)` }
-  ], { duration: 1500, easing: "cubic-bezier(.45,0,.25,1)", fill: "forwards" });
-  anim.onfinish = () => { el.remove(); lift(); };
+  const text = "🔥 " + n + " in a row";
+  if (reduceMotion() || !document.body.animate) {
+    const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.setAttribute("role", "status"); el.textContent = text;
+    document.body.append(el); lift(); setTimeout(() => el.remove(), 1400); return;
+  }
+  gooDefs();
+  const t = dots.getBoundingClientRect(), col = HEAT_COL[heatLevel(n)];
+  const label = document.createElement("div"); label.className = "streak-label"; label.setAttribute("role", "status"); label.textContent = text;
+  label.style.left = "-999px"; document.body.append(label);
+  const W = Math.ceil(label.getBoundingClientRect().width) + 36, H = 40;
+  const cx = t.left + t.width / 2, barY = t.top + t.height / 2, cy = t.bottom + 46;   // bubble centre, under the bar
+  const top = t.top - 24, goo = document.createElement("div"); goo.className = "goo";
+  goo.style.top = top + "px"; goo.style.height = (cy + H / 2 + 24 - top) + "px";
+  const drop = document.createElement("i"), well = document.createElement("i");
+  drop.style.cssText = `width:${W}px;height:${H}px;left:${cx - W / 2}px;top:${cy - H / 2 - top}px;background:${col}`;
+  well.style.cssText = `width:28px;height:12px;left:${cx - 14}px;top:${barY - 6 - top}px;background:${col}`;
+  goo.append(well, drop); document.body.append(goo);
+  label.style.left = cx + "px"; label.style.top = cy + "px";
+  const dy = barY - cy, k = H / W, dur = 2100, ease = "linear", e = "cubic-bezier(.45,0,.4,1)";
+  drop.animate([
+    { offset: 0, easing: e,    opacity: 0, transform: "translateY(10px) scale(.55)" },
+    { offset: .1, easing: e,   opacity: 1, transform: "translateY(0) scale(1.07, .94)" },
+    { offset: .17, easing: e,  opacity: 1, transform: "translateY(0) scale(.97, 1.04)" },
+    { offset: .24, easing: e,  opacity: 1, transform: "translateY(0) scale(1)" },
+    { offset: .52, easing: e,  opacity: 1, transform: "translateY(0) scale(1)" },
+    { offset: .62, easing: e,  opacity: 1, transform: `translateY(${dy * .1}px) scale(${k * 1.05}, 1.02)` },
+    { offset: .72, easing: e,  opacity: 1, transform: `translateY(${dy * .62}px) scale(${k * .74}, 1.45)` },
+    { offset: .8, easing: e,   opacity: 1, transform: `translateY(${dy * .95}px) scale(${k * 1.1}, .5)` },
+    { offset: .88, easing: e,  opacity: .9, transform: `translateY(${dy}px) scale(${(t.width * .55) / W}, .22)` },
+    { offset: 1, easing: e,    opacity: 0, transform: `translateY(${dy}px) scale(${t.width / W}, .12)` }
+  ], { duration: dur, easing: ease, fill: "forwards" });
+  well.animate([
+    { offset: 0, easing: e,   opacity: 0, transform: "scale(0)" },
+    { offset: .55, easing: e, opacity: 0, transform: "scale(0)" },
+    { offset: .64, easing: e, opacity: 1, transform: "translateY(3px) scale(1, 1)" },
+    { offset: .74, easing: e, opacity: 1, transform: "translateY(13px) scale(.85, 2.6)" },
+    { offset: .82, easing: e, opacity: 1, transform: "translateY(2px) scale(2.2, 1)" },
+    { offset: .9, easing: e,  opacity: .9, transform: `translateY(0) scale(${t.width / 28 * .7}, .7)` },
+    { offset: 1, easing: e,   opacity: 0, transform: `translateY(0) scale(${t.width / 28}, .45)` }
+  ], { duration: dur, easing: ease, fill: "forwards" });
+  label.animate([
+    { offset: 0, easing: e,   opacity: 0, transform: "translate(-50%, calc(-50% + 10px)) scale(.6)" },
+    { offset: .12, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1.04)" },
+    { offset: .24, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
+    { offset: .52, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
+    { offset: .62, easing: e, opacity: 0, transform: "translate(-50%, calc(-50% - 6px)) scale(.55)" },
+    { offset: 1, easing: e,   opacity: 0, transform: "translate(-50%, calc(-50% - 6px)) scale(.55)" }
+  ], { duration: dur, easing: ease, fill: "forwards" });
+  setTimeout(lift, dur * .8);
+  setTimeout(() => { goo.remove(); label.remove(); }, dur + 60);
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
@@ -652,8 +702,8 @@ function playAct(act, el) {
   const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q, current.mode);
   if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
-  if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.scrollIntoView({ block: "nearest" }); return; }
-  if (act === "pause") { SET.paused = !SET.paused; saveSet(); if (TIMER) { clearTimeout(TIMER.to); if (SET.paused) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
+  if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) h.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" }); return; }
+  if (act === "pause") { PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
   if (act === "back") return nav(-1);
   if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
   if (act === "self") { finalize(el.dataset.self); return renderPlay(true); }
@@ -925,7 +975,7 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { TIME, durOf: durFor, fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav };
+window.SB = { TIME, durOf: durFor, fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav, streakFeed };
 applyView();
 route();
 loadSamples().then(route);
