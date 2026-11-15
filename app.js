@@ -384,7 +384,7 @@ function route() {
 }
 // rep = replace the history entry instead of adding one, so Back from a round goes to the library, not round -> home -> round -> home.
 function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); } else if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
-window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { cancelScroll(); route(); window.scrollTo(0, 0); });
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
 const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
 const seg = (name, cur, opts) => `<div class="seg" role="group" aria-label="${name}">${opts.map(o => `<button type="button" class="${o[0] === cur ? "on" : ""}" aria-pressed="${o[0] === cur}" data-set-${name}="${o[0]}">${o[1]}</button>`).join("")}</div>`;
@@ -565,7 +565,7 @@ function renderPlay(keepScroll) {
       detail = `<div class="yours">Right order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>`;
     }
     const selfMark = (f.kind === "flip" || (f.kind === "text" && !q.keyPoints.length)) ? `<p class="lead">How did you do?</p><div class="selfmark">${[["right", "Got it"], ["partial", "Nearly"], ["miss", "Not yet"]].map(k => `<button class="btn${status === k[0] ? " on" : ""}" type="button" data-self="${k[0]}">${k[1]}</button>`).join("")}</div>` : "";
-    fb = `<section class="fb ${status || "open"}" aria-live="polite">${detail}<div class="model"><span class="k">${f.kind === "pick" || f.kind === "multi" || f.kind === "order" ? "Why" : "Answer"}</span>${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}${selfMark}</section>`;
+    fb = `<section class="fb ${status || "open"}${keepScroll === "fb" && !reduceMotion() ? " wait" : ""}" aria-live="polite">${detail}<div class="model"><span class="k">${f.kind === "pick" || f.kind === "multi" || f.kind === "order" ? "Why" : "Answer"}</span>${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}${selfMark}</section>`;
   }
   const needsSelf = (cur.revealed && !cur.done);
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
@@ -578,7 +578,7 @@ function renderPlay(keepScroll) {
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">${heatIcon(heatNow)}</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">${heatIcon(heatNow)}</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -590,50 +590,117 @@ function renderPlay(keepScroll) {
     </div>
   </main>
   ${bar.trim() ? `<div class="actionbar"><div class="actionbar-in">${bar}</div></div>` : ""}`;
+  // Paint. While on the player, patch the screen in place instead of rebuilding it: the top bar (flame, sky, count)
+  // keeps animating without restarting, and on an answer the options change in place so they can fade and fold smoothly.
+  // A new question still gets a fresh card (for the slide-in).
+  const onPlay = app().querySelector(".top.play") && app().querySelector(".qcardp");
+  const sameQ = !!(onPlay && keepScroll && app().dataset.qid === id);
+  if (onPlay) { const t = document.createElement("div"); t.innerHTML = html; patchKids(app(), t, sameQ); }
+  else app().innerHTML = html;
+  app().dataset.qid = id;
   DIR = 0;
   if (!r.review) placeSky(heatNow);
   armTimer(); if (TIMER && TIMER.pausedAt) { const dd = document.querySelector(".dots"); if (dd) dd.classList.add("paused"); }
-  if (!keepScroll) window.scrollTo(0, 0);
+  if (!keepScroll) { cancelScroll(); window.scrollTo(0, 0); }
   else {
-    window.scrollTo(0, y0);
+    if (!sameQ) window.scrollTo(0, y0);
     const el = app().querySelector(".fb");
     if (keepScroll === "fb" && el) {
-      const wrong = status && status !== "right";
-      // let the pop (or the shake) play, fold the other options away, then bring the explanation into view
-      setTimeout(() => foldAway(() => reveal(el, app().querySelector(".opt.ok, .opt.wrong, .order") || el)), wrong && !reduceMotion() ? 480 : 380);
+      const wrong = status && status !== "right", picked = fx && fx.oi !== undefined;
+      // let the pop (or the shake) play, then fold the other options away, fade the explanation in and glide down to it, all in one motion
+      settle(el, !picked ? 60 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
   if (feeding) streakFeed(stk);
 }
-/* Fold the faded options away (height to zero), then call done. */
-function foldAway(done) {
-  const els = [...app().querySelectorAll(".opt.dim:not(.away)")];
-  if (!els.length) return done();
-  if (reduceMotion() || !document.body.animate) { els.forEach(o => o.classList.add("away")); return done(); }
-  const gap = parseFloat(getComputedStyle(els[0].parentElement).rowGap) || 0;
-  let left = els.length;
-  els.forEach(o => {
-    const h = o.offsetHeight;
-    const an = o.animate([
-      { height: h + "px", opacity: .45, marginBottom: "0px" },
-      { height: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", borderTopWidth: "0px", borderBottomWidth: "0px", marginBottom: -gap + "px" }
-    ], { duration: 340, easing: "cubic-bezier(.3,.7,.2,1)" });
-    o.style.overflow = "hidden";
-    an.onfinish = an.oncancel = () => { o.classList.add("away"); o.style.overflow = ""; if (!--left) done(); };
+/* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
+   and transitions carry on). Nodes marked data-keep (the sky) are left alone. The timer bar is always swapped
+   whole, so its fill restarts from the right spot. */
+function patchKids(a, b, sameQ) {
+  const ac = [...a.childNodes].filter(n => !(n.nodeType === 1 && n.hasAttribute("data-keep"))), bc = [...b.childNodes];
+  bc.forEach((n, i) => {
+    const o = ac[i];
+    if (!o) a.appendChild(n);
+    else if (!sameQ && n.nodeName === "MAIN") o.replaceWith(n);
+    else morph(o, n);
   });
+  for (let i = bc.length; i < ac.length; i++) ac[i].remove();
 }
-/* Auto-scroll after an answer or a hint: show as much of el as fits above the action bar (whole, if it can),
-   but never scroll `keep` (the answer you picked, or the question) up under the top bar. */
-function reveal(el, keep) {
-  if (!el || !el.isConnected) return;
-  const hdr = $(".top.play"), bar = $(".actionbar");
-  const topY = (hdr ? hdr.getBoundingClientRect().bottom : 0) + 8, botY = (bar ? bar.getBoundingClientRect().top : innerHeight) - 12;
-  const b = el.getBoundingClientRect(), want = b.bottom - botY;
-  if (want <= 0) return;
-  const k = keep && keep.isConnected ? keep.getBoundingClientRect().top - topY : want;
-  const by = Math.min(want, Math.max(0, k)); if (by < 4) return;
-  window.scrollBy({ top: by, behavior: reduceMotion() ? "auto" : "smooth" });
+function morph(a, b) {
+  if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName || (b.nodeType === 1 && b.classList.contains("dots"))) return a.replaceWith(b);
+  if (a.nodeType !== 1) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
+  if (a.isEqualNode(b)) return;
+  for (const { name } of [...a.attributes]) if (!b.hasAttribute(name)) a.removeAttribute(name);
+  for (const { name, value } of [...b.attributes]) if (a.getAttribute(name) !== value) a.setAttribute(name, value);
+  patchKids(a, b, true);
+}
+/* Our own eased scroll. The browser's smooth scroll on iPhone is short and abrupt; this one starts and stops
+   gently (ease-in-out sine) and stops the moment you touch the screen. */
+let SCROLL = 0;
+const easeSine = t => (1 - Math.cos(Math.PI * t)) / 2, EASE_SINE = "cubic-bezier(.37,0,.63,1)";
+const glideMs = d => Math.round(Math.min(760, Math.max(460, 320 + Math.abs(d) * .8)));
+function cancelScroll() { if (SCROLL) { cancelAnimationFrame(SCROLL); SCROLL = 0; } }
+function smoothScrollTo(y, dur) {
+  cancelScroll();
+  const y0 = window.scrollY, d = y - y0;
+  if (Math.abs(d) < 2) return;
+  if (reduceMotion()) return window.scrollTo(0, y);
+  dur = dur || glideMs(d);
+  let t0 = 0;
+  const step = now => {
+    if (!t0) t0 = now;
+    const t = Math.min(1, (now - t0) / dur);
+    window.scrollTo(0, y0 + d * easeSine(t));
+    SCROLL = t < 1 ? requestAnimationFrame(step) : 0;
+  };
+  SCROLL = requestAnimationFrame(step);
+}
+["touchstart", "wheel"].forEach(ev => addEventListener(ev, cancelScroll, { passive: true }));
+/* Where to scroll so as much of el as fits sits above the action bar (whole, if it can), without pushing
+   `keep` (the answer you picked, or the question) up under the top bar. Never past the end of the page. */
+function revealTarget(el, keep) {
+  const y = window.scrollY, max = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+  let by = 0;
+  if (el && el.isConnected) {
+    const hdr = $(".top.play"), bar = $(".actionbar");
+    const topY = (hdr ? hdr.getBoundingClientRect().bottom : 0) + 8, botY = (bar ? bar.getBoundingClientRect().top : innerHeight) - 12;
+    const want = el.getBoundingClientRect().bottom - botY;
+    if (want > 0) {
+      const k = keep && keep.isConnected ? keep.getBoundingClientRect().top - topY : want;
+      by = Math.min(want, Math.max(0, k)); if (by < 4) by = 0;
+    }
+  }
+  return Math.min(max, Math.max(0, y + by));
+}
+function reveal(el, keep) { smoothScrollTo(revealTarget(el, keep)); }
+/* After an answer: the faded options fold away (height and opacity), the explanation fades up, and the page
+   glides to it. All three share one duration and one gentle ease, so they read as a single movement. The end
+   position is measured up front (options hidden for an instant, before anything is drawn). */
+function settle(fb, delay) {
+  setTimeout(() => {
+    if (!fb.isConnected) return;
+    const els = [...app().querySelectorAll(".opt.dim:not(.away)")];
+    const keepEl = () => app().querySelector(".opt.ok, .opt.wrong, .order") || fb;
+    if (reduceMotion() || !document.body.animate) { els.forEach(o => o.classList.add("away")); fb.classList.remove("wait"); return reveal(fb, keepEl()); }
+    const from = els.map(o => ({ h: o.offsetHeight, op: getComputedStyle(o).opacity }));
+    const gap = els.length ? parseFloat(getComputedStyle(els[0].parentElement).rowGap) || 0 : 0;
+    els.forEach(o => o.classList.add("away"));
+    const y1 = revealTarget(fb, keepEl());
+    els.forEach(o => o.classList.remove("away"));
+    const D = glideMs(y1 - window.scrollY);
+    els.forEach((o, i) => {
+      o.style.overflow = "hidden";
+      const an = o.animate([
+        { height: from[i].h + "px", minHeight: from[i].h + "px", opacity: from[i].op, marginBottom: "0px" },
+        { height: "0px", minHeight: "0px", opacity: 0, paddingTop: "0px", paddingBottom: "0px", borderTopWidth: "0px", borderBottomWidth: "0px", marginBottom: -gap + "px" }
+      ], { duration: D * .9, easing: EASE_SINE, fill: "forwards" });
+      an.onfinish = () => { o.classList.add("away"); o.style.overflow = ""; an.cancel(); };
+    });
+    fb.style.animation = "none"; fb.classList.remove("wait");
+    fb.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], { duration: D, easing: "cubic-bezier(.25,.6,.3,1)", fill: "backwards" });
+    smoothScrollTo(y1, D);
+  }, delay);
 }
 function burst(el) {
   if (reduceMotion()) return;
@@ -681,9 +748,11 @@ function placeSky(lvl, fresh) {
   if (lvl < 6) { if (sky) sky.remove(); return; }
   gooDefs();
   const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect(), W = Math.round(d.width + 16), H = 40;
-  if (!sky) { sky = document.createElement("span"); sky.className = "sky"; sky.setAttribute("aria-hidden", "true"); top.prepend(sky); }
-  sky.dataset.heat = lvl; sky.classList.toggle("fresh", !!fresh);
+  if (!sky) { sky = document.createElement("span"); sky.className = "sky"; sky.setAttribute("aria-hidden", "true"); sky.dataset.keep = "1"; top.prepend(sky); }
   sky.style.cssText = `left:${d.left - t.left - 8}px;top:${d.top - t.top + d.height / 2 - H / 2}px;width:${W}px;height:${H}px`;
+  // Same stage, same size: leave the stars where they are (rebuilding would make them jump back every question).
+  if (!fresh && sky.dataset.key === lvl + ":" + W) return;
+  sky.dataset.key = lvl + ":" + W; sky.dataset.heat = lvl; sky.classList.toggle("fresh", !!fresh);
   const rnd = seeded(7 + lvl), still = reduceMotion();
   let h = "";
   if (lvl !== 7) h += `<b class="neb n1"></b><b class="neb n2"></b><b class="neb n3"></b>`;
@@ -730,7 +799,10 @@ function streakFeed(n) {
   pill.style.cssText = `width:${W}px;height:${H}px;left:${px - W / 2}px;top:${py - H / 2}px;background:${bg}`;
   neck.style.cssText = `width:18px;height:18px;left:${bx - 9}px;top:${by - 9}px;background:${bg}`;
   well.style.cssText = `width:22px;height:14px;left:${tx - 11}px;top:${ty - 7}px;background:${bg}`;
-  goo.append(neck, well, pill); document.body.append(goo);
+  goo.append(neck, well, pill);
+  // The goo filter is costly: run it over a band at the top only, not the whole screen.
+  goo.style.cssText = `top:0;bottom:auto;height:${Math.ceil(Math.max(py + H, by) + 36)}px`;
+  document.body.append(goo);
   const dur = 2100, fromBar = `translate(${bx - px}px, ${by - py}px)`, dx = tx - px, dy = ty - py;
   pill.animate([
     { offset: 0, easing: e,    opacity: 0, transform: `${fromBar} scale(${k * .25}, .25)` },

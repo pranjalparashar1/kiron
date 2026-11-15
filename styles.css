@@ -819,3 +819,34 @@ button.opt.sel .k.box { background: var(--blue); border-color: var(--blue); colo
 
 /* v10: answered questions fold the faded options away so question, answer and explanation fit on one screen */
 .opt.away { display: none; }
+
+/* ===== v11: smoothness. Animate only transform and opacity where we can; no filters over moving things. ===== */
+/* Timer fill: grow with transform (cheap, on the GPU) instead of width (re-lays out the bar every frame). */
+.dots i.now::after { width: 100%; transform: scaleX(.4); transform-origin: 0 50%; will-change: transform; transition: background-color .6s ease, transform .45s cubic-bezier(.2,.8,.2,1); }
+.dots i.now.full::after { width: 100%; transform: none; }
+.dots i.now.timing::after { width: 100%; transform: scaleX(0); transition: none; }
+@keyframes fillbar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* Streak glow: a shadow on each segment instead of a drop-shadow filter over the whole bar
+   (the filter had to be redrawn on every frame of the timer). Same look. */
+.dots, .dots[data-heat] { filter: none; transition: none; }
+.dots i { transition: background-color .6s ease, box-shadow .6s ease; }
+.dots[data-heat]:not([data-heat="0"]) i { box-shadow: 0 0 5px var(--glow); }
+.dots[data-heat="5"] i.past { box-shadow: 0 0 0 1.5px #ff6a2b, 0 0 6px 1px rgba(150,70,255,.7), 0 0 5px var(--glow); }
+/* Next button: the ring is its own layer that grows and fades (transform + opacity), instead of a
+   box-shadow that repainted the button non-stop while you read. */
+.btn.pulse, .actionbar .btn.primary[data-act="next"] { position: relative; will-change: transform; }
+@keyframes nextpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+.btn.pulse::after, .actionbar .btn.primary[data-act="next"]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 3px rgba(217,119,87,.65); opacity: 0; pointer-events: none; will-change: transform, opacity; animation: ring 1.15s ease-out .35s infinite; }
+@keyframes ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05, 1.5); } }
+@media (prefers-reduced-motion: reduce) { .btn.pulse::after, .actionbar .btn.primary[data-act="next"]::after { display: none; } }
+/* Sky: blurred clouds and motes get their own layers, so drifting does not redraw the blur. */
+.sky .neb, .sky i { will-change: transform, opacity; }
+/* Explanation waits (invisible) while the pick pops, then fades up as the other options fold away. */
+.fb.wait { opacity: 0; animation: none; }
+/* A softer slide between questions. */
+@media (prefers-reduced-motion: no-preference) {
+  .qcardp.in-next { animation: inr .34s cubic-bezier(.22,.8,.24,1); } .qcardp.in-prev { animation: inl .34s cubic-bezier(.22,.8,.24,1); }
+  @keyframes inr { from { opacity: 0; transform: translate3d(24px,0,0); } to { opacity: 1; transform: none; } }
+  @keyframes inl { from { opacity: 0; transform: translate3d(-24px,0,0); } to { opacity: 1; transform: none; } }
+}
