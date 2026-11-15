@@ -364,7 +364,7 @@ function openQuiz(id) {
 function route() {
   clearTimer();
   if (!/^#play-/.test(location.hash)) {
-    ["#streak", ".goo", ".fly"].forEach(s => document.querySelectorAll(s).forEach(p => p.remove()));
+    ["#streak", ".goo", ".fly", ".rowlabel"].forEach(s => document.querySelectorAll(s).forEach(p => p.remove()));
     // Leaving the quiz ends the streak.
     if (current && current.P.round && current.P.round.streak) { current.P.round.streak = 0; saveProg(); }
   }
@@ -452,6 +452,7 @@ function startRound(opt) {
   const r = buildRound(quiz, P, opt);
   if (!r) { toast("Nothing left there. Nice."); return; }
   if (!opt || opt.kind !== "revisit") r.streak = carry;
+  r.best = r.streak || 0;
   P.round = r; P.cur = null; saveProg(); go("play-" + quiz.id, true);
 }
 
@@ -576,7 +577,7 @@ function renderPlay(keepScroll) {
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">🔥</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">${heatIcon(heatNow)}</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -589,6 +590,7 @@ function renderPlay(keepScroll) {
   </main>
   ${bar.trim() ? `<div class="actionbar"><div class="actionbar-in">${bar}</div></div>` : ""}`;
   DIR = 0;
+  if (!r.review) placeSky(heatNow);
   armTimer(); if (TIMER && TIMER.pausedAt) { const dd = document.querySelector(".dots"); if (dd) dd.classList.add("paused"); }
   if (!keepScroll) window.scrollTo(0, 0);
   else {
@@ -596,12 +598,24 @@ function renderPlay(keepScroll) {
     const el = app().querySelector(".fb");
     if (keepScroll === "fb" && el) {
       const wrong = status && status !== "right";
-      // a wrong answer: let the shake play, then bring the explanation into view
-      setTimeout(() => { if (el.isConnected) el.scrollIntoView({ block: wrong ? "start" : "nearest", behavior: reduceMotion() ? "auto" : "smooth" }); }, wrong && !reduceMotion() ? 480 : 60);
+      // let the shake play first on a wrong answer, then peek the explanation in (never pushing the question off the top)
+      setTimeout(() => reveal(el), wrong && !reduceMotion() ? 480 : 60);
     }
   }
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
   if (feeding) streakFeed(stk);
+}
+/* Gentle auto-scroll: bring the first `peek` px of el above the action bar, but never scroll the question
+   off the top of the screen. If there is still more below, the reader scrolls by hand. */
+function reveal(el, peek) {
+  if (!el || !el.isConnected) return;
+  const hdr = $(".top.play"), bar = $(".actionbar"), p = $("#qprompt");
+  const topY = (hdr ? hdr.getBoundingClientRect().bottom : 0) + 10, botY = (bar ? bar.getBoundingClientRect().top : innerHeight) - 14;
+  const b = el.getBoundingClientRect(), want = Math.min(b.bottom, b.top + (peek || 110)) - botY;
+  if (want <= 0) return;
+  const room = p ? Math.max(0, p.getBoundingClientRect().top - topY) : want;
+  const by = Math.min(want, room); if (by < 4) return;
+  window.scrollBy({ top: by, behavior: reduceMotion() ? "auto" : "smooth" });
 }
 function burst(el) {
   if (reduceMotion()) return;
@@ -613,78 +627,132 @@ function burst(el) {
     document.body.append(p); setTimeout(() => p.remove(), 800);
   }
 }
-/* Streak: from 3 in a row, each right answer sends a small flame from the answer up into the timer bar.
-   It melts into the end of the bar (liquid merge), the bar and the count beside it take the streak's colour,
-   and the count pulses gently. The colour heats up as the run grows: yellow, gold, pale gold, white-hot,
-   then black fire from 15 in a row. A wrong answer, or leaving the quiz, cools it back. */
-const BLACK_FIRE = 15;
-const heatLevel = n => n >= BLACK_FIRE ? 5 : n >= 11 ? 4 : n >= 8 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
-const HEAT_COL = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b"];
+/* Streak: from 3 in a row, each right answer drips a bubble out of the middle of the timer bar. It swells into
+   "N in a row" at the top centre of the screen, then rolls up and melts into the end of the bar (liquid merge).
+   The bar, the flame and the count beside it take the streak's colour. The timer keeps running throughout.
+   Fire:      3 amber · 5 gold · 8 pale gold · 11 white-hot · 15 black fire
+   Celestial: 20 nebula (violet, magenta and teal clouds drift behind the bar)
+              25 constellation (stars appear around the bar and join up with fine lines)
+              30 galaxy (clouds, constellation and a ringed star; the bar shimmers gold-white)
+   A wrong answer, or leaving the quiz, cools it back. */
+const BLACK_FIRE = 15, STAGES = [3, 5, 8, 11, BLACK_FIRE, 20, 25, 30];
+const heatLevel = n => { let l = 0; STAGES.forEach((t, i) => { if (n >= t) l = i + 1; }); return l; };
+const HEAT_COL = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b", "#9b7bff", "#dfe7ff", "#fff1c9"];
+const PILL_BG = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b", "linear-gradient(100deg,#7c5cff,#c86bd1 55%,#4fb6c9)", "#dfe7ff", "linear-gradient(100deg,#fff1c9,#ffffff 45%,#c9b8ff)"];
+// The flame: two shapes, an outer tongue and a hot core, that flicker out of step. From 25 it becomes a star; at 30 a ringed star.
+function heatIcon(l) {
+  if (l >= 6) gooDefs();
+  if (l >= 7) return `<svg class="kstar${l >= 8 ? " ringed" : ""}" viewBox="-14 -14 28 28" aria-hidden="true">${l >= 8 ? `<ellipse class="ring" rx="12.5" ry="4.2" transform="rotate(-22)"/>` : ""}<path class="s" d="M0-11C1.1-3.2 3.2-1.1 11 0C3.2 1.1 1.1 3.2 0 11C-1.1 3.2-3.2 1.1-11 0C-3.2-1.1-1.1-3.2 0-11Z"/><circle class="core" r="1.8"/>${l >= 8 ? `<g transform="rotate(-22) scale(1 .336)"><g class="moon"><circle cx="12.5" r="4.4"/></g></g>` : ""}</svg>`;
+  return `<svg class="kf" viewBox="0 0 24 32" aria-hidden="true"><path class="o" d="M12 1.5c1.2 6.2 7.5 9.6 7.5 18a7.5 7.5 0 0 1-15 0c0-4.1 2-6.9 3.7-8.4.3 2.5 1.4 3.8 2.8 4.3C10.4 10.6 10.8 5.7 12 1.5z"/><path class="c" d="M12.2 14.5c.7 3 4.1 4.7 4.1 8.4a4.3 4.3 0 0 1-8.6 0c0-2.1 1-3.4 2.1-4.2.2 1.1.8 1.7 1.4 1.9-.2-2.4.2-4.3 1-6.1z"/></svg>`;
+}
 function gooDefs() {
   if ($("#kgoo-svg")) return;
   const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
   svg.id = "kgoo-svg"; svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.setAttribute("aria-hidden", "true"); svg.style.position = "absolute";
-  svg.innerHTML = `<defs><filter id="kgoo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter></defs>`;
+  svg.innerHTML = `<defs><filter id="kgoo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter>
+    <linearGradient id="kneb" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4fb6c9"/><stop offset=".5" stop-color="#c86bd1"/><stop offset="1" stop-color="#7c5cff"/></linearGradient>
+    <linearGradient id="kgold" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#c9b8ff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient></defs>`;
   document.body.append(svg);
 }
+// a tiny seeded random, so the sky looks the same on every screen of a run instead of jumping around
+const seeded = seed => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+// The celestial sky lives behind the timer bar, inside the top bar only (never over the question).
+function placeSky(lvl, fresh) {
+  const top = $(".top.play .top-in"), dots = $(".dots"); if (!top || !dots) return;
+  let sky = top.querySelector(".sky");
+  if (lvl < 6) { if (sky) sky.remove(); return; }
+  gooDefs();
+  const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect(), W = Math.round(d.width + 16), H = 40;
+  if (!sky) { sky = document.createElement("span"); sky.className = "sky"; sky.setAttribute("aria-hidden", "true"); top.prepend(sky); }
+  sky.dataset.heat = lvl; sky.classList.toggle("fresh", !!fresh);
+  sky.style.cssText = `left:${d.left - t.left - 8}px;top:${d.top - t.top + d.height / 2 - H / 2}px;width:${W}px;height:${H}px`;
+  const rnd = seeded(7 + lvl), still = reduceMotion();
+  let h = "";
+  if (lvl !== 7) h += `<b class="neb n1"></b><b class="neb n2"></b><b class="neb n3"></b>`;
+  if (lvl >= 7) {
+    const n = Math.max(5, Math.min(9, Math.round(W / 34))), pts = [];
+    for (let i = 0; i < n; i++) { const up = i % 2 ? -1 : 1; pts.push([Math.round(8 + (W - 16) * (i + .15 + rnd() * .7) / n), Math.round(H / 2 + up * (7 + rnd() * 9))]); }
+    const line = pts.map(p => p.join(",")).join(" "), len = Math.round(pts.reduce((a, p, i) => i ? a + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0));
+    h += `<svg class="cons" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><polyline points="${line}" style="--len:${len}"/>${pts.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="${i % 3 ? 1.3 : 1.9}" style="--i:${i}"/>`).join("")}</svg>`;
+  }
+  const np = lvl >= 8 ? 16 : 10;
+  for (let i = 0; i < np; i++) h += `<i style="left:${(rnd() * 100).toFixed(1)}%;top:${(10 + rnd() * 80).toFixed(1)}%;--s:${(1 + rnd() * 1.6).toFixed(1)}px;--d:${(4 + rnd() * 5).toFixed(1)}s;--l:-${(rnd() * 8).toFixed(1)}s;--x:${Math.round(rnd() * 24 - 12)}px"></i>`;
+  sky.innerHTML = h;
+  if (still) sky.classList.add("still");
+}
+addEventListener("resize", () => { const s = $(".sky"), d = $(".dots"); if (s && d) placeSky(+d.dataset.heat || 0); });
 function streakFeed(n) {
-  ["#streak", ".goo", ".fly"].forEach(s => document.querySelectorAll(s).forEach(o => o.remove()));
+  ["#streak", ".goo", ".fly", ".rowlabel"].forEach(s => document.querySelectorAll(s).forEach(o => o.remove()));
   const dots = $(".dots"), slot = $(".heat"); if (!dots || !slot) return;
-  const lvl = heatLevel(n);
+  const lvl = heatLevel(n), was = heatLevel(n - 1), up = lvl !== was;
   const lift = () => {
     if (!dots.isConnected) return;
     dots.dataset.heat = lvl; slot.dataset.heat = lvl; slot.classList.add("on");
     const num = slot.querySelector(".n"); if (num) num.textContent = n;
+    const fl = slot.querySelector(".fl"); if (fl && up) fl.innerHTML = heatIcon(lvl);
+    placeSky(lvl, up);
     flash(dots, "fed"); flash(slot, "fed");
   };
-  if (reduceMotion() || !document.body.animate) { lift(); return; }
+  // "N in a row" at the top centre, below the bar
+  const label = document.createElement("span"); label.className = "rowlabel" + (up ? " up" : ""); label.dataset.heat = lvl; label.setAttribute("aria-hidden", "true");
+  label.innerHTML = `<span class="fl">${heatIcon(lvl)}</span>${n} in a row`;
+  const t = dots.getBoundingClientRect(), s = slot.getBoundingClientRect(), hdr = ($(".top.play") || dots).getBoundingClientRect();
+  const px = innerWidth / 2, py = hdr.bottom + 46;
+  label.style.left = px + "px"; label.style.top = py + "px"; document.body.append(label);
+  if (reduceMotion() || !document.body.animate) {
+    lift(); label.classList.add("calm"); setTimeout(() => label.remove(), 1500); return;
+  }
   gooDefs();
-  // where the flame starts: the right answer (or the list / question), kept on screen
-  const src = app().querySelector(".opt.ok") || app().querySelector(".order") || app().querySelector(".fb") || $("#qprompt");
-  const t = dots.getBoundingClientRect(), s = slot.getBoundingClientRect();
+  const W = Math.max(label.offsetWidth + 8, 120), H = label.offsetHeight || 42;
+  const bx = t.left + t.width / 2, by = t.top + t.height / 2;
   const tx = s.width > 4 ? s.left + 10 : t.right - 4, ty = t.top + t.height / 2;
-  let ox = innerWidth / 2, oy = innerHeight / 2;
-  if (src) { const b = src.getBoundingClientRect(); ox = Math.min(innerWidth - 40, Math.max(40, b.left + b.width * .78)); oy = b.top + Math.min(b.height / 2, 40); }
-  oy = Math.min(innerHeight - 140, Math.max(t.bottom + 90, oy));
-  const col = lvl === 5 ? "#2a0d05" : HEAT_COL[lvl], D = 30, dx = tx - ox, dy = ty - oy;
+  const bg = PILL_BG[lvl], k = H / W, e = "cubic-bezier(.45,0,.4,1)";
   const goo = document.createElement("div"); goo.className = "goo";
-  const drop = document.createElement("i"), well = document.createElement("i");
-  drop.style.cssText = `width:${D}px;height:${D}px;left:${ox - D / 2}px;top:${oy - D / 2}px;background:${col}`;
-  well.style.cssText = `width:22px;height:14px;left:${tx - 11}px;top:${ty - 7}px;background:${col}`;
-  goo.append(well, drop); document.body.append(goo);
-  const fire = document.createElement("span"); fire.className = "fly" + (lvl === 5 ? " black" : ""); fire.setAttribute("aria-hidden", "true"); fire.textContent = "🔥";
-  fire.style.left = ox + "px"; fire.style.top = oy + "px"; document.body.append(fire);
-  const dur = 1250, e = "cubic-bezier(.45,0,.4,1)";
-  // a gentle arc: rise first, then sweep across to the end of the bar
-  const at = (f, bend) => `translate(${dx * f + bend}px, ${dy * Math.pow(f, .8)}px)`;
-  drop.animate([
-    { offset: 0, easing: e,   opacity: 0, transform: "translate(0, 12px) scale(.3)" },
-    { offset: .16, easing: e, opacity: 1, transform: "translate(0, 0) scale(1.08, .94)" },
-    { offset: .26, easing: e, opacity: 1, transform: "translate(0, -4px) scale(.96, 1.06)" },
-    { offset: .5, easing: e,  opacity: 1, transform: at(.45, -10) + " scale(.82, 1.3)" },
-    { offset: .7, easing: e,  opacity: 1, transform: at(.86, -4) + " scale(.72, 1.25)" },
-    { offset: .8, easing: e,  opacity: 1, transform: at(1, 0) + " scale(.9, .7)" },
-    { offset: 1,              opacity: 0, transform: at(1, 0) + " scale(.3, .25)" }
+  const pill = document.createElement("i"), neck = document.createElement("i"), well = document.createElement("i");
+  pill.style.cssText = `width:${W}px;height:${H}px;left:${px - W / 2}px;top:${py - H / 2}px;background:${bg}`;
+  neck.style.cssText = `width:18px;height:18px;left:${bx - 9}px;top:${by - 9}px;background:${bg}`;
+  well.style.cssText = `width:22px;height:14px;left:${tx - 11}px;top:${ty - 7}px;background:${bg}`;
+  goo.append(neck, well, pill); document.body.append(goo);
+  const dur = 2100, fromBar = `translate(${bx - px}px, ${by - py}px)`, dx = tx - px, dy = ty - py;
+  pill.animate([
+    { offset: 0, easing: e,    opacity: 0, transform: `${fromBar} scale(${k * .25}, .25)` },
+    { offset: .05, easing: e,  opacity: 1, transform: `${fromBar} scale(${k * .45}, .45)` },
+    { offset: .15, easing: e,  opacity: 1, transform: `translate(0, -10px) scale(${k * .8}, .95)` },
+    { offset: .23, easing: e,  opacity: 1, transform: `translate(0, 3px) scale(1.06, .9)` },
+    { offset: .3, easing: e,   opacity: 1, transform: `translate(0, 0) scale(.98, 1.03)` },
+    { offset: .36, easing: e,  opacity: 1, transform: `translate(0, 0) scale(1)` },
+    { offset: .6, easing: e,   opacity: 1, transform: `translate(0, 0) scale(1)` },
+    { offset: .68, easing: e,  opacity: 1, transform: `translate(0, 4px) scale(${k * 1.05}, .95)` },
+    { offset: .78, easing: e,  opacity: 1, transform: `translate(${dx * .55}px, ${dy * .45}px) scale(${k * .7}, .8)` },
+    { offset: .87, easing: e,  opacity: 1, transform: `translate(${dx}px, ${dy}px) scale(${k * .55}, .45)` },
+    { offset: 1,               opacity: 0, transform: `translate(${dx}px, ${dy}px) scale(${k * .15}, .12)` }
+  ], { duration: dur, easing: "linear", fill: "forwards" });
+  neck.animate([
+    { offset: 0, easing: e,   opacity: 0, transform: "scale(0)" },
+    { offset: .04, easing: e, opacity: 1, transform: "scale(1.5, .8)" },
+    { offset: .1, easing: e,  opacity: 1, transform: "translateY(10px) scale(.7, 1.6)" },
+    { offset: .18,            opacity: 0, transform: "translateY(16px) scale(0)" },
+    { offset: 1,              opacity: 0, transform: "scale(0)" }
   ], { duration: dur, easing: "linear", fill: "forwards" });
   well.animate([
-    { offset: 0, easing: e,   opacity: 0, transform: "scale(0)" },
-    { offset: .55, easing: e, opacity: 0, transform: "scale(0)" },
-    { offset: .66, easing: e, opacity: 1, transform: "translateY(5px) scale(.9, 1.9)" },
-    { offset: .8, easing: e,  opacity: 1, transform: "scale(1.9, 1.1)" },
-    { offset: .9, easing: e,  opacity: .8, transform: "scale(1.3, .7)" },
+    { offset: 0,              opacity: 0, transform: "scale(0)" },
+    { offset: .74, easing: e, opacity: 0, transform: "scale(0)" },
+    { offset: .82, easing: e, opacity: 1, transform: "translateY(5px) scale(.9, 1.9)" },
+    { offset: .9, easing: e,  opacity: 1, transform: "scale(1.9, 1.1)" },
+    { offset: .96, easing: e, opacity: .8, transform: "scale(1.3, .7)" },
     { offset: 1,              opacity: 0, transform: "scale(.6, .4)" }
   ], { duration: dur, easing: "linear", fill: "forwards" });
-  fire.animate([
-    { offset: 0, easing: e,   opacity: 0, transform: "translate(-50%, -50%) translate(0, 12px) scale(.3)" },
-    { offset: .16, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1.15)" },
-    { offset: .26, easing: e, opacity: 1, transform: "translate(-50%, -50%) translate(0, -4px) scale(1)" },
-    { offset: .5, easing: e,  opacity: 1, transform: "translate(-50%, -50%) " + at(.45, -10) + " scale(.9)" },
-    { offset: .7, easing: e,  opacity: 1, transform: "translate(-50%, -50%) " + at(.86, -4) + " scale(.75)" },
-    { offset: .8,             opacity: 0, transform: "translate(-50%, -50%) " + at(1, 0) + " scale(.5)" },
-    { offset: 1,              opacity: 0, transform: "translate(-50%, -50%) " + at(1, 0) + " scale(.5)" }
+  label.animate([
+    { offset: 0,              opacity: 0, transform: "translate(-50%, -50%) scale(.7)" },
+    { offset: .18, easing: e, opacity: 0, transform: "translate(-50%, -50%) scale(.7)" },
+    { offset: .28, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1.04)" },
+    { offset: .34, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
+    { offset: .58, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
+    { offset: .66,            opacity: 0, transform: "translate(-50%, -50%) scale(.6)" },
+    { offset: 1,              opacity: 0, transform: "translate(-50%, -50%) scale(.6)" }
   ], { duration: dur, easing: "linear", fill: "forwards" });
-  setTimeout(lift, dur * .74);
-  setTimeout(() => { goo.remove(); fire.remove(); }, dur + 60);
+  setTimeout(lift, dur * .88);
+  setTimeout(() => { goo.remove(); label.remove(); }, dur + 60);
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
@@ -692,7 +760,7 @@ function finalize(status) {
   P.cur.done = true; P.cur.status = status;
   P.st[id] = status; r.res[id] = status;
   if (first) {
-    r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id);
+    r.streak = status === "right" ? (r.streak || 0) + 1 : 0; r.best = Math.max(r.best || 0, r.streak); logEvent(status === "right" ? "right" : "other", quiz.id);
     FX = { id, kind: status === "right" ? "right" : "wrong" };
   }
   else if (status !== "right") r.streak = 0;
@@ -715,7 +783,7 @@ function playAct(act, el) {
   const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q, current.mode);
   if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
-  if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) h.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" }); return; }
+  if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) reveal(h, 400); return; }
   if (act === "pause") { PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
   if (act === "back") return nav(-1);
   if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
@@ -783,7 +851,8 @@ document.addEventListener("pointerdown", e => {
   g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
 });
 
-/* ---- story-style side taps: left = back, right = next (or "do this later" if unanswered). No swipes. ---- */
+/* ---- story-style edge taps: left quarter = back, right quarter = next (or "do this later" if unanswered). No swipes, no centre taps. ---- */
+const EDGE = 0.25; // width of each tap zone, as a share of the screen
 let tapDown = null, ghostUntil = 0;
 document.addEventListener("pointerdown", e => { tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
 document.addEventListener("pointerup", e => {
@@ -791,13 +860,16 @@ document.addEventListener("pointerup", e => {
   if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
   const t = e.target && e.target.closest ? e.target : null; if (!t) return;
   if (t.closest("a, input, textarea, label, summary, .actionbar, .top, .toast, .kp, .selfmark, .grip, .mv, [data-act], [data-self], [data-kp], [data-go]")) return;
-  const done = !!(current.P.cur && current.P.cur.done);
-  if (!done && t.closest(".opt, .order, .hint")) return; // answering, not navigating
+  // Answer options, the ordering list and the hint never navigate, answered or not.
+  if (t.closest(".opt, .order, .hint, .kps, .sky")) return;
   const dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Date.now() - d.t;
   if (Math.abs(dx) > 10 || Math.abs(dy) > 10 || dt > 450) return;
   if (String(getSelection && getSelection())) return;
+  // Only the outer quarter on each side navigates (left = back, right = next). The middle half does nothing.
+  const x = e.clientX / innerWidth, dir = x < EDGE ? -1 : x > 1 - EDGE ? 1 : 0;
+  if (!dir) return;
   ghostUntil = Date.now() + 250; // the browser sends a click after this tap: swallow it so it can't hit the next screen's option
-  nav(e.clientX < innerWidth * 0.35 ? -1 : 1);
+  nav(dir);
 });
 document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 
@@ -810,12 +882,18 @@ function renderRoundEnd() {
   P.ratioPrev = { g: gNow, r: rNow }; saveProg();
   const res = Object.values(r.res), missed = res.filter(x => x === "miss" || x === "partial").length;
   const allDone = !c.left && !c.skip;
+  // The longest run in this round (a carried-over run counts). Shown from 2 in a row; "longest yet" when it beats this quiz's record.
+  const best = r.review ? 0 : r.best || 0, record = P.bestRun || 0, newRec = best >= 3 && best > record && !r.bestShown;
+  if (best > record) P.bestRun = best;
+  if (newRec) r.bestShown = true; saveProg();
+  const bl = heatLevel(best), bestRun = best >= 2 ? `<div class="bestrun${newRec ? " rec" : ""}" data-heat="${bl}"><span class="fl" aria-hidden="true">${heatIcon(Math.max(1, bl))}</span><span><b>${best}</b> in a row</span>${newRec || (r.bestShown && best === P.bestRun) ? `<em>longest yet</em>` : ""}</div>` : "";
   const keep = c.left || c.skip ? `<button class="btn primary xl" data-act="${r.only !== undefined && counts(quiz, P, r.only).left ? "keeppart" : "start"}" type="button">Keep going</button>` : "";
   const rev = missed ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisitround" type="button">Revisit</button>` : c.revisit ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisit" type="button">Revisit</button>` : "";
   app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" data-replace="1" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
     <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
     <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="width:${prev.g}%"><b aria-hidden="true">✓</b></i><i class="r" id="rr" style="width:${prev.r}%"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
+    ${bestRun}
     ${allDone ? `<p>Come back in a few days and see what stuck.</p>` : ""}
     <div class="cta">${keep}${rev}</div>
   </div></main>`;
@@ -967,7 +1045,7 @@ document.addEventListener("click", e => {
 });
 document.addEventListener("toggle", e => {
   const d = e.target; if (!d || !d.classList || !d.classList.contains("more") || !d.open) return;
-  setTimeout(() => d.scrollIntoView({ block: "start", behavior: reduceMotion() ? "auto" : "smooth" }), 40);
+  setTimeout(() => d.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" }), 40);
 }, true);
 document.addEventListener("input", e => { if (current && e.target.dataset && e.target.dataset.in && current.P.cur) { current.P.a[current.P.cur.id] = e.target.value; saveProg(); } });
 document.addEventListener("keydown", e => {
