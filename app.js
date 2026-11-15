@@ -581,7 +581,7 @@ function renderPlay(keepScroll) {
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">${heatIcon(heatNow)}</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">${heatIcon(heatNow)}</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -685,15 +685,21 @@ function settle(fb, delay) {
     reveal(fb, keepEl);
   }, delay);
 }
+// Confetti on a right answer: 16 pieces built once and kept (hidden) in the page; each burst only moves them.
+let CONF = null, CONF_RUN = [];
 function burst(el) {
-  if (reduceMotion()) return;
-  const b = el.getBoundingClientRect(), cols = ["#d97757", "#faf9f5", "#6a9bcc", "#788c5d", "#e3b04b"];
-  for (let i = 0; i < 16; i++) {
-    const p = document.createElement("i"); p.className = "conf";
-    const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = 50 + Math.random() * 70;
-    p.style.cssText = `left:${b.right - 28}px;top:${b.top + b.height / 2}px;background:${cols[i % cols.length]};--dx:${Math.cos(ang) * d}px;--dy:${Math.sin(ang) * d - 20}px`;
-    document.body.append(p); setTimeout(() => p.remove(), 800);
+  if (reduceMotion() || !document.body.animate) return;
+  const cols = ["#d97757", "#faf9f5", "#6a9bcc", "#788c5d", "#e3b04b"];
+  if (!CONF || !CONF[0].isConnected) {
+    CONF = [];
+    for (let i = 0; i < 16; i++) { const p = document.createElement("i"); p.className = "cfp"; p.setAttribute("aria-hidden", "true"); p.style.background = cols[i % cols.length]; document.body.append(p); CONF.push(p); }
   }
+  CONF_RUN.forEach(a => a.cancel()); CONF_RUN = [];
+  const b = el.getBoundingClientRect(), x = b.right - 28, y = b.top + b.height / 2;
+  CONF.forEach((p, i) => {
+    const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = 50 + Math.random() * 70, dx = Math.cos(ang) * d, dy = Math.sin(ang) * d - 20;
+    CONF_RUN.push(p.animate([{ opacity: 1, transform: `translate3d(${x}px,${y}px,0) rotate(0deg)` }, { opacity: 0, transform: `translate3d(${x + dx}px,${y + dy}px,0) rotate(360deg)` }], { duration: 750, easing: "ease-out" }));
+  });
 }
 /* Streak: from 3 in a row, each right answer is rewarded: "N in a row" pops up at the top centre, then swoops
    into the flame and count at the end of the bar, which pop and flash as it lands (see streakFeed).
@@ -926,7 +932,7 @@ function playAct(act, el) {
   if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
   if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) reveal(h, $(".opts, .order") || $("#qprompt")); return; }
-  if (act === "pause") { PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
+  if (act === "pause") { if (cur.done) return; PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
   if (act === "back") return nav(-1);
   if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
   if (act === "self") { finalize(el.dataset.self); return renderPlay(true); }
