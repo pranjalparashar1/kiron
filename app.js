@@ -16,15 +16,15 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // tiny safe formatting: **bold**, *italic*, line breaks
 /* Maths typesetting over the quiz text (no per-question editing): x^2 -> superscript, z_m -> subscript, a/b and a ÷ b -> stacked fraction, proper − and ×. */
-const SUPM = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "−", "⁺": "+", "ⁿ": "n" };
+const SUPM = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "−", "⁺": "+", "ⁿ": "n", "ᵗ": "t" };
 const SUBM = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6", "₇": "7", "₈": "8", "₉": "9", "₋": "−", "₊": "+", "ₙ": "n", "ₜ": "t", "ₘ": "m", "ₓ": "x", "ₐ": "a", "ₑ": "e", "ₒ": "o", "ᵢ": "i", "ⱼ": "j", "ₖ": "k", "ₗ": "l", "ₛ": "s", "ₚ": "p", "ₕ": "h" };
 const FTERM = "(?:\\([^()]+\\)|\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?%?|[A-Za-z0-9]+(?:\\.\\d+)*%?)(?:<su[bp]>[^<]*<\\/su[bp]>)*";
 // Lookbehind (?<!...) is not supported before iOS 16.4: if it throws, skip fraction/minus typesetting instead of showing a blank app.
 let FRAC_RE = null, LB = true;
-try { FRAC_RE = new RegExp("(?<![\\w.)\\]])(" + FTERM + ")\\s*[\\/÷]\\s*(" + FTERM + ")(?![\\w\\[(,]|\\.\\d|<su)", "g"); new RegExp("(?<=[\\d)])x"); } catch (e) { LB = false; FRAC_RE = null; }
+try { FRAC_RE = new RegExp("(?<![\\w.)\\]-])(" + FTERM + ")\\s*[\\/÷]\\s*(" + FTERM + ")(?![\\w\\[(,]|\\.\\d|<su)", "g"); new RegExp("(?<=[\\d)])x"); } catch (e) { LB = false; FRAC_RE = null; }
 function mathify(h) {
   const supm = c => SUPM[c] || c, subm = c => SUBM[c] || c;
-  h = h.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿ]+/g, m => "<sup>" + [...m].map(supm).join("") + "</sup>")
+  h = h.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿᵗ]+/g, m => "<sup>" + [...m].map(supm).join("") + "</sup>")
        .replace(/[₀₁₂₃₄₅₆₇₈₉₋₊ₙₜₘₓₐₑₒᵢⱼₖₗₛₚₕ]+/g, m => "<sub>" + [...m].map(subm).join("") + "</sub>")
        .replace(/\^\(([^)]*)\)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
        .replace(/\^(-?\d+(?:\.\d+)?|[A-Za-z]\w*)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
@@ -40,7 +40,9 @@ function mathify(h) {
       const pa = a.replace(/<[^>]*>/g, ""), pb = b.replace(/<[^>]*>/g, "");
       const word = x => /^[A-Za-z]{3,}$/.test(x) && x !== x.toUpperCase() && !/^[A-Z]{2,}[a-z]$/.test(x);
       const digits = /\d/.test(pa + pb), shortVars = pa.length <= 4 && pb.length <= 4 && !(pa === pa.toUpperCase() && pb === pb.toUpperCase());
-      if (word(pa) || word(pb) || (!digits && !shortVars)) return all;
+      // not maths: "BBB / Baa3" (ratings), "P/Es", "y/y"
+      const notMath = /^[A-Za-z]{2,}\d+$/.test(a) || /^[A-Za-z]{2,}\d+$/.test(b) || /^[A-Z]s$/.test(pb) || (pa === pb && !digits);
+      if (notMath || word(pa) || word(pb) || (!digits && !shortVars)) return all;
       return `<span class="frac"><span>${strip(a)}</span><span>${strip(b)}</span></span>`;
     });
     if (h === before) break;
@@ -1111,12 +1113,27 @@ document.addEventListener("click", e => {
   if (act === "resume") return go("play-" + current.quiz.id, true);
   if (act === "share") return shareQuiz();
   if (act === "addtap") return sheet("Add tap options", `<p class="note">Paste this into any AI chat. It returns the same quiz with tap-to-answer options added. Import the result and choose <b>Replace it</b>.</p>`, addTapPrompt(current.quiz), "Copy prompt and quiz");
-  if (act === "reset") { if (!twoTap(t, "Tap again to reset")) return; current.P = blankProg(); saveProg(); t.classList.add("ticked"); t.innerHTML = `<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg><span class="sr">Reset</span>`; t.disabled = true; return setTimeout(() => { if (current && /^#quiz-/.test(location.hash)) renderHome(); }, 850); }
+  if (act === "reset") {
+    if (!twoTap(t, "Tap again to reset")) return;
+    current.P = blankProg(); saveProg(); t.disabled = true;
+    /* The button folds away and a round tick grows in its place. Only transform and opacity move (no width,
+       height, border-radius or stroke animation), so iPhone runs it on the compositor at the screen's full rate. */
+    const foot = t.parentNode, done = document.createElement("span");
+    done.className = "rdone"; done.setAttribute("role", "status");
+    done.innerHTML = `<span class="tkw"><svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span><span class="sr">Reset</span>`;
+    done.style.top = (t.offsetTop + t.offsetHeight / 2) + "px";
+    foot.classList.add("resetting"); t.classList.add("folding"); foot.append(done);
+    return setTimeout(() => { if (current && /^#quiz-/.test(location.hash)) renderHome(); }, 900);
+  }
   playAct(act, t);
 });
+/* "Full answer": once it has opened and laid out, glide (native smooth scroll) until the whole answer sits above
+   the Next bar, without pushing the "Full answer" line up under the top bar. (scrollIntoView ignored the fixed
+   Next bar, so the answer stopped underneath it.) */
 document.addEventListener("toggle", e => {
   const d = e.target; if (!d || !d.classList || !d.classList.contains("more") || !d.open) return;
-  setTimeout(() => d.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" }), 40);
+  cancelScroll();
+  requestAnimationFrame(() => requestAnimationFrame(() => reveal(d, d.querySelector("summary"))));
 }, true);
 document.addEventListener("input", e => { if (current && e.target.dataset && e.target.dataset.in && current.P.cur) { current.P.a[current.P.cur.id] = e.target.value; saveProg(); } });
 document.addEventListener("keydown", e => {

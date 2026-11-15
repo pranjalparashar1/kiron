@@ -439,9 +439,12 @@ button.opt.wrong .k.box { background: var(--no); }
 /* typeset maths */
 sup, sub { font-size: .72em; line-height: 0; }
 sup { vertical-align: .5em; } sub { vertical-align: -.28em; }
-.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; text-align: center; line-height: 1.2; margin: 0 .18em; font-size: .94em; }
-.frac > span:first-child { border-bottom: 1.5px solid currentColor; padding: 0 .3em .06em; }
-.frac > span:last-child { padding: .06em .3em 0; }
+/* A fraction is one box as wide as its wider part; both parts are centred and the bar runs the full width,
+   so it always covers the denominator. Small side padding only, so no gap opens before what follows. */
+.frac { display: inline-flex; flex-direction: column; align-items: stretch; vertical-align: middle; text-align: center; line-height: 1.2; margin: 0 .12em; font-size: .94em; white-space: nowrap; }
+.frac > span { display: block; padding: 0 .14em; }
+.frac > span:first-child { border-bottom: 1.5px solid currentColor; padding-bottom: .08em; }
+.frac > span:last-child { padding-top: .08em; }
 /* finished options stay tappable for navigation but can't be re-answered */
 button.opt[aria-disabled="true"] { cursor: default; opacity: 1; }
 button.opt.dim { opacity: .72; }
@@ -607,10 +610,22 @@ button.opt.dim, button.opt.wrong.dim { opacity: .28; }
 .order.done li.ok .p { background: var(--ink); color: var(--ok); }
 .order.done li.wrong .p { background: var(--no); color: var(--ink); }
 
-/* reset: confirm becomes a round tick */
-.foot .btn { transition: width .35s cubic-bezier(.32,.72,0,1), border-radius .35s, border-color .2s; }
-.foot .btn.ticked, .foot .btn.ticked:disabled { opacity: 1; width: 56px; height: 56px; min-height: 56px; padding: 0; border-radius: 50%; align-self: center; border: 2px solid var(--good); background: transparent; }
+/* reset: the button folds into a round tick. Transform and opacity only (compositor), nothing that re-lays out. */
+.foot { position: relative; }
+.foot .btn.folding, .foot .btn.folding:disabled { animation: rfold .26s cubic-bezier(.4,0,.6,1) forwards; }
+@keyframes rfold { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.16, .9); } }
+.rdone { position: absolute; left: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border: 2px solid var(--good); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(.4); animation: rgrow .42s cubic-bezier(.3,1.45,.5,1) .14s forwards; will-change: transform, opacity; }
+@keyframes rgrow { to { opacity: 1; transform: none; } }
+/* the tick is "drawn" by a sliding window (two opposite translates), not by animating the stroke */
+.rdone .tkw { display: block; width: 30px; height: 30px; overflow: hidden; transform: translateX(-100%); animation: rslide .32s cubic-bezier(.3,.7,.4,1) .3s forwards; }
+.rdone .tkw .tick { display: block; transform: translateX(100%); animation: rslide .32s cubic-bezier(.3,.7,.4,1) .3s forwards; }
+.rdone .tick path { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+@keyframes rslide { to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .foot .btn.folding, .rdone, .rdone .tkw, .rdone .tkw .tick { animation-duration: .01s; animation-delay: 0s; } }
 .tick { stroke: var(--good); }
+/* Full answer fades up as it opens (opacity + transform only) */
+details.more[open] > p { animation: fullin .32s cubic-bezier(.25,.6,.3,1); }
+@keyframes fullin { from { opacity: 0; transform: translateY(8px); } }
 
 /* numbers heads-up in brand blue */
 .numtag::before { color: var(--bg); }
