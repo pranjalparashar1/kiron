@@ -363,7 +363,11 @@ function openQuiz(id) {
 }
 function route() {
   clearTimer();
-  if (!/^#play-/.test(location.hash)) { ["#streak", ".goo", ".streak-label"].forEach(s => { const p = $(s); if (p) p.remove(); }); }
+  if (!/^#play-/.test(location.hash)) {
+    ["#streak", ".goo", ".fly"].forEach(s => document.querySelectorAll(s).forEach(p => p.remove()));
+    // Leaving the quiz ends the streak.
+    if (current && current.P.round && current.P.round.streak) { current.P.round.streak = 0; saveProg(); }
+  }
   applyView();
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (DEEP_ON && !SET.mode) return renderChooser();
@@ -443,8 +447,11 @@ function renderHome() {
 }
 function startRound(opt) {
   const { quiz, P } = current;
+  // Carrying on in order straight from the end of a round keeps the streak going; anything else starts fresh.
+  const carry = P.round && P.round.ended && !P.round.review ? P.round.streak || 0 : 0;
   const r = buildRound(quiz, P, opt);
   if (!r) { toast("Nothing left there. Nice."); return; }
+  if (!opt || opt.kind !== "revisit") r.streak = carry;
   P.round = r; P.cur = null; saveProg(); go("play-" + quiz.id, true);
 }
 
@@ -496,7 +503,7 @@ function renderPlay(keepScroll) {
   const { q, id } = getQ(quiz, r.ids[r.i]);
   if (!P.cur || P.cur.id !== id) {
     const was = r.res[id];
-    P.cur = was && was !== "skip" && (P.a[id] !== undefined || r.review) ? { id, done: true, status: was, revealed: true, ticks: [] } : { id, done: false };
+    P.cur = was && was !== "skip" ? { id, done: true, status: was, revealed: true, ticks: [] } : { id, done: false };
   }
   const cur = P.cur, f = formOf(q, current.mode);
   const fx = FX && FX.id === id ? FX : null; FX = null;
@@ -569,7 +576,7 @@ function renderPlay(keepScroll) {
   const isNum = q.type === "number", nid = r.ids[r.i + 1], nextNum = nid && getQ(quiz, nid).q.type === "number" && !r.review;
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", on a streak" : ""}">${dots}</div><span class="flame${heatNow ? " on" : ""}" aria-hidden="true">🔥</span>${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
+  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">🔥</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}">${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div>${nextNum ? `<div class="headsup">Numbers next. You only pick the setup. No calculating.</div>` : ""}</header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -606,73 +613,78 @@ function burst(el) {
     document.body.append(p); setTimeout(() => p.remove(), 800);
   }
 }
-/* Streak: from 3 in a row, a "🔥 n in a row" counter pops up under the bar, then shrinks and flies into it.
-   The bar then changes colour as the run grows (gold, orange, flame) and a small flame sits at its end. A wrong answer quietly cools it back. */
-const heatLevel = n => n >= 10 ? 4 : n >= 7 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
-const HEAT_COL = ["#faf9f5", "#e3b04b", "#d97757", "#e08a52", "#e08a52"];
+/* Streak: from 3 in a row, each right answer sends a small flame from the answer up into the timer bar.
+   It melts into the end of the bar (liquid merge), the bar and the count beside it take the streak's colour,
+   and the count pulses gently. The colour heats up as the run grows: yellow, gold, pale gold, white-hot,
+   then black fire from 15 in a row. A wrong answer, or leaving the quiz, cools it back. */
+const BLACK_FIRE = 15;
+const heatLevel = n => n >= BLACK_FIRE ? 5 : n >= 11 ? 4 : n >= 8 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0;
+const HEAT_COL = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b"];
 function gooDefs() {
   if ($("#kgoo-svg")) return;
   const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
   svg.id = "kgoo-svg"; svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.setAttribute("aria-hidden", "true"); svg.style.position = "absolute";
-  svg.innerHTML = `<defs><filter id="kgoo" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter></defs>`;
+  svg.innerHTML = `<defs><filter id="kgoo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"/></filter></defs>`;
   document.body.append(svg);
 }
-/* Liquid merge: the "🔥 n in a row" bubble wells up under the bar, then stretches into a drop,
-   reaches up, and melts into the bar, which ripples and takes the new streak colour. */
 function streakFeed(n) {
-  ["#streak", ".goo", ".streak-label"].forEach(s => { const o = $(s); if (o) o.remove(); });
-  const dots = $(".dots"), flame = $(".flame"); if (!dots) return;
-  const lift = () => { if (!dots.isConnected) return; dots.dataset.heat = heatLevel(n); if (flame) flame.classList.add("on"); flash(dots, "fed"); if (flame) flash(flame, "fed"); };
-  const text = "🔥 " + n + " in a row";
-  if (reduceMotion() || !document.body.animate) {
-    const el = document.createElement("div"); el.id = "streak"; el.className = "streak"; el.setAttribute("role", "status"); el.textContent = text;
-    document.body.append(el); lift(); setTimeout(() => el.remove(), 1400); return;
-  }
+  ["#streak", ".goo", ".fly"].forEach(s => document.querySelectorAll(s).forEach(o => o.remove()));
+  const dots = $(".dots"), slot = $(".heat"); if (!dots || !slot) return;
+  const lvl = heatLevel(n);
+  const lift = () => {
+    if (!dots.isConnected) return;
+    dots.dataset.heat = lvl; slot.dataset.heat = lvl; slot.classList.add("on");
+    const num = slot.querySelector(".n"); if (num) num.textContent = n;
+    flash(dots, "fed"); flash(slot, "fed");
+  };
+  if (reduceMotion() || !document.body.animate) { lift(); return; }
   gooDefs();
-  const t = dots.getBoundingClientRect(), col = HEAT_COL[heatLevel(n)];
-  const label = document.createElement("div"); label.className = "streak-label"; label.setAttribute("role", "status"); label.textContent = text;
-  label.style.left = "-999px"; document.body.append(label);
-  const W = Math.ceil(label.getBoundingClientRect().width) + 36, H = 40;
-  const cx = t.left + t.width / 2, barY = t.top + t.height / 2, cy = t.bottom + 46;   // bubble centre, under the bar
-  const top = t.top - 24, goo = document.createElement("div"); goo.className = "goo";
-  goo.style.top = top + "px"; goo.style.height = (cy + H / 2 + 24 - top) + "px";
+  // where the flame starts: the right answer (or the list / question), kept on screen
+  const src = app().querySelector(".opt.ok") || app().querySelector(".order") || app().querySelector(".fb") || $("#qprompt");
+  const t = dots.getBoundingClientRect(), s = slot.getBoundingClientRect();
+  const tx = s.width > 4 ? s.left + 10 : t.right - 4, ty = t.top + t.height / 2;
+  let ox = innerWidth / 2, oy = innerHeight / 2;
+  if (src) { const b = src.getBoundingClientRect(); ox = Math.min(innerWidth - 40, Math.max(40, b.left + b.width * .78)); oy = b.top + Math.min(b.height / 2, 40); }
+  oy = Math.min(innerHeight - 140, Math.max(t.bottom + 90, oy));
+  const col = lvl === 5 ? "#2a0d05" : HEAT_COL[lvl], D = 30, dx = tx - ox, dy = ty - oy;
+  const goo = document.createElement("div"); goo.className = "goo";
   const drop = document.createElement("i"), well = document.createElement("i");
-  drop.style.cssText = `width:${W}px;height:${H}px;left:${cx - W / 2}px;top:${cy - H / 2 - top}px;background:${col}`;
-  well.style.cssText = `width:28px;height:12px;left:${cx - 14}px;top:${barY - 6 - top}px;background:${col}`;
+  drop.style.cssText = `width:${D}px;height:${D}px;left:${ox - D / 2}px;top:${oy - D / 2}px;background:${col}`;
+  well.style.cssText = `width:22px;height:14px;left:${tx - 11}px;top:${ty - 7}px;background:${col}`;
   goo.append(well, drop); document.body.append(goo);
-  label.style.left = cx + "px"; label.style.top = cy + "px";
-  const dy = barY - cy, k = H / W, dur = 2100, ease = "linear", e = "cubic-bezier(.45,0,.4,1)";
+  const fire = document.createElement("span"); fire.className = "fly" + (lvl === 5 ? " black" : ""); fire.setAttribute("aria-hidden", "true"); fire.textContent = "🔥";
+  fire.style.left = ox + "px"; fire.style.top = oy + "px"; document.body.append(fire);
+  const dur = 1250, e = "cubic-bezier(.45,0,.4,1)";
+  // a gentle arc: rise first, then sweep across to the end of the bar
+  const at = (f, bend) => `translate(${dx * f + bend}px, ${dy * Math.pow(f, .8)}px)`;
   drop.animate([
-    { offset: 0, easing: e,    opacity: 0, transform: "translateY(10px) scale(.55)" },
-    { offset: .1, easing: e,   opacity: 1, transform: "translateY(0) scale(1.07, .94)" },
-    { offset: .17, easing: e,  opacity: 1, transform: "translateY(0) scale(.97, 1.04)" },
-    { offset: .24, easing: e,  opacity: 1, transform: "translateY(0) scale(1)" },
-    { offset: .52, easing: e,  opacity: 1, transform: "translateY(0) scale(1)" },
-    { offset: .62, easing: e,  opacity: 1, transform: `translateY(${dy * .1}px) scale(${k * 1.05}, 1.02)` },
-    { offset: .72, easing: e,  opacity: 1, transform: `translateY(${dy * .62}px) scale(${k * .74}, 1.45)` },
-    { offset: .8, easing: e,   opacity: 1, transform: `translateY(${dy * .95}px) scale(${k * 1.1}, .5)` },
-    { offset: .88, easing: e,  opacity: .9, transform: `translateY(${dy}px) scale(${(t.width * .55) / W}, .22)` },
-    { offset: 1, easing: e,    opacity: 0, transform: `translateY(${dy}px) scale(${t.width / W}, .12)` }
-  ], { duration: dur, easing: ease, fill: "forwards" });
+    { offset: 0, easing: e,   opacity: 0, transform: "translate(0, 12px) scale(.3)" },
+    { offset: .16, easing: e, opacity: 1, transform: "translate(0, 0) scale(1.08, .94)" },
+    { offset: .26, easing: e, opacity: 1, transform: "translate(0, -4px) scale(.96, 1.06)" },
+    { offset: .5, easing: e,  opacity: 1, transform: at(.45, -10) + " scale(.82, 1.3)" },
+    { offset: .7, easing: e,  opacity: 1, transform: at(.86, -4) + " scale(.72, 1.25)" },
+    { offset: .8, easing: e,  opacity: 1, transform: at(1, 0) + " scale(.9, .7)" },
+    { offset: 1,              opacity: 0, transform: at(1, 0) + " scale(.3, .25)" }
+  ], { duration: dur, easing: "linear", fill: "forwards" });
   well.animate([
     { offset: 0, easing: e,   opacity: 0, transform: "scale(0)" },
     { offset: .55, easing: e, opacity: 0, transform: "scale(0)" },
-    { offset: .64, easing: e, opacity: 1, transform: "translateY(3px) scale(1, 1)" },
-    { offset: .74, easing: e, opacity: 1, transform: "translateY(13px) scale(.85, 2.6)" },
-    { offset: .82, easing: e, opacity: 1, transform: "translateY(2px) scale(2.2, 1)" },
-    { offset: .9, easing: e,  opacity: .9, transform: `translateY(0) scale(${t.width / 28 * .7}, .7)` },
-    { offset: 1, easing: e,   opacity: 0, transform: `translateY(0) scale(${t.width / 28}, .45)` }
-  ], { duration: dur, easing: ease, fill: "forwards" });
-  label.animate([
-    { offset: 0, easing: e,   opacity: 0, transform: "translate(-50%, calc(-50% + 10px)) scale(.6)" },
-    { offset: .12, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1.04)" },
-    { offset: .24, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
-    { offset: .52, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
-    { offset: .62, easing: e, opacity: 0, transform: "translate(-50%, calc(-50% - 6px)) scale(.55)" },
-    { offset: 1, easing: e,   opacity: 0, transform: "translate(-50%, calc(-50% - 6px)) scale(.55)" }
-  ], { duration: dur, easing: ease, fill: "forwards" });
-  setTimeout(lift, dur * .8);
-  setTimeout(() => { goo.remove(); label.remove(); }, dur + 60);
+    { offset: .66, easing: e, opacity: 1, transform: "translateY(5px) scale(.9, 1.9)" },
+    { offset: .8, easing: e,  opacity: 1, transform: "scale(1.9, 1.1)" },
+    { offset: .9, easing: e,  opacity: .8, transform: "scale(1.3, .7)" },
+    { offset: 1,              opacity: 0, transform: "scale(.6, .4)" }
+  ], { duration: dur, easing: "linear", fill: "forwards" });
+  fire.animate([
+    { offset: 0, easing: e,   opacity: 0, transform: "translate(-50%, -50%) translate(0, 12px) scale(.3)" },
+    { offset: .16, easing: e, opacity: 1, transform: "translate(-50%, -50%) scale(1.15)" },
+    { offset: .26, easing: e, opacity: 1, transform: "translate(-50%, -50%) translate(0, -4px) scale(1)" },
+    { offset: .5, easing: e,  opacity: 1, transform: "translate(-50%, -50%) " + at(.45, -10) + " scale(.9)" },
+    { offset: .7, easing: e,  opacity: 1, transform: "translate(-50%, -50%) " + at(.86, -4) + " scale(.75)" },
+    { offset: .8,             opacity: 0, transform: "translate(-50%, -50%) " + at(1, 0) + " scale(.5)" },
+    { offset: 1,              opacity: 0, transform: "translate(-50%, -50%) " + at(1, 0) + " scale(.5)" }
+  ], { duration: dur, easing: "linear", fill: "forwards" });
+  setTimeout(lift, dur * .74);
+  setTimeout(() => { goo.remove(); fire.remove(); }, dur + 60);
 }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
@@ -681,6 +693,7 @@ function finalize(status) {
   P.st[id] = status; r.res[id] = status;
   if (first) {
     r.streak = status === "right" ? (r.streak || 0) + 1 : 0; logEvent(status === "right" ? "right" : "other", quiz.id);
+    FX = { id, kind: status === "right" ? "right" : "wrong" };
   }
   else if (status !== "right") r.streak = 0;
   saveProg();
