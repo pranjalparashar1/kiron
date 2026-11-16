@@ -459,7 +459,7 @@ function renderPlay(keepScroll) {
   if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); const now = Date.now(); PAUSED = false; TIMER = { id, dur: timedDur, t0: now, pausedAt: 0, to: null }; } } else clearTimer();
   const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
-  let input = "", primary = "";
+  let input = "", primary = "", waiting = false;
   const a = P.a[id];
   if (f.kind === "pick") {
     const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
@@ -484,10 +484,13 @@ function renderPlay(keepScroll) {
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
-    const ord = Array.isArray(a) && a.length === q.items.length ? a : orderStart(id, q.items.length);
-    input = `<p class="lead">${cur.done ? "Your order:" : "Drag, or tap the arrows."}</p><ol class="order${cur.done ? " done" : ""}">` + ord.map((it, pos) => {
+    // The list is always in the order it will be checked in. The first `k` rows have been given their place (they carry a
+    // number); the rest are still waiting below them, in the order they were dealt.
+    const n = q.items.length, ord = Array.isArray(a) && a.length === n ? a : orderStart(id, n), k = cur.done ? n : placedOf(P, id, n);
+    waiting = !cur.done && k < n;
+    input = `<p class="lead">${cur.done ? "Your order:" : "Tap in order. Hold to move."}</p><ol class="order${cur.done ? " done" : ""}"${cur.done ? "" : ` data-k="${k}"`}>` + ord.map((it, pos) => {
       const ok = cur.done && it === pos;
-      return `<li data-it="${it}" class="${cur.done ? (ok ? "ok" : "wrong") : ""}">${cur.done ? "" : `<span class="grip" aria-hidden="true">⠿</span>`}<span class="p">${cur.done ? (ok ? "✓" : "✕") : pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv up" type="button" data-mv="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>▲</button><button class="mv dn" type="button" data-mv="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>▼</button>`}</li>`;
+      return `<li data-it="${it}" class="${cur.done ? (ok ? "ok" : "wrong") : pos < k ? "set" : ""}"${cur.done ? "" : ` role="button" tabindex="0"`}><span class="p">${cur.done ? (ok ? "✓" : "✕") : pos < k ? pos + 1 : ""}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : HX}</li>`;
     }).join("") + `</ol>`;
     primary = "check";
   }
@@ -503,7 +506,7 @@ function renderPlay(keepScroll) {
   const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
   const bar = cur.done
     ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
-    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : ""}`;
+    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow${waiting ? " soft" : ""}" data-act="check" type="button">Check</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number";
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
@@ -530,6 +533,8 @@ function renderPlay(keepScroll) {
   else app().innerHTML = hxAll(html);
   app().dataset.qid = id;
   DIR = 0;
+  // While a row is held, the page must not scroll under the finger. Only touches that start on the list are looked at.
+  const ol = app().querySelector(".order:not(.done)"); if (ol && !ol._hold) { ol._hold = true; ol.addEventListener("touchmove", e => { if (dragging && e.cancelable) e.preventDefault(); }, { passive: false }); }
   if (!r.review) { placeSky(heatNow); placeGlint(heatNow); }
   if (barW0) slideFrom(barW0);
   armTimer(); if (TIMER && TIMER.pausedAt) { const dd = document.querySelector(".dots"); if (dd) dd.classList.add("paused"); }
@@ -910,69 +915,99 @@ function playAct(act, el) {
   if (act === "check") {
     if (cur.done) return;
     if (f.kind === "multi") finalize(gradeMulti(q, P.a[id]));
-    else if (f.kind === "order") { if (!P.a[id]) P.a[id] = orderStart(id, q.items.length); finalize(gradeOrder(q, P.a[id])); }
+    else if (f.kind === "order") { endDrag(); if (placedOf(P, id, q.items.length) < q.items.length) return; finalize(gradeOrder(q, P.a[id])); }
     else return;
     return renderPlay("fb");
   }
   if (act === "next") { if (!cur.done) return; return nav(1); }
 }
 
-/* ---- reordering: tap arrows (animated) or drag the handle; both move the real list item ----
-   The list has slots (first, second, ...). A row is always in exactly one slot: dragging only floats it above its
-   slot, and letting go, however that happens, drops it into the slot under the finger. Arrows swap two slots. */
+/* ---- Kiron 1.5: ordering by hand. Two moves, and the whole row is the target for both.
+   Tap: the way you would deal cards or say the order out loud. Tap what comes first and it takes number 1 and flies to
+   the top; tap the next and it lands under it. The last one left takes the last place by itself. Tapping a numbered row
+   hands its number back and it rejoins the waiting rows.
+   Hold: rest a finger anywhere on a row and it lifts, as in any iPhone list; carry it to its place and let go. A finger
+   that moves straight away scrolls the page as usual.
+   The list has slots (first, second, ...). A row is always in exactly one slot, and the first `k` slots are the placed ones. */
 let dragging = null;   // the row being held, if any
 let DRAG = null;       // { end } for the drag in progress
-function endDrag() { if (DRAG) DRAG.end(); }
+let HOLD = null;       // { stop } for a finger resting on a row, not lifted yet
+function endDrag() { if (HOLD) HOLD.stop(); if (DRAG) DRAG.end(); }
+const placedOf = (P, id, n) => !Array.isArray(P.a[id]) || P.a[id].length !== n ? 0 : P.k && P.k[id] != null ? Math.min(n, P.k[id]) : n;
 // Nothing may be left floating: clear any leftover hold state and offsets before the list is measured or changed.
 function restRows(ol) {
   ol.classList.remove("sorting");
-  for (const k of ol.children) { k.getAnimations().forEach(a => a.cancel()); k.style.transform = ""; k.classList.remove("drag", "lift"); }
+  for (const r of ol.children) { r.getAnimations().forEach(a => a.cancel()); r.style.transform = ""; r.classList.remove("drag", "fly"); }
 }
-function syncOrder(ol, save) {
+// Numbers follow the slots: the first k rows read 1, 2, 3 from the top, the waiting rows carry none. Check wakes up once every row has a place.
+function syncOrder(ol, k, save) {
   const kids = [...ol.children];
-  kids.forEach((li, i) => { li.querySelector(".p").textContent = i + 1; li.querySelector(".up").disabled = i === 0; li.querySelector(".dn").disabled = i === kids.length - 1; });
-  if (save && current && current.P.cur && !current.P.cur.done) { current.P.a[current.P.cur.id] = kids.map(li => +li.dataset.it); saveProg(); }
+  ol.dataset.k = k;
+  kids.forEach((li, i) => { const on = i < k, txt = on ? String(i + 1) : "", p = li.querySelector(".p"); if (li.classList.contains("set") !== on) li.classList.toggle("set", on); if (p.textContent !== txt) p.textContent = txt; });
+  const chk = document.querySelector('.actionbar [data-act="check"]'); if (chk) chk.classList.toggle("soft", k < kids.length);
+  if (save && current && current.P.cur && !current.P.cur.done) { const P = current.P, id = P.cur.id; P.a[id] = kids.map(li => +li.dataset.it); (P.k = P.k || {})[id] = k; saveProg(); }
 }
-// lift = the row the person moved with an arrow: it rises a little, glides to its new slot and settles, so the swap is easy to follow.
-function moveLi(ol, li, to, lift) {
+// Move a row to a slot. Every row is put squarely in its new slot at once, and only glides there from where it looked
+// (one transform each, so a quick run of taps never queues up). The tapped row rides above the rest and lands with a small settle.
+function moveLi(ol, li, to) {
   const kids = [...ol.children], from = kids.indexOf(li);
   if (to < 0 || to >= kids.length || to === from) return false;
-  // Where each row looks right now (it may still be gliding from the last tap)...
-  const before = new Map(kids.map(k => [k, k.getBoundingClientRect().top]));
+  const before = new Map(kids.map(r => [r, r.getBoundingClientRect().top]));
   ol.insertBefore(li, to > from ? kids[to].nextSibling : kids[to]);
-  // ...then every row is put squarely in its slot, and only glides there from where it looked.
   restRows(ol);
-  if (!reduceMotion()) kids.forEach(k => {
-    const d = before.get(k) - k.getBoundingClientRect().top; if (!d) return;
-    if (k === lift) { k.classList.add("lift"); const a = k.animate([{ transform: `translateY(${d}px) scale(1)` }, { transform: `translateY(${d * .55}px) scale(1.045)`, offset: .35 }, { transform: "translateY(0) scale(1.045)", offset: .8 }, { transform: "none" }], { duration: 520, easing: "cubic-bezier(.3,.7,.2,1)" }); a.onfinish = a.oncancel = () => k.classList.remove("lift"); }
-    else k.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: lift ? 520 : 240, easing: "cubic-bezier(.3,.7,.2,1)" });
+  if (!reduceMotion() && li.animate) kids.forEach(r => {
+    const d = before.get(r) - r.getBoundingClientRect().top; if (!d) return;
+    const kf = [{ transform: `translate3d(0,${d}px,0)` }, { transform: "translate3d(0,0,0)" }];
+    if (r === li) { r.classList.add("fly"); const a = r.animate(kf, { duration: 400, easing: EASE.drop }); a.onfinish = a.oncancel = () => r.classList.remove("fly"); }
+    else r.animate(kf, { duration: 300, easing: DRAG_EASE });
   });
   return true;
 }
-function flash(li, cls) { cls = cls || "moved"; li.classList.remove(cls); void li.offsetWidth; li.classList.add(cls); }
-function arrowMove(btn) {
+function tapRow(li) {
   endDrag();
-  const li = btn.closest("li"), ol = li.parentElement, dir = +btn.dataset.mv, i = [...ol.children].indexOf(li), other = ol.children[i + dir];
-  if (!moveLi(ol, li, i + dir, li)) return;
-  syncOrder(ol, true); flash(li); if (other) flash(other, "nudged");
-  const nb = li.querySelector(btn.classList.contains("up") ? ".up" : ".dn"); (nb && !nb.disabled ? nb : li.querySelector(".mv:not(:disabled)")) ?.focus({ preventScroll: true });
+  const ol = li.parentElement, kids = [...ol.children], n = kids.length, i = kids.indexOf(li); let k = Math.min(n, +ol.dataset.k || 0);
+  if (i >= k) { moveLi(ol, li, k); k++; if (k === n - 1) k = n; }   // takes the next number; the last one left needs no tap
+  else { k--; moveLi(ol, li, k); }                                    // hands its number back and waits just under the placed rows
+  syncOrder(ol, k, true);
 }
+document.addEventListener("click", e => {
+  const li = e.target.closest && e.target.closest(".order:not(.done) li"); if (!li || !current) return;
+  if (e.target.classList.contains("hx")) buzz(10);
+  tapRow(li);
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const li = e.target.closest && e.target.closest(".order:not(.done) li"); if (!li || !current) return;
+  e.preventDefault(); tapRow(li); li.focus({ preventScroll: true });
+});
+document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".order li")) e.preventDefault(); });
+// A finger resting on a row lifts it after a moment. Moving first means a scroll (or a tap that slipped), and the list stays out of it.
+const HOLD_MS = 180, HOLD_SLOP = 8;
+document.addEventListener("pointerdown", e => {
+  const li = e.target.closest && e.target.closest(".order:not(.done) li"); if (!li || !current || e.button > 0) return;
+  endDrag();
+  const pid = e.pointerId, mouse = e.pointerType === "mouse", x0 = e.clientX, y0 = e.clientY; let y = y0, timer = 0;
+  const stop = () => { clearTimeout(timer); HOLD = null; window.removeEventListener("pointermove", mv, true); window.removeEventListener("pointerup", stop, true); window.removeEventListener("pointercancel", stop, true); };
+  const lift = () => { stop(); if (li.isConnected && !li.parentElement.classList.contains("done")) startDrag(li, pid, mouse ? y0 : y, y, mouse); };
+  const mv = ev => { if (ev.pointerId !== pid) return; y = ev.clientY; if (Math.hypot(ev.clientX - x0, y - y0) > (mouse ? 4 : HOLD_SLOP)) mouse ? lift() : stop(); };
+  window.addEventListener("pointermove", mv, true); window.addEventListener("pointerup", stop, true); window.addEventListener("pointercancel", stop, true);
+  if (!mouse) timer = setTimeout(lift, HOLD_MS);   // with a mouse, moving is the lift
+  HOLD = { stop };
+});
 /* Dragging works the way reordering does in iPhone lists. Nothing in the list is re-arranged while the finger is
    down: the held row rides under the finger, and the rows it passes slide aside into the gap it left (each a single
    transform the phone animates by itself). Letting go springs the held row into the open slot; only then is the
    list re-arranged for real, in the exact spot everything is already showing, so nothing jumps.
    Rows are measured once, when the hold starts. */
 const DRAG_EASE = "cubic-bezier(.2,.8,.2,1)";
-document.addEventListener("pointerdown", e => {
-  const g = e.target.closest && e.target.closest(".order .grip"); if (!g || !current) return;
-  endDrag();   // a second finger, a hold that never got its "let go", or a row still settling
-  const li = g.closest("li"), ol = li.parentElement, pid = e.pointerId; e.preventDefault();
+function startDrag(li, pid, startY, nowY, mouse) {
+  const ol = li.parentElement, g = li, k0 = Math.min(ol.children.length, +ol.dataset.k || 0); let carried = false;
   restRows(ol);
   const rows = [...ol.children], n = rows.length, f = rows.indexOf(li), still = reduceMotion() || !li.animate;
   const top = rows.map(r => r.offsetTop), h = rows.map(r => r.offsetHeight), mid = rows.map((r, i) => top[i] + h[i] / 2);
   const hl = h[f], step = hl + (n > 1 ? top[1] - top[0] - h[0] : 0), minY = top[0], maxY = top[n - 1] + h[n - 1] - hl;
   const nums = rows.map(r => r.querySelector(".p")), moved = rows.map(() => 0);
-  const startY = e.clientY; let lastY = startY, raf = 0, y = top[f], t = f, phase = 1, settle = null, lift = null;
+  let lastY = nowY, raf = 0, y = top[f], t = f, phase = 1, settle = null, lift = null;
   dragging = li; li.classList.add("drag"); ol.classList.add("sorting");
   try { g.setPointerCapture(pid); } catch (_) {}
   if (!still) lift = li.animate([{ scale: "1" }, { scale: "1.03" }], { duration: 180, easing: DRAG_EASE, fill: "forwards" });
@@ -982,6 +1017,8 @@ document.addEventListener("pointerdown", e => {
   const slotTop = to => to <= f ? top[to] : top[to] + h[to] - hl;
   const place = () => {
     raf = 0;
+    // Carrying a row gives every row a place: from here the list reads 1, 2, 3 all the way down.
+    if (!carried && Math.abs(lastY - startY) > 4) { carried = true; syncOrder(ol, n, false); }
     const raw = top[f] + lastY - startY;
     y = raw < minY ? minY - band(minY - raw) : raw > maxY ? maxY + band(raw - maxY) : raw;
     // A row gives way once the held row's leading edge passes its middle (and comes back a little later than it
@@ -1023,6 +1060,7 @@ document.addEventListener("pointerdown", e => {
     if (raf) cancelAnimationFrame(raf);
     if (li.isConnected) place();
     unlisten();
+    if (carried && mouse) ghostUntil = Date.now() + 350;   // a mouse sends a click after the drop: it is not a tap
     if (still || !li.isConnected || document.hidden) return commit();
     const from = y - top[f], to = slotTop(t) - top[f], far = Math.abs(from - to);
     li.style.transform = `translate3d(0,${to}px,0)`;
@@ -1043,14 +1081,15 @@ document.addEventListener("pointerdown", e => {
     rows.forEach(r => { r.style.transform = ""; });
     if (!li.isConnected) return;
     if (t !== f) ol.insertBefore(li, t > f ? rows[t].nextSibling : rows[t]);
-    syncOrder(ol, true); flash(li);
+    syncOrder(ol, carried ? n : k0, carried);
   }
   DRAG = { end: commit };
   // Listen on the window, not the handle: if the phone drops the handle's hold on the finger, the events still arrive.
   window.addEventListener("pointermove", move, true);
   EVS.forEach(([ty, cap]) => window.addEventListener(ty, up, cap));
   document.addEventListener("visibilitychange", hidden);
-});
+  if (lastY !== startY) place();
+}
 
 /* ---- story-style edge taps: left quarter = back, right quarter = next (or "do this later" if unanswered). No swipes, no centre taps. ---- */
 const EDGE = 0.25; // width of each tap zone, as a share of the screen
@@ -1060,7 +1099,7 @@ document.addEventListener("pointerup", e => {
   const d = tapDown; tapDown = null;
   if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
   const t = e.target && e.target.closest ? e.target : null; if (!t) return;
-  if (t.closest("a, summary, .actionbar, .top, .toast, .grip, .mv, [data-act], [data-go]")) return;
+  if (t.closest("a, summary, .actionbar, .top, .toast, [data-act], [data-go]")) return;
   // Answer options, the ordering list and the hint never navigate, answered or not.
   if (t.closest(".opt, .order, .hint, .sky")) return;
   const dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Date.now() - d.t;
@@ -1156,7 +1195,6 @@ document.addEventListener("click", e => {
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
   if (d.toggle !== undefined) return playAct("toggle", t);
-  if (d.mv !== undefined) return arrowMove(t);
   if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); unfurl(j, o); t.setAttribute("aria-expanded", o); return; }
   if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"); app().querySelectorAll(".part.open").forEach(x => { if (x !== p) { unfurl(x, false); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); } }); unfurl(p, o); t.setAttribute("aria-expanded", o); return; }
   if (d.act === "partstart") return startRound({ only: +d.pi });
