@@ -44,7 +44,35 @@ Quizzes are tap-to-answer only. Don't write a typed version of each question (no
 - `answer` is the one-line "why" shown after a tap. (`why` works as the field name too.)
 - Calculations: four formulas or setups as options, not four numbers, with `"tags": ["calc"]`.
 - `multi` and `order` only when the idea is naturally a set or a sequence. For `order`, list `items` in the correct order.
-- `**bold**`, `*italic*`, `x^2`, `z_m` and `a/b` are typeset.
+- `**bold**`, `*italic*`, `x^2`, `z_m`, `a/b` and `√(…)` are typeset as you type them. For anything bigger, see Maths below.
 - Prompts short (under 25 words). Follow the material's order. Only facts from the material.
 
 Older quizzes use `text`/`number` questions with an `mcq` field; the app still plays them, so leave them as they are.
+
+## Maths
+
+Simple maths needs nothing special. Plain text is typeset on its own: `x^2`, `x^(n+1)`, `z_m`, `104/1.06^3`, `Δp/Δy`, `(a + b)/(c − d)`, and `√250` or `√(a/b)` (the bar covers the whole bracket).
+
+For roots over fractions, sums, integrals, derivatives and anything nested, write TeX between `\(` and `\)`. It works in prompts, options, hints and answers, and mixes with normal text. Use `\[` and `\]` instead to put a formula on its own centred line (good in a prompt).
+
+**In JSON every backslash is doubled.** So `\(\frac{a}{b}\)` is written `"\\(\\frac{a}{b}\\)"`. Step 4's parse check catches most slips.
+
+| You want | Write (before doubling the backslashes) |
+| --- | --- |
+| Fraction | `\frac{a + b}{2n}` |
+| Root, cube root | `\sqrt{\frac{a}{b}}`, `\sqrt[3]{x}` |
+| Power, subscript, both | `x^2`, `x_i`, `x_i^2`, `e^{-rt}` (braces when it is more than one character) |
+| Sum, product | `\sum_{i=1}^{n} x_i`, `\prod_{t=1}^{T}(1 + r_t)` |
+| Integral, loop integral | `\int_0^\infty f(x)\,dx`, `\oint_C F\,ds` |
+| Derivative, partial | `\frac{dy}{dx}`, `\frac{d^2P}{dy^2}`, `\frac{\partial f}{\partial x}`, `f'(x)` |
+| Limit, max, min | `\lim_{h \to 0}`, `\max_{x}` |
+| Brackets that grow | `\left( \frac{1 + r}{1 + g} \right)^n`; plain `( )` and `[ ]` also grow when there is something tall inside |
+| Evaluated at | `\left. \frac{dP}{dy} \right\|_{y_0}` |
+| Greek | `\mu \sigma \Delta \pi \theta …` (or just type μ, σ, Δ) |
+| Signs | `\times \cdot \div \pm \le \ge \ne \approx \to \infty \partial` |
+| Mean bar, hat | `\bar{x}`, `\hat{y}` |
+| Words inside maths | `\text{coupon}`; functions `\ln \log \exp \sin \cos` |
+| Choose | `\binom{n}{k}` |
+| Small gap | `\,` |
+
+Everything nests: `\sqrt{\frac{\sum_{i=1}^{n}(x_i - \mu)^2}{n - 1}}`. Keep each formula short enough for a phone line; a long one in an option wraps at its `=` and `+` signs, and a `\[ … \]` line scrolls sideways. A command the app doesn't know is shown as written, so a slip is easy to spot. Section 6 of the Test quiz shows each of these in use.

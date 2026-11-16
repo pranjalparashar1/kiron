@@ -765,6 +765,89 @@
      ]
     }
    ]
+  },
+  {
+   "title": "Section 6",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Which root has μ under it?",
+     "hint": "Look for μ.",
+     "options": [
+      "\\(\\sqrt{\\frac{\\mu + b}{2n}}\\)",
+      "\\(\\sqrt{\\frac{a + b}{2n}}\\)",
+      "\\(\\sqrt[3]{x^2 + 1}\\)",
+      "\\(\\sqrt{1 + \\sqrt{\\frac{x}{y}}}\\)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ."
+    },
+    {
+     "type": "single",
+     "prompt": "Which sum contains μ?",
+     "hint": "Look for μ.",
+     "options": [
+      "\\(\\sigma = \\sqrt{\\frac{\\sum_{i=1}^{n}(x_i - \\mu)^2}{n - 1}}\\)",
+      "\\(\\bar{x} = \\frac{1}{n}\\sum_{i=1}^{n} x_i\\)",
+      "\\(\\prod_{t=1}^{T}(1 + r_t)\\)",
+      "\\(P = \\sum_{t=1}^{n}\\frac{C}{(1 + y)^t} + \\frac{F}{(1 + y)^n}\\)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ."
+    },
+    {
+     "type": "single",
+     "prompt": "Which integral contains μ?",
+     "hint": "Look for μ.",
+     "options": [
+      "\\(\\int_0^\\infty e^{-\\mu t}\\,dt = \\frac{1}{\\mu}\\)",
+      "\\(\\int_0^\\infty e^{-rt}\\,dt = \\frac{1}{r}\\)",
+      "\\(\\oint_C F\\,ds\\)",
+      "\\(\\int_a^b f(x)\\,dx\\)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ."
+    },
+    {
+     "type": "single",
+     "prompt": "Which derivative contains μ?",
+     "hint": "Look for μ.",
+     "options": [
+      "\\(\\frac{\\partial f}{\\partial \\mu}\\)",
+      "\\(\\frac{dy}{dx}\\)",
+      "\\(\\frac{d^2P}{dy^2}\\)",
+      "\\(f'(x) = \\lim_{h \\to 0}\\frac{f(x + h) - f(x)}{h}\\)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ."
+    },
+    {
+     "type": "single",
+     "prompt": "Which bracket contains μ?",
+     "hint": "Look for μ.",
+     "options": [
+      "\\(\\left(\\frac{1 + \\mu}{1 + g}\\right)^n\\)",
+      "\\(\\left(1 + \\frac{r}{m}\\right)^{mt}\\)",
+      "\\(\\left[\\frac{a}{b} - 1\\right]\\)",
+      "\\(D = -\\frac{1}{P}\\frac{dP}{dy}\\)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ."
+    },
+    {
+     "type": "single",
+     "prompt": "Which line shows the quadratic formula?\\[x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\]",
+     "hint": "It is the one printed in the question.",
+     "options": [
+      "\\(\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}\\)",
+      "\\(\\frac{b \\pm \\sqrt{b^2 + 4ac}}{2a}\\)",
+      "\\(\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{a}\\)",
+      "\\(-b \\pm \\frac{\\sqrt{b^2 - 4ac}}{2a}\\)"
+     ],
+     "correct": 0,
+     "answer": "−b, then ± the root of b² − 4ac, all over 2a."
+    }
+   ]
   }
  ]
 }

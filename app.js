@@ -16,42 +16,7 @@ function saveFailed() { if (saveWarned) return; saveWarned = true; setTimeout(()
 /* ---------------- helpers ---------------- */
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-// tiny safe formatting: **bold**, *italic*, line breaks
-/* Maths typesetting over the quiz text (no per-question editing): x^2 -> superscript, z_m -> subscript, a/b and a ÷ b -> stacked fraction, proper − and ×. */
-const SUPM = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "−", "⁺": "+", "ⁿ": "n", "ᵗ": "t" };
-const SUBM = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6", "₇": "7", "₈": "8", "₉": "9", "₋": "−", "₊": "+", "ₙ": "n", "ₜ": "t", "ₘ": "m", "ₓ": "x", "ₐ": "a", "ₑ": "e", "ₒ": "o", "ᵢ": "i", "ⱼ": "j", "ₖ": "k", "ₗ": "l", "ₛ": "s", "ₚ": "p", "ₕ": "h" };
-const FTERM = "(?:\\([^()]+\\)|\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?%?|[A-Za-z0-9]+(?:\\.\\d+)*%?)(?:<su[bp]>[^<]*<\\/su[bp]>)*";
-// Lookbehind (?<!...) is not supported before iOS 16.4: if it throws, skip fraction/minus typesetting instead of showing a blank app.
-let FRAC_RE = null, LB = true;
-try { FRAC_RE = new RegExp("(?<![\\w.)\\]-])(" + FTERM + ")\\s*[\\/÷]\\s*(" + FTERM + ")(?![\\w\\[(,]|\\.\\d|<su)", "g"); new RegExp("(?<=[\\d)])x"); } catch (e) { LB = false; FRAC_RE = null; }
-function mathify(h) {
-  const supm = c => SUPM[c] || c, subm = c => SUBM[c] || c;
-  h = h.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿᵗ]+/g, m => "<sup>" + [...m].map(supm).join("") + "</sup>")
-       .replace(/[₀₁₂₃₄₅₆₇₈₉₋₊ₙₜₘₓₐₑₒᵢⱼₖₗₛₚₕ]+/g, m => "<sub>" + [...m].map(subm).join("") + "</sub>")
-       .replace(/\^\(([^)]*)\)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
-       .replace(/\^(-?\d+(?:\.\d+)?|[A-Za-z]\w*)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
-       .replace(/_\(([^)]*)\)/g, "<sub>$1</sub>")
-       .replace(/_([A-Za-z0-9]+)/g, "<sub>$1</sub>")
-       .replace(/(^|[\s(=×÷+<>\/])-(?=\.?\d)/g, "$1−");
-  if (LB) h = h.replace(new RegExp("(?<=[\\d)])\\s[x*]\\s(?=[\\d(])", "g"), " × ").replace(new RegExp("(?<=[\\d)>%])\\s-\\s(?=[\\d(.])", "g"), " − ");
-  if (!FRAC_RE) return h;
-  const strip = t => { const m = t.match(/^\(([^()]*)\)$/); return m ? m[1] : t; };
-  for (let k = 0; k < 3; k++) {
-    const before = h;
-    h = h.replace(FRAC_RE, (all, a, b) => {
-      const pa = a.replace(/<[^>]*>/g, ""), pb = b.replace(/<[^>]*>/g, "");
-      const word = x => /^[A-Za-z]{3,}$/.test(x) && x !== x.toUpperCase() && !/^[A-Z]{2,}[a-z]$/.test(x);
-      const digits = /\d/.test(pa + pb), shortVars = pa.length <= 4 && pb.length <= 4 && !(pa === pa.toUpperCase() && pb === pb.toUpperCase());
-      // not maths: "BBB / Baa3" (ratings), "P/Es", "y/y"
-      const notMath = /^[A-Za-z]{2,}\d+$/.test(a) || /^[A-Za-z]{2,}\d+$/.test(b) || /^[A-Z]s$/.test(pb) || (pa === pb && !digits);
-      if (notMath || word(pa) || word(pb) || (!digits && !shortVars)) return all;
-      return `<span class="frac"><span>${strip(a)}</span><span>${strip(b)}</span></span>`;
-    });
-    if (h === before) break;
-  }
-  return h;
-}
-const fmt = s => mathify(esc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
+// Text formatting (maths, **bold**, *italic*, line breaks) lives in maths.js: fmt().
 const slug = s => String(s || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "quiz";
 let toastT;
 let toastHeld = false;
@@ -356,7 +321,7 @@ function renderHome() {
   else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Continue" : "Start"}</button>`;
   else if (c.skip) primary = `<button class="btn primary xl" data-act="start" type="button">Do the ones you left</button>`;
   else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit what you missed</button>`;
-  else primary = `<div class="donebox"><b>That's the whole quiz.</b></div>`;
+  else primary = `<div class="donebox"><b>End of quiz.</b></div>`;
   const stateOf = pc => !pc.total || pc.left === pc.total ? ["none", "Not started"] : pc.left === 0 && pc.skip === 0 ? ["done", "Done"] : ["some", "In progress"];
   const parts = quiz.sections.map((s, i) => {
     const pc = counts(quiz, P, i), st = stateOf(pc), answered = pc.right + pc.revisit > 0;
@@ -1051,10 +1016,9 @@ function renderRoundEnd() {
   const rev = missed ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisitround" type="button">Revisit</button>` : c.revisit ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisit" type="button">Revisit</button>` : "";
   app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" data-replace="1" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
-    <h2 id="endh" tabindex="-1">${allDone ? "That's the whole quiz." : "Round done"}</h2>
+    <h2 id="endh" tabindex="-1">${allDone ? "End of quiz." : "Round done"}</h2>
     <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="transform:${slid(gNow)}"><b aria-hidden="true" style="margin-left:${100 - gNow}%">✓</b></i><i class="r" id="rr" style="transform:${slid(gNow + rNow)}"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
     ${bestRun}
-    ${allDone ? `<p>Come back in a few days and see what stuck.</p>` : ""}
     <div class="cta">${keep}${rev}</div>
   </div></main>`;
   // Grow from last time's split to this one: the fills slide (transform), the ✓ is held still by an equal and opposite slide.
