@@ -342,7 +342,7 @@ function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) {
 window.addEventListener("hashchange", () => {
   cancelScroll();
   const flow = FLOW, show = () => { route(); window.scrollTo(0, 0); }; FLOW = false;
-  if (flow && document.startViewTransition && !reduceMotion()) { try { mark("screen", 400); document.startViewTransition(show); return; } catch (e) {} }
+  if (flow && document.startViewTransition && !reduceMotion()) { try { mark("screen", 400); const vt = document.startViewTransition(show), ok = () => {}; [vt.ready, vt.finished, vt.updateCallbackDone].forEach(p => p && p.catch(ok)); return; } catch (e) {} }
   show();
 });
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
