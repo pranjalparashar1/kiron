@@ -97,6 +97,14 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .btn.xl:active { transform: translateY(3px); box-shadow: 0 2px 0 #8f4630; }
 .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; min-width: 44px; height: 44px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; color: var(--ink); }
 .icon-btn.done { font-weight: 800; padding: 0 16px; }
+/* Kiron 1.4.1: the controls that did not answer a tap. The press is at once, with no transition, because these can sit
+   under a scrolling finger. The spring back is played by app.js from the tap itself, so a scroll never springs. */
+.icon-btn:active, .actionbar .btn.back:active { transform: scale(.9); }
+.jump-btn:active, .part-row:active { transform: scale(.97); }
+/* A tap on the side of the screen lights that edge for a moment. Two fixed layers, opacity only. */
+.edge { position: fixed; top: 0; bottom: 0; width: 22vw; z-index: 4; pointer-events: none; opacity: 0; }
+.edge.l { left: 0; background: linear-gradient(90deg, rgba(250,249,245,.14), transparent); }
+.edge.r { right: 0; background: linear-gradient(270deg, rgba(250,249,245,.14), transparent); }
 /* pause control for the timer. Once answered the timer has stopped, so it steps out; its space stays, so the bar does not move. */
 .icon-btn.pause { flex: none; padding: 0; }
 .icon-btn.pause svg { width: 20px; height: 20px; fill: currentColor; }
