@@ -95,8 +95,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* Everything you can tap answers the finger: it presses in at once (quick) and springs back on release.
    Rows inside a card dim instead of shrinking, so the card's edge stays still. */
 .btn, .icon-btn, .opt, .mv { transition: transform var(--move) var(--spring); }
-.btn:active:not(:disabled), .icon-btn:active:not(:disabled) { transform: scale(.95); transition-duration: var(--quick); }
+.btn:active:not(:disabled), .icon-btn:active:not(:disabled) { transform: scale(.97); transition-duration: var(--quick); }
 .icon-btn:active:not(:disabled) { transform: scale(.88); }
+/* Haptics: an invisible iOS switch stretched over a button (see app.js). It must stay a real switch (no
+   appearance: none), or the phone gives no tick. */
+.btn, .opt, .qcard { position: relative; }
+.hx { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .jump-btn, .part-row, details summary { transition: opacity var(--move) var(--out); }
 .jump-btn:active, .part-row:active, details summary:active { opacity: .45; transition-duration: 0s; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 18px; cursor: pointer; font-size: 16px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--ink); }

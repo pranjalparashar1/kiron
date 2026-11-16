@@ -46,6 +46,7 @@ window.addEventListener("unhandledrejection", e => wentOff(e.reason));
    fetched only while it is on. mark() names the stretch of time that follows, so dropped frames can be counted
    per moment (an answer, the streak flight, ...). While the check is off, mark() does nothing. */
 const K_PERF = "sb:perf";
+const K_HAPTIC = "sb:haptic";
 const mark = (label, ms) => { if (window.KironPerf) window.KironPerf.mark(label, ms); };
 function perfBoot() {
   if (LS.get(K_PERF, 0)) { if (!window.KironPerf) loadScript("perf.js").catch(() => {}); }
@@ -320,6 +321,7 @@ function route() {
   document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (h === "perf") { const on = !LS.get(K_PERF, 0); if (on) LS.set(K_PERF, 1); else LS.del(K_PERF); perfBoot(); toast("Performance check " + (on ? "on" : "off")); return go("", true); }
+  if (h === "haptics") { HAPTIC = !HAPTIC; if (HAPTIC) LS.set(K_HAPTIC, 1); else LS.del(K_HAPTIC); toast("Haptics " + (HAPTIC ? "on" : "off")); return go("", true); }
   if (h === "import" || h === "make") return renderExtra(h);
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
@@ -342,7 +344,7 @@ function renderLibrary() {
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    <div class="grid">${list.length ? list.map(x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
+    <div class="grid">${list.length ? list.map(x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span>${hx()}</button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
@@ -353,8 +355,8 @@ function renderHome() {
   const c = counts(quiz, P), started = c.left < c.total;
   const inRound = P.round && !P.round.ended && P.round.i < P.round.ids.length;
   let primary;
-  if (inRound) primary = `<button class="btn primary xl" data-act="resume" type="button">Continue</button>`;
-  else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Continue" : "Start"}</button>`;
+  if (inRound) primary = `<button class="btn primary xl" data-act="resume" type="button">Continue${hx()}</button>`;
+  else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Continue" : "Start"}${hx()}</button>`;
   else if (c.skip) primary = `<button class="btn primary xl" data-act="start" type="button">Do the ones you left</button>`;
   else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit what you missed</button>`;
   else primary = `<div class="donebox"><b>End of quiz.</b></div>`;
@@ -421,6 +423,13 @@ let FX = null;      // one-shot effect for the next render: { kind: "right" | "w
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 // The app's motion language, shared with styles.css (--quick, --move, --slow, --out, --spring).
 const MOVE = 300, SLOW = 460, OUT = "cubic-bezier(.22,.8,.24,1)", SPRING = "cubic-bezier(.3,1.5,.5,1)";
+/* Haptics (a small tick under the finger). iPhone Safari has no vibrate call. The only route is a real iOS switch
+   control: when a finger taps one, the phone ticks. So each main button carries an invisible switch stretched over
+   it; the tap lands on the switch (tick) and the click carries on up to the button as usual. If the phone gives no
+   tick, the button still works exactly as before. Off unless #haptics has been opened once on this phone (again =
+   off), until it has been tried on real iPhones: see haptics.html. Android phones get a short vibrate instead. */
+let HAPTIC = false;
+const hx = () => HAPTIC ? `<input class="hx" type="checkbox" switch tabindex="-1" aria-hidden="true">` : "";
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function renderPlay(keepScroll) {
   endDrag();
@@ -452,7 +461,7 @@ function renderPlay(keepScroll) {
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
-      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span></button>`;
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span>${cur.done ? "" : hx()}</button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
     const sel = a || [];
@@ -460,7 +469,7 @@ function renderPlay(keepScroll) {
       let cls = "opt" + (sel.includes(i) ? " sel" : ""), ic = sel.includes(i) ? "✓" : "";
       // Once checked, only the right options stay bright; everything else fades back. No tick boxes then.
       if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong dim" : right ? " missed" : " dim"); }
-      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${cur.done ? "" : `<span class="k box">${ic}</span>`}<span>${fmt(o)}</span></button>`;
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${cur.done ? "" : `<span class="k box">${ic}</span>`}<span>${fmt(o)}</span>${cur.done ? "" : hx()}</button>`;
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
@@ -482,8 +491,8 @@ function renderPlay(keepScroll) {
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
   const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
   const bar = cur.done
-    ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
-    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : ""}`;
+    ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}${hx()}</button>`
+    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check${hx()}</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number";
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
@@ -1107,6 +1116,7 @@ function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000)
 document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
+  if (HAPTIC && navigator.vibrate && t.querySelector(".hx")) try { navigator.vibrate(8); } catch (err) {}
   if (d.go !== undefined) { go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
   if (!current) return;
@@ -1170,6 +1180,7 @@ window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, 
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
 // iPhone Safari only shows a button's pressed look (:active) when the page listens for touches.
 document.addEventListener("touchstart", () => {}, { passive: true });
+HAPTIC = !!LS.get(K_HAPTIC, 0);
 perfBoot();
 route();
 loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
