@@ -80,6 +80,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .brand img { width: 28px; height: 28px; border-radius: 7px; }
 
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 15px; z-index: 20; max-width: calc(100% - 32px); }
+.toast.tap { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
 
 /* ---------- buttons ---------- */
 .btn, .icon-btn, .opt, .part { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }

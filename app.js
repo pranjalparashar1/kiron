@@ -5,10 +5,13 @@
 /* ---------------- storage ---------------- */
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { saveFailed(); return false; } },
   del(k) { try { localStorage.removeItem(k); } catch (e) {} }
 };
 const K_IMPORTED = "sb:imported";
+// The phone's storage can be full or switched off (private browsing). Say so once, kindly, and carry on.
+let saveWarned = false;
+function saveFailed() { if (saveWarned) return; saveWarned = true; setTimeout(() => toast("Your progress can't be saved on this phone right now."), 0); }
 
 /* ---------------- helpers ---------------- */
 const $ = s => document.querySelector(s);
@@ -51,12 +54,28 @@ function mathify(h) {
 const fmt = s => mathify(esc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
 const slug = s => String(s || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "quiz";
 let toastT;
-function toast(msg) {
+let toastHeld = false;
+// onTap: the toast stays until tapped, and the tap does that one thing (used for "tap to reload").
+function toast(msg, onTap) {
+  if (toastHeld && !onTap) return;
   let t = $("#toast");
   if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); }
-  t.textContent = msg; t.hidden = false;
-  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600);
+  t.textContent = msg; t.hidden = false; t.onclick = onTap || null; t.classList.toggle("tap", !!onTap); toastHeld = !!onTap;
+  clearTimeout(toastT); if (!onTap) toastT = setTimeout(() => { t.hidden = true; }, 2600);
 }
+/* ---------------- safety net ----------------
+   If anything in the app breaks, a button must never just go dead: say so kindly and offer a reload. Progress is
+   already saved after every answer, so a reload loses nothing. The last problem is kept for bug reports. */
+const TROUBLE = { last: "", quizzes: [] };
+function wentOff(what) {
+  const text = String(what && (what.stack || what.message) || what || "unknown").slice(0, 600);
+  if (/ResizeObserver loop/.test(text)) return;
+  TROUBLE.last = text; try { console.error("[Kiron]", text); } catch (e) {}
+  if (toastHeld) return;
+  try { toast("Something went off. Tap to reload.", () => location.reload()); } catch (e) {}
+}
+window.addEventListener("error", e => { if (e.error || e.message) wentOff(e.error || e.message); });
+window.addEventListener("unhandledrejection", e => wentOff(e.reason));
 /* ---------------- validation ---------------- */
 const TYPES = ["text", "single", "multi", "number", "order"];
 const TYPE_ALIASES = { mcq: "single", choice: "single", radio: "single", checkbox: "multi", multiple: "multi", num: "number", numeric: "number", calc: "number", calculation: "number", typed: "text", open: "text", short: "text", rank: "order", sequence: "order" };
@@ -162,12 +181,19 @@ function allQuizzes() {
     .sort((a, b) => a.quiz.title.localeCompare(b.quiz.title, undefined, { sensitivity: "base", numeric: true }));
 }
 function findQuiz(id) { return allQuizzes().find(x => x.quiz.id === id); }
+// A quiz file that can't be read is left out of the list, and the reason is written to the console and kept in SB.trouble.
+function badQuiz(file, errors) { TROUBLE.quizzes.push({ file, errors }); try { console.warn("[Kiron] quiz left out: " + file + "\n  " + (errors || []).join("\n  ")); } catch (e) {} }
 async function loadSamples() {
   try {
     const r = await fetch("quizzes.json", { cache: "no-cache" });
     const list = await r.json();
     const got = await Promise.all((list.quizzes || []).map(async f => {
-      try { const res = await fetch(f); const v = validateQuiz(await res.json()); return v.quiz ? { file: f, quiz: v.quiz } : null; } catch (e) { return null; }
+      try {
+        const res = await fetch(f); if (!res.ok) throw new Error("could not be fetched (" + res.status + ")");
+        const v = validateQuiz(await res.json()); if (v.quiz) return { file: f, quiz: v.quiz };
+        badQuiz(f, v.errors);
+      } catch (e) { badQuiz(f, [e && e.message || String(e)]); }
+      return null;
     }));
     SAMPLES = got.filter(Boolean);
   } catch (e) { SAMPLES = []; }
@@ -183,6 +209,15 @@ function saveProg() { if (!current) return; current.P.seen = Date.now(); LS.set(
 const qid = (si, qi) => "s" + si + "q" + qi;
 function eachQ(quiz, fn) { quiz.sections.forEach((s, si) => s.questions.forEach((q, qi) => fn(q, qid(si, qi), si, qi))); }
 function getQ(quiz, id) { const m = id.match(/^s(\d+)q(\d+)$/); const si = +m[1], qi = +m[2]; return { q: quiz.sections[si].questions[qi], id, si, qi }; }
+const hasQ = (quiz, id) => { const m = /^s(\d+)q(\d+)$/.exec(id || ""); return !!(m && quiz.sections[+m[1]] && quiz.sections[+m[1]].questions[+m[2]]); };
+// Saved progress points at questions by position. If the quiz file has changed since and a saved round names a
+// question that is no longer there, drop that round (answers so far are kept) so the next tap starts a fresh one.
+function freshen(quiz, P) {
+  const r = P.round;
+  if (r && !(Array.isArray(r.ids) && r.ids.length && r.ids.every(id => hasQ(quiz, id)))) { P.round = null; P.cur = null; }
+  if (P.cur && !hasQ(quiz, P.cur.id)) P.cur = null;
+  return P;
+}
 
 function shuffledOrder(seedStr, n) {
   const idx = [...Array(n).keys()];
@@ -247,7 +282,7 @@ let current = null; // { quiz, mine, P }
 const app = () => $("#app");
 function openQuiz(id) {
   const found = findQuiz(id); if (!found) return null;
-  current = { quiz: found.quiz, mine: found.mine, P: getProg(found.quiz.id) };
+  current = { quiz: found.quiz, mine: found.mine, P: freshen(found.quiz, getProg(found.quiz.id)) };
   return current;
 }
 function route() {
@@ -400,7 +435,7 @@ function renderPlay(keepScroll) {
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
-    const ord = a || orderStart(id, q.items.length);
+    const ord = Array.isArray(a) && a.length === q.items.length ? a : orderStart(id, q.items.length);
     input = `<p class="lead">${cur.done ? "Your order:" : "Drag, or tap the arrows."}</p><ol class="order${cur.done ? " done" : ""}">` + ord.map((it, pos) => {
       const ok = cur.done && it === pos;
       return `<li data-it="${it}" class="${cur.done ? (ok ? "ok" : "wrong") : ""}">${cur.done ? "" : `<span class="grip" aria-hidden="true">⠿</span>`}<span class="p">${cur.done ? (ok ? "✓" : "✕") : pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv up" type="button" data-mv="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>▲</button><button class="mv dn" type="button" data-mv="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>▼</button>`}</li>`;
@@ -1050,7 +1085,7 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
+window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
 route();
