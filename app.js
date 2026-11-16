@@ -46,7 +46,6 @@ window.addEventListener("unhandledrejection", e => wentOff(e.reason));
    fetched only while it is on. mark() names the stretch of time that follows, so dropped frames can be counted
    per moment (an answer, the streak flight, ...). While the check is off, mark() does nothing. */
 const K_PERF = "sb:perf";
-const K_HAPTIC = "sb:haptic";
 const mark = (label, ms) => { if (window.KironPerf) window.KironPerf.mark(label, ms); };
 function perfBoot() {
   if (LS.get(K_PERF, 0)) { if (!window.KironPerf) loadScript("perf.js").catch(() => {}); }
@@ -321,46 +320,29 @@ function route() {
   document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (h === "perf") { const on = !LS.get(K_PERF, 0); if (on) LS.set(K_PERF, 1); else LS.del(K_PERF); perfBoot(); toast("Performance check " + (on ? "on" : "off")); return go("", true); }
-  if (h === "haptics") { HAPTIC = !HAPTIC; LS.set(K_HAPTIC, HAPTIC ? 1 : 0); toast("Haptics " + (HAPTIC ? "on" : "off")); return go("", true); }
   if (h === "import" || h === "make") return renderExtra(h);
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
     if (openQuiz(m[2])) return m[1] === "play" ? renderPlay() : renderHome();
-    if (!samplesLoaded) { app().innerHTML = `<main class="wrap lib"><div class="grid">${ghosts}</div></main>`; return; }
+    if (!samplesLoaded) return;
     toast("That quiz isn't on this device. Import it first.");
   }
   renderLibrary();
 }
 // rep = replace the history entry instead of adding one, so Back from a round goes to the library, not round -> home -> round -> home.
-/* Screens flow into each other: a move you start with a tap cross-fades (a view transition, which the phone runs as
-   two flat pictures: opacity and transform only), and a quiz's name travels from its card to the top of its page and
-   back. The phone's own back swipe already animates, so that one is left alone. Where view transitions are missing,
-   or motion is reduced, screens swap at once as before. */
-let FLOW = false, HASH_WAS = location.hash;
-function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); return; } FLOW = true; if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
-window.addEventListener("hashchange", () => {
-  cancelScroll();
-  // Only between the list and a quiz's page, which stand still. Going into or out of a round swaps at once: a view
-  // transition there makes the phone redraw the whole moving screen (timer, flame) as a picture on every frame.
-  const onPlay = /^#play-/, was = HASH_WAS; HASH_WAS = location.hash;
-  const flow = FLOW && !onPlay.test(was) && !onPlay.test(location.hash), show = () => { route(); window.scrollTo(0, 0); }; FLOW = false;
-  if (flow && document.startViewTransition && !reduceMotion()) { try { mark("screen", 400); const vt = document.startViewTransition(show), ok = () => {}; [vt.ready, vt.finished, vt.updateCallbackDone].forEach(p => p && p.catch(ok)); return; } catch (e) {} }
-  show();
-});
+function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); } else if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
+window.addEventListener("hashchange", () => { cancelScroll(); route(); window.scrollTo(0, 0); });
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
 const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
 /* ---------------- library: just the list ---------------- */
-let LIST_SHOWN = false;   // the list rises in card by card the first time it appears, and never again
-const ghosts = `<span class="sr">Loading</span>` + `<div class="qcard ghost" aria-hidden="true"></div>`.repeat(4);
 function renderLibrary() {
-  const from = current ? current.quiz.id : null;   // the quiz just left: its name travels back into its card
   current = null; document.title = "Kiron";
   const list = allQuizzes();
   if (samplesLoaded && !TROUBLE.listAt) TROUBLE.listAt = Math.round(performance.now());   // how long the list took to show, for the performance report
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    <div class="grid${list.length && samplesLoaded && !LIST_SHOWN ? " rise" : ""}">${list.length ? list.map((x, i) => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button" style="--i:${Math.min(i, 9)}"><h3${x.quiz.id === from ? ' style="view-transition-name:qt"' : ""}>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : samplesLoaded ? `<p class="empty">No quizzes yet.</p>` : ghosts}</div>
+    <div class="grid">${list.length ? list.map(x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
@@ -371,8 +353,8 @@ function renderHome() {
   const c = counts(quiz, P), started = c.left < c.total;
   const inRound = P.round && !P.round.ended && P.round.i < P.round.ids.length;
   let primary;
-  if (inRound) primary = `<button class="btn primary xl" data-act="resume" type="button">Continue${hx()}</button>`;
-  else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Continue" : "Start"}${hx()}</button>`;
+  if (inRound) primary = `<button class="btn primary xl" data-act="resume" type="button">Continue</button>`;
+  else if (c.left) primary = `<button class="btn primary xl" data-act="start" type="button">${started ? "Continue" : "Start"}</button>`;
   else if (c.skip) primary = `<button class="btn primary xl" data-act="start" type="button">Do the ones you left</button>`;
   else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit what you missed</button>`;
   else primary = `<div class="donebox"><b>End of quiz.</b></div>`;
@@ -437,15 +419,6 @@ document.addEventListener("visibilitychange", () => {
 });
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
-// Speeds and curves for the effects added in 1.4 only, shared with styles.css. Older moments keep their own tuned numbers.
-const MOVE = 420, SLOW = 640, OUT = "cubic-bezier(.22,.8,.24,1)", SPRING = "cubic-bezier(.3,1.5,.5,1)";
-/* Haptics (a small tick under the finger). iPhone Safari has no vibrate call. The only route is a real iOS switch
-   control: when a finger taps one, the phone ticks. So each main button carries an invisible switch stretched over
-   it; the tap lands on the switch (tick) and the click carries on up to the button as usual. If the phone gives no
-   tick, the button still works exactly as before. On for everyone (tried on an iPhone, iOS 27); opening #haptics
-   turns it off on this phone, and again turns it back on. haptics.html is a test page. Android phones get a short vibrate instead. */
-let HAPTIC = false;
-const hx = () => HAPTIC ? `<input class="hx" type="checkbox" switch tabindex="-1" aria-hidden="true">` : "";
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function renderPlay(keepScroll) {
   endDrag();
@@ -476,10 +449,8 @@ function renderPlay(keepScroll) {
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
-      // A right pick pops. A pick that was off sinks back softly (no shake), and the right answer rises to meet you.
-      if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " sink";
-      else if (fx && fx.kind === "wrong" && fx.oi !== undefined && oi === f.correct) cls += " lift";
-      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span>${cur.done ? "" : hx()}</button>`;
+      if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
     const sel = a || [];
@@ -487,7 +458,7 @@ function renderPlay(keepScroll) {
       let cls = "opt" + (sel.includes(i) ? " sel" : ""), ic = sel.includes(i) ? "✓" : "";
       // Once checked, only the right options stay bright; everything else fades back. No tick boxes then.
       if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong dim" : right ? " missed" : " dim"); }
-      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${cur.done ? "" : `<span class="k box">${ic}</span>`}<span>${fmt(o)}</span>${cur.done ? "" : hx()}</button>`;
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${cur.done ? "" : `<span class="k box">${ic}</span>`}<span>${fmt(o)}</span></button>`;
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
@@ -509,8 +480,8 @@ function renderPlay(keepScroll) {
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
   const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
   const bar = cur.done
-    ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}${hx()}</button>`
-    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check${hx()}</button>` : ""}`;
+    ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
+    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number";
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
@@ -551,22 +522,8 @@ function renderPlay(keepScroll) {
       settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
-  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
+  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
   if (feeding) streakFeed(stk, 420);
-}
-/* A right pick: a soft light spreads from the spot the finger touched and fades (one round layer over the green,
-   transform and opacity only). The option itself is painted green once, at the tap, and is not touched again: nothing
-   is redrawn when the light finishes, so the glide down to the explanation has the phone to itself. */
-let TAP = null;   // where the last tap landed, in screen points
-function bloom(el) {
-  if (reduceMotion() || !el.animate) return;
-  const b = el.getBoundingClientRect(), t = TAP && Date.now() - TAP.t < 600 ? TAP : null;
-  const x = t ? Math.min(b.width, Math.max(0, t.x - b.left)) : b.width / 2, y = t ? Math.min(b.height, Math.max(0, t.y - b.top)) : b.height / 2;
-  const rad = Math.ceil(Math.hypot(Math.max(x, b.width - x), Math.max(y, b.height - y))) + 4;
-  const c = document.createElement("i"); c.className = "bloom"; c.setAttribute("aria-hidden", "true");
-  c.style.cssText = `left:${x - rad}px;top:${y - rad}px;width:${rad * 2}px;height:${rad * 2}px`;
-  el.append(c);
-  c.animate([{ transform: "scale(.05)", opacity: .6 }, { transform: "scale(1)", opacity: 0 }], { duration: SLOW, easing: OUT, fill: "forwards" });
 }
 /* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
    and transitions carry on). Nodes marked data-keep (the sky) are left alone. The timer bar is always swapped
@@ -639,7 +596,7 @@ function settle(fb, delay) {
 }
 // Confetti on a right answer: 16 pieces built once and kept (hidden) in the page; each burst only moves them.
 let CONF = null, CONF_RUN = [];
-function burst(el, big) {
+function burst(el) {
   if (reduceMotion() || !document.body.animate) return;
   const cols = ["#d97757", "#faf9f5", "#6a9bcc", "#788c5d", "#e3b04b"];
   if (!CONF || !CONF[0].isConnected) {
@@ -647,10 +604,10 @@ function burst(el, big) {
     for (let i = 0; i < 16; i++) { const p = document.createElement("i"); p.className = "cfp"; p.setAttribute("aria-hidden", "true"); p.style.background = cols[i % cols.length]; document.body.append(p); CONF.push(p); }
   }
   CONF_RUN.forEach(a => a.cancel()); CONF_RUN = [];
-  const b = el.getBoundingClientRect(), x = big ? b.left + b.width / 2 : b.right - 28, y = b.top + b.height / 2, far = big ? 1.9 : 1;
+  const b = el.getBoundingClientRect(), x = b.right - 28, y = b.top + b.height / 2;
   CONF.forEach((p, i) => {
-    const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = (50 + Math.random() * 70) * far, dx = Math.cos(ang) * d, dy = Math.sin(ang) * d - 20;
-    CONF_RUN.push(p.animate([{ opacity: 1, transform: `translate3d(${x}px,${y}px,0) rotate(0deg)` }, { opacity: 0, transform: `translate3d(${x + dx}px,${y + dy}px,0) rotate(360deg)` }], { duration: big ? 1100 : 750, easing: "ease-out" }));
+    const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = 50 + Math.random() * 70, dx = Math.cos(ang) * d, dy = Math.sin(ang) * d - 20;
+    CONF_RUN.push(p.animate([{ opacity: 1, transform: `translate3d(${x}px,${y}px,0) rotate(0deg)` }, { opacity: 0, transform: `translate3d(${x + dx}px,${y + dy}px,0) rotate(360deg)` }], { duration: 750, easing: "ease-out" }));
   });
 }
 /* Streak: from 3 in a row, each right answer is rewarded: "N in a row" pops up at the top centre, then swoops
@@ -1058,18 +1015,10 @@ document.addEventListener("pointerdown", e => {
   document.addEventListener("visibilitychange", hidden);
 });
 
-// The side you tapped lights up and fades: two fixed layers built once, opacity only.
-let EDGES = null;
-function edgeGlow(dir) {
-  if (reduceMotion() || !document.body.animate) return;
-  if (!EDGES || !EDGES[0].isConnected) EDGES = ["l", "r"].map(s => { const el = document.createElement("i"); el.className = "edge " + s; el.setAttribute("aria-hidden", "true"); document.body.append(el); return el; });
-  EDGES[dir < 0 ? 0 : 1].animate([{ opacity: 1 }, { opacity: 0 }], { duration: SLOW, easing: OUT });
-}
 /* ---- story-style edge taps: left quarter = back, right quarter = next (or "do this later" if unanswered). No swipes, no centre taps. ---- */
 const EDGE = 0.25; // width of each tap zone, as a share of the screen
 let tapDown = null, ghostUntil = 0;
 document.addEventListener("pointerdown", e => { tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
-document.addEventListener("click", e => { if (e.clientX || e.clientY) TAP = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
 document.addEventListener("pointerup", e => {
   const d = tapDown; tapDown = null;
   if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
@@ -1084,7 +1033,6 @@ document.addEventListener("pointerup", e => {
   const x = e.clientX / innerWidth, dir = x < EDGE ? -1 : x > 1 - EDGE ? 1 : 0;
   if (!dir) return;
   ghostUntil = Date.now() + 250; // the browser sends a click after this tap: swallow it so it can't hit the next screen's option
-  if (dir > 0 || current.P.round.i > 0) edgeGlow(dir);
   nav(dir);
 });
 document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
@@ -1113,13 +1061,11 @@ function renderRoundEnd() {
     ${bestRun}
     <div class="cta">${keep}${rev}</div>
   </div></main>`;
-  mark("round-end", 1500);
-  // A round with nothing missed gets a bigger shower, from the middle of the bar once it has filled.
-  if (!r.review && res.length >= 3 && res.every(x => x === "right") && !r.cheered) { r.cheered = true; saveProg(); setTimeout(() => { const bar = $(".ratio"); if (bar && r.ended) burst(bar, true); }, 700); }
+  mark("round-end", 1300);
   // Grow from last time's split to this one: the fills slide (transform), the ✓ is held still by an equal and opposite slide.
   const rg = $("#rg"), rr = $("#rr");
   if (rg && rr && rg.animate && !reduceMotion() && (prev.g !== gNow || prev.r !== rNow)) {
-    const W = rg.parentNode.getBoundingClientRect().width, e = { duration: 1200, delay: 200, easing: OUT, fill: "backwards" };
+    const W = rg.parentNode.getBoundingClientRect().width, e = { duration: 1200, easing: "cubic-bezier(.22,.8,.24,1)" };
     rg.animate([{ transform: slid(prev.g) }, { transform: slid(gNow) }], e);
     rg.firstElementChild.animate([{ transform: `translateX(${((gNow - prev.g) / 100 * W).toFixed(1)}px)` }, { transform: "none" }], e);
     rr.animate([{ transform: slid(prev.g + prev.r) }, { transform: slid(gNow + rNow) }], e);
@@ -1151,12 +1097,7 @@ function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000)
 document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
-  if (HAPTIC && navigator.vibrate && t.querySelector(".hx")) try { navigator.vibrate(8); } catch (err) {}
-  if (d.go !== undefined) {
-    // the tapped card's name is the one that travels to the quiz page
-    if (t.classList.contains("qcard")) app().querySelectorAll(".qcard h3").forEach(h => { h.style.viewTransitionName = t.contains(h) ? "qt" : ""; });
-    go(d.go, d.replace !== undefined); return;
-  }
+  if (d.go !== undefined) { go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
@@ -1217,10 +1158,9 @@ document.addEventListener("keydown", e => {
 window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
-HAPTIC = LS.get(K_HAPTIC, 1) !== 0;
 perfBoot();
 route();
-loadSamples().then(() => { route(); LIST_SHOWN = true; if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
+loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
 if (hasSW) {
   try {
     // A new version never reloads the page under someone who is reading or answering. It is picked up the next time
