@@ -192,9 +192,33 @@ const qid = (si, qi) => "s" + si + "q" + qi;
 function eachQ(quiz, fn) { quiz.sections.forEach((s, si) => s.questions.forEach((q, qi) => fn(q, qid(si, qi), si, qi))); }
 function getQ(quiz, id) { const m = id.match(/^s(\d+)q(\d+)$/); const si = +m[1], qi = +m[2]; return { q: quiz.sections[si].questions[qi], id, si, qi }; }
 const hasQ = (quiz, id) => { const m = /^s(\d+)q(\d+)$/.exec(id || ""); return !!(m && quiz.sections[+m[1]] && quiz.sections[+m[1]].questions[+m[2]]); };
-// Saved progress points at questions by position. If the quiz file has changed since and a saved round names a
-// question that is no longer there, drop that round (answers so far are kept) so the next tap starts a fresh one.
+// Saved progress points at questions by position (s0q12), so each saved question also keeps a fingerprint of what
+// it asked. If the quiz file is edited later (a question added, removed, moved or reworded), progress follows each
+// question to its new place; a question that is gone, or now asks something else, simply counts as not done yet.
+const FP = new WeakMap();
+function prints(quiz) {
+  let m = FP.get(quiz); if (m) return m;
+  m = {};
+  eachQ(quiz, (q, id) => {
+    const s = [q.type, q.prompt, (q.options || q.items || []).join("\u0001"), q.correct, q.mcq ? q.mcq.prompt + "\u0001" + q.mcq.options.join("\u0001") + "\u0001" + q.mcq.correct : ""].join("\u0002");
+    let a = 2166136261, b = 5381;
+    for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); a = Math.imul(a ^ c, 16777619); b = (Math.imul(b, 33) + c) | 0; }
+    m[id] = (a >>> 0).toString(36) + (b >>> 0).toString(36);
+  });
+  FP.set(quiz, m); return m;
+}
 function freshen(quiz, P) {
+  const now = prints(quiz), old = P.fp;
+  if (old && Object.keys(old).some(id => old[id] !== now[id])) {
+    // Questions that have not moved keep their place; the others look for the same question elsewhere in the quiz.
+    const free = {}, to = {};
+    for (const id in now) if (old[id] !== now[id]) (free[now[id]] = free[now[id]] || []).push(id);
+    for (const id in old) to[id] = old[id] === now[id] ? id : (free[old[id]] || []).shift();
+    ["st", "a", "h", "n"].forEach(k => { const was = P[k] || {}, o = {}; for (const id in was) { const t = id in to ? to[id] : hasQ(quiz, id) && !(id in old) ? id : ""; if (t) o[t] = was[id]; } P[k] = o; });
+    // The round in hand was built from the old layout: drop it (answers so far are kept), so the next tap starts a fresh one.
+    P.round = null; P.cur = null; P.fp = now; LS.set(progKey(quiz.id), P);
+  }
+  P.fp = now;
   const r = P.round;
   if (r && !(Array.isArray(r.ids) && r.ids.length && r.ids.every(id => hasQ(quiz, id)))) { P.round = null; P.cur = null; }
   if (P.cur && !hasQ(quiz, P.cur.id)) P.cur = null;
