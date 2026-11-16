@@ -5,10 +5,13 @@
 /* ---------------- storage ---------------- */
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { saveFailed(); return false; } },
   del(k) { try { localStorage.removeItem(k); } catch (e) {} }
 };
 const K_IMPORTED = "sb:imported";
+// The phone's storage can be full or switched off (private browsing). Say so once, kindly, and carry on.
+let saveWarned = false;
+function saveFailed() { if (saveWarned) return; saveWarned = true; setTimeout(() => toast("Your progress can't be saved on this phone right now."), 0); }
 
 /* ---------------- helpers ---------------- */
 const $ = s => document.querySelector(s);
@@ -51,12 +54,28 @@ function mathify(h) {
 const fmt = s => mathify(esc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
 const slug = s => String(s || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "quiz";
 let toastT;
-function toast(msg) {
+let toastHeld = false;
+// onTap: the toast stays until tapped, and the tap does that one thing (used for "tap to reload").
+function toast(msg, onTap) {
+  if (toastHeld && !onTap) return;
   let t = $("#toast");
   if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); }
-  t.textContent = msg; t.hidden = false;
-  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600);
+  t.textContent = msg; t.hidden = false; t.onclick = onTap || null; t.classList.toggle("tap", !!onTap); toastHeld = !!onTap;
+  clearTimeout(toastT); if (!onTap) toastT = setTimeout(() => { t.hidden = true; }, 2600);
 }
+/* ---------------- safety net ----------------
+   If anything in the app breaks, a button must never just go dead: say so kindly and offer a reload. Progress is
+   already saved after every answer, so a reload loses nothing. The last problem is kept for bug reports. */
+const TROUBLE = { last: "", quizzes: [] };
+function wentOff(what) {
+  const text = String(what && (what.stack || what.message) || what || "unknown").slice(0, 600);
+  if (/ResizeObserver loop/.test(text)) return;
+  TROUBLE.last = text; try { console.error("[Kiron]", text); } catch (e) {}
+  if (toastHeld) return;
+  try { toast("Something went off. Tap to reload.", () => location.reload()); } catch (e) {}
+}
+window.addEventListener("error", e => { if (e.error || e.message) wentOff(e.error || e.message); });
+window.addEventListener("unhandledrejection", e => wentOff(e.reason));
 /* ---------------- validation ---------------- */
 const TYPES = ["text", "single", "multi", "number", "order"];
 const TYPE_ALIASES = { mcq: "single", choice: "single", radio: "single", checkbox: "multi", multiple: "multi", num: "number", numeric: "number", calc: "number", calculation: "number", typed: "text", open: "text", short: "text", rank: "order", sequence: "order" };
@@ -162,16 +181,40 @@ function allQuizzes() {
     .sort((a, b) => a.quiz.title.localeCompare(b.quiz.title, undefined, { sensitivity: "base", numeric: true }));
 }
 function findQuiz(id) { return allQuizzes().find(x => x.quiz.id === id); }
+// A quiz file that can't be read is left out of the list, and the reason is written to the console and kept in SB.trouble.
+function badQuiz(file, errors) { TROUBLE.quizzes.push({ file, errors }); try { console.warn("[Kiron] quiz left out: " + file + "\n  " + (errors || []).join("\n  ")); } catch (e) {} }
+// net = ask the network first (the quiet check for new quizzes); otherwise the saved copy answers at once.
+async function fetchSamples(net) {
+  const q = net ? "?net=1" : "";
+  const r = await fetch("quizzes.json" + q, { cache: "no-cache" });
+  const list = await r.json();
+  const got = await Promise.all((list.quizzes || []).map(async f => {
+    try {
+      const res = await fetch(f + q);
+      if (!res.ok) { if (!net) badQuiz(f, ["could not be fetched (" + res.status + ")"]); return null; }
+      const text = await res.text(), v = validateQuiz(JSON.parse(text)); if (v.quiz) return { file: f, quiz: v.quiz, text };
+      if (!net) badQuiz(f, v.errors);
+    } catch (e) { if (!net) badQuiz(f, [e && e.message || String(e)]); else if (!(e instanceof SyntaxError)) throw e; }
+    return null;
+  }));
+  return got.filter(Boolean);
+}
 async function loadSamples() {
-  try {
-    const r = await fetch("quizzes.json", { cache: "no-cache" });
-    const list = await r.json();
-    const got = await Promise.all((list.quizzes || []).map(async f => {
-      try { const res = await fetch(f); const v = validateQuiz(await res.json()); return v.quiz ? { file: f, quiz: v.quiz } : null; } catch (e) { return null; }
-    }));
-    SAMPLES = got.filter(Boolean);
-  } catch (e) { SAMPLES = []; }
+  try { SAMPLES = await fetchSamples(false); } catch (e) { SAMPLES = []; }
   samplesLoaded = true;
+}
+// The list above came straight from this phone's saved copy, so it shows at once. Then, quietly, look for newer
+// quizzes. They are swapped in only while the person is not inside a round.
+let FRESH = null;
+const sig = list => list.map(x => x.file + "\n" + x.text).join("\n\n");
+async function checkFresh() {
+  try { const got = await fetchSamples(true); if (got.length && sig(got) !== sig(SAMPLES)) { FRESH = got; takeFresh(); } } catch (e) {}
+}
+function takeFresh() {
+  if (!FRESH || /^#play-/.test(location.hash)) return false;
+  SAMPLES = FRESH; FRESH = null;
+  if (!location.hash || location.hash === "#") renderLibrary();
+  return true;
 }
 
 /* ---------------- progress + grading ---------------- */
@@ -183,6 +226,15 @@ function saveProg() { if (!current) return; current.P.seen = Date.now(); LS.set(
 const qid = (si, qi) => "s" + si + "q" + qi;
 function eachQ(quiz, fn) { quiz.sections.forEach((s, si) => s.questions.forEach((q, qi) => fn(q, qid(si, qi), si, qi))); }
 function getQ(quiz, id) { const m = id.match(/^s(\d+)q(\d+)$/); const si = +m[1], qi = +m[2]; return { q: quiz.sections[si].questions[qi], id, si, qi }; }
+const hasQ = (quiz, id) => { const m = /^s(\d+)q(\d+)$/.exec(id || ""); return !!(m && quiz.sections[+m[1]] && quiz.sections[+m[1]].questions[+m[2]]); };
+// Saved progress points at questions by position. If the quiz file has changed since and a saved round names a
+// question that is no longer there, drop that round (answers so far are kept) so the next tap starts a fresh one.
+function freshen(quiz, P) {
+  const r = P.round;
+  if (r && !(Array.isArray(r.ids) && r.ids.length && r.ids.every(id => hasQ(quiz, id)))) { P.round = null; P.cur = null; }
+  if (P.cur && !hasQ(quiz, P.cur.id)) P.cur = null;
+  return P;
+}
 
 function shuffledOrder(seedStr, n) {
   const idx = [...Array(n).keys()];
@@ -243,15 +295,24 @@ function buildReview(quiz, P, si) {
 }
 
 /* ---------------- routing ---------------- */
+const hasSW = "serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost");
+let UPDATE = false;   // a newer version of the app is saved and waiting
+// Reload into the waiting version, but only on the library (hash = the one place it may happen while on screen) or out of sight, and never inside a round.
+function updateIfWaiting(hash) {
+  if (!UPDATE || /^#play-/.test(location.hash)) return false;
+  if (hash !== undefined && (location.hash || "").replace(/^#/, "") !== hash) return false;
+  UPDATE = false; location.reload(); return true;
+}
 let current = null; // { quiz, mine, P }
 const app = () => $("#app");
 function openQuiz(id) {
   const found = findQuiz(id); if (!found) return null;
-  current = { quiz: found.quiz, mine: found.mine, P: getProg(found.quiz.id) };
+  current = { quiz: found.quiz, mine: found.mine, P: freshen(found.quiz, getProg(found.quiz.id)) };
   return current;
 }
 function route() {
   clearTimer();
+  if (!/^#play-/.test(location.hash)) { if (updateIfWaiting("")) return; if (FRESH) { SAMPLES = FRESH; FRESH = null; } }
   if (!/^#play-/.test(location.hash)) {
     clearFeed();
     // Leaving the quiz ends the streak.
@@ -346,6 +407,7 @@ function armTimer() {
     if (!current || !current.P.round || !TIMER) return;
     const r = current.P.round, id = TIMER.id;
     if (r.ended || r.ids[r.i] !== id || (current.P.cur && current.P.cur.done)) return;
+    if (dragging) { TIMER.t0 = Date.now() - TIMER.dur + 1500; return armTimer(); }   // never change question under a held row
     nav(1);
   }, Math.max(0, TIMER.dur - timerElapsed()));
 }
@@ -358,6 +420,7 @@ let FX = null;      // one-shot effect for the next render: { kind: "right" | "w
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function renderPlay(keepScroll) {
+  endDrag();
   const { quiz, P } = current;
   const r = P.round;
   if (!r) return go("quiz-" + quiz.id, true);
@@ -398,7 +461,7 @@ function renderPlay(keepScroll) {
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
-    const ord = a || orderStart(id, q.items.length);
+    const ord = Array.isArray(a) && a.length === q.items.length ? a : orderStart(id, q.items.length);
     input = `<p class="lead">${cur.done ? "Your order:" : "Drag, or tap the arrows."}</p><ol class="order${cur.done ? " done" : ""}">` + ord.map((it, pos) => {
       const ok = cur.done && it === pos;
       return `<li data-it="${it}" class="${cur.done ? (ok ? "ok" : "wrong") : ""}">${cur.done ? "" : `<span class="grip" aria-hidden="true">⠿</span>`}<span class="p">${cur.done ? (ok ? "✓" : "✕") : pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv up" type="button" data-mv="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>▲</button><button class="mv dn" type="button" data-mv="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>▼</button>`}</li>`;
@@ -806,21 +869,32 @@ function playAct(act, el) {
   if (act === "next") { if (!cur.done) return; return nav(1); }
 }
 
-/* ---- reordering: tap arrows (animated) or drag the handle; both move the real list item ---- */
-let dragging = null;
+/* ---- reordering: tap arrows (animated) or drag the handle; both move the real list item ----
+   The list has slots (first, second, ...). A row is always in exactly one slot: dragging only floats it above its
+   slot, and letting go, however that happens, drops it into the slot under the finger. Arrows swap two slots. */
+let dragging = null;   // the row being held, if any
+let DRAG = null;       // { end } for the drag in progress
+function endDrag() { if (DRAG) DRAG.end(); }
+// Nothing may be left floating: clear any leftover hold state and offsets before the list is measured or changed.
+function restRows(ol) {
+  for (const k of ol.children) { k.getAnimations().forEach(a => a.cancel()); k.style.transform = ""; k.classList.remove("drag", "lift"); }
+}
 function syncOrder(ol, save) {
   const kids = [...ol.children];
   kids.forEach((li, i) => { li.querySelector(".p").textContent = i + 1; li.querySelector(".up").disabled = i === 0; li.querySelector(".dn").disabled = i === kids.length - 1; });
-  if (save && current && current.P.cur) { current.P.a[current.P.cur.id] = kids.map(li => +li.dataset.it); saveProg(); }
+  if (save && current && current.P.cur && !current.P.cur.done) { current.P.a[current.P.cur.id] = kids.map(li => +li.dataset.it); saveProg(); }
 }
-// lift = the row the person moved with an arrow: it rises a little, glides to its new place and settles, so the swap is easy to follow.
+// lift = the row the person moved with an arrow: it rises a little, glides to its new slot and settles, so the swap is easy to follow.
 function moveLi(ol, li, to, lift) {
   const kids = [...ol.children], from = kids.indexOf(li);
   if (to < 0 || to >= kids.length || to === from) return false;
+  // Where each row looks right now (it may still be gliding from the last tap)...
   const before = new Map(kids.map(k => [k, k.getBoundingClientRect().top]));
   ol.insertBefore(li, to > from ? kids[to].nextSibling : kids[to]);
+  // ...then every row is put squarely in its slot, and only glides there from where it looked.
+  restRows(ol);
   if (!reduceMotion()) kids.forEach(k => {
-    if (k === dragging) return; const d = before.get(k) - k.getBoundingClientRect().top; if (!d) return;
+    const d = before.get(k) - k.getBoundingClientRect().top; if (!d) return;
     if (k === lift) { k.classList.add("lift"); const a = k.animate([{ transform: `translateY(${d}px) scale(1)` }, { transform: `translateY(${d * .55}px) scale(1.045)`, offset: .35 }, { transform: "translateY(0) scale(1.045)", offset: .8 }, { transform: "none" }], { duration: 520, easing: "cubic-bezier(.3,.7,.2,1)" }); a.onfinish = a.oncancel = () => k.classList.remove("lift"); }
     else k.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: lift ? 520 : 240, easing: "cubic-bezier(.3,.7,.2,1)" });
   });
@@ -828,6 +902,7 @@ function moveLi(ol, li, to, lift) {
 }
 function flash(li, cls) { cls = cls || "moved"; li.classList.remove(cls); void li.offsetWidth; li.classList.add(cls); }
 function arrowMove(btn) {
+  endDrag();
   const li = btn.closest("li"), ol = li.parentElement, dir = +btn.dataset.mv, i = [...ol.children].indexOf(li), other = ol.children[i + dir];
   if (!moveLi(ol, li, i + dir, li)) return;
   syncOrder(ol, true); flash(li); if (other) flash(other, "nudged");
@@ -835,13 +910,16 @@ function arrowMove(btn) {
 }
 document.addEventListener("pointerdown", e => {
   const g = e.target.closest && e.target.closest(".order .grip"); if (!g || !current) return;
-  const li = g.closest("li"), ol = li.parentElement; e.preventDefault();
+  endDrag();   // a second finger, or a hold that never got its "let go"
+  const li = g.closest("li"), ol = li.parentElement, pid = e.pointerId; e.preventDefault();
+  restRows(ol);
   const startY = e.clientY; dragging = li; li.classList.add("drag");
-  try { g.setPointerCapture(e.pointerId); } catch (_) {}
+  try { g.setPointerCapture(pid); } catch (_) {}
   // Read the rows once, at the start: their heights and the gap. Every position during the drag is worked out from
   // these, so moving the finger never makes the phone measure the page again.
   const order = [...ol.children], h = new Map(order.map(r => [r, r.offsetHeight])), top0 = order[0].offsetTop, startTop = li.offsetTop;
   const gap = order.length > 1 ? order[1].offsetTop - top0 - h.get(order[0]) : 0;
+  const total = order.reduce((s, r) => s + h.get(r), 0) + gap * (order.length - 1);
   const topOf = el => { let y = top0; for (const r of order) { if (r === el) return y; y += h.get(r) + gap; } return y; };
   const swap = to => {
     const from = order.indexOf(li), other = order[to], shift = (h.get(li) + gap) * (to < from ? -1 : 1);
@@ -849,21 +927,48 @@ document.addEventListener("pointerdown", e => {
     order.splice(from, 1); order.splice(to, 0, li);
     if (!reduceMotion()) other.animate([{ transform: `translateY(${shift}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.3,.7,.2,1)" });
   };
-  let lastY = startY, raf = 0;
+  let lastY = startY, raf = 0, off = 0;
   const place = () => {
-    raf = 0; const dy = lastY - startY, cy = startTop + h.get(li) / 2 + dy;
-    for (let n = 0; n < 6; n++) {
+    raf = 0;
+    // The held row follows the finger but never leaves the list.
+    const y = Math.min(top0 + total - h.get(li), Math.max(top0, startTop + lastY - startY)), cy = y + h.get(li) / 2;
+    // Its slot is whichever one its middle is over.
+    for (let n = 0; n < order.length; n++) {
       const idx = order.indexOf(li), prev = order[idx - 1], next = order[idx + 1];
       if (prev && cy < topOf(prev) + h.get(prev) / 2) { swap(idx - 1); continue; }
       if (next && cy > topOf(next) + h.get(next) / 2) { swap(idx + 1); continue; }
       break;
     }
-    li.style.transform = `translateY(${dy - (topOf(li) - startTop)}px)`;
+    off = y - topOf(li);
+    li.style.transform = `translateY(${off}px)`;
   };
   // At most one move per frame, however often the finger reports.
-  const move = ev => { lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
-  const up = () => { if (raf) { cancelAnimationFrame(raf); place(); } g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up); dragging = null; li.classList.remove("drag"); li.style.transform = ""; syncOrder(ol, true); flash(li); };
-  g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+  const mine = ev => ev.pointerId === undefined || ev.pointerId === pid;
+  const move = ev => { if (!mine(ev)) return; lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
+  const hidden = () => { if (document.hidden) end(); };
+  // Letting go can arrive in many ways on a phone (finger up, the system taking the touch over, a call, the app
+  // going to the background, the question changing). Every one of them ends here, and ends the same way.
+  const EVS = [["pointerup", true], ["pointercancel", true], ["touchend", false], ["touchcancel", false], ["blur", false], ["pagehide", false]];
+  const up = ev => { if (ev.type.startsWith("pointer") && !mine(ev)) return; end(); };
+  function end() {
+    if (!DRAG || DRAG.end !== end) return; DRAG = null; dragging = null;
+    if (raf) cancelAnimationFrame(raf);
+    if (li.isConnected) place();
+    window.removeEventListener("pointermove", move, true);
+    EVS.forEach(([t, cap]) => window.removeEventListener(t, up, cap));
+    document.removeEventListener("visibilitychange", hidden);
+    try { g.releasePointerCapture(pid); } catch (_) {}
+    li.classList.remove("drag"); li.style.transform = "";
+    if (!li.isConnected) return;
+    // Drop into the slot: one short glide from where it was floating.
+    if (off && !reduceMotion()) li.animate([{ transform: `translateY(${off}px)` }, { transform: "none" }], { duration: 180, easing: "cubic-bezier(.2,.8,.2,1)" });
+    syncOrder(ol, true); flash(li);
+  }
+  DRAG = { end };
+  // Listen on the window, not the handle: if the phone drops the handle's hold on the finger, the events still arrive.
+  window.addEventListener("pointermove", move, true);
+  EVS.forEach(([t, cap]) => window.addEventListener(t, up, cap));
+  document.addEventListener("visibilitychange", hidden);
 });
 
 /* ---- story-style edge taps: left quarter = back, right quarter = next (or "do this later" if unanswered). No swipes, no centre taps. ---- */
@@ -1006,18 +1111,22 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
+window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
 route();
-loadSamples().then(route);
-if ("serviceWorker" in navigator && location.protocol === "https:") {
+loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
+if (hasSW) {
   try {
-    // When a new version takes over, reload once so the new files show straight away.
-    const hadSW = !!navigator.serviceWorker.controller; let reloaded = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hadSW || reloaded) return; reloaded = true; location.reload(); });
+    // A new version never reloads the page under someone who is reading or answering. It is picked up the next time
+    // the app is opened; if the app is simply left open, it reloads while out of sight, or on the way back to the library.
+    const hadSW = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadSW) UPDATE = true; });
     navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => { reg.update().catch(() => {}); }).catch(() => {});
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {}); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) updateIfWaiting();
+      else navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
+    });
   } catch (e) {}
 }
 })();

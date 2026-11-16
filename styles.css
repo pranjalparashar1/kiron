@@ -12,11 +12,12 @@
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 800; font-display: swap; src: url("poppins-800.woff2") format("woff2"); }
 
 /* ---------- tokens ----------
-   Always dark, on Anthropic's palette: Dark #141413, Light #faf9f5, Mid Gray #b0aea5; accents Orange #d97757 and
+   Always dark: true black behind everything (on an iPhone's OLED screen black pixels are switched off, so colours sit
+   on real black, not dark grey). Anthropic's palette: Light #faf9f5, Mid Gray #b0aea5; accents Orange #d97757 and
    Blue #6a9bcc (calm, informational: hints, pause, selection). Right and not-yet are off-brand on purpose:
    solid bright green, and a red outline on a red tint. */
 :root {
-  --bg: #141413; --surface: #1f1e1d; --surface2: #2a2927; --line: #363531;
+  --bg: #000; --surface: #181817; --surface2: #242322; --line: #33322e;
   --ink: #faf9f5; --muted: #b0aea5;
   --accent: #d97757; --accent-ink: #141413; --accent-soft: #33241d;
   --blue: #6a9bcc; --blue-soft: rgba(106,155,204,.14);
@@ -27,6 +28,15 @@
   --r: 12px; --w: 560px;
   color-scheme: dark;
 }
+/* iPhone screens show a wider range of colour (P3) than the standard web range these hex codes are written in, and
+   Safari keeps hex colours inside the standard range, so they look tamer than the screen can go. On a P3 screen the
+   same numbers are given in P3: the same colours, at the screen's full strength. Other screens keep the hex above. */
+@supports (color: color(display-p3 1 1 1)) { @media (color-gamut: p3) {
+  :root { --accent: color(display-p3 0.851 0.467 0.341); --blue: color(display-p3 0.416 0.608 0.8); --ok: color(display-p3 0.204 0.78 0.349); --no: color(display-p3 1 0.353 0.31); }
+  [data-heat="1"] { --heat: color(display-p3 0.941 0.698 0.227); --f1: color(display-p3 0.851 0.467 0.341); --f2: color(display-p3 0.941 0.698 0.227); }
+  [data-heat="2"] { --heat: color(display-p3 1 0.812 0.247); --f1: color(display-p3 0.941 0.698 0.227); --f2: color(display-p3 1 0.878 0.541); }
+  [data-heat="3"] { --heat: color(display-p3 1 0.914 0.639); --f1: color(display-p3 1 0.812 0.247); --f2: color(display-p3 1 0.965 0.847); }
+} }
 /* Streak colours. Fire: 1 amber (3 in a row) · 2 gold (5) · 3 pale gold (8) · 4 white-hot (11) · 5 black fire (15).
    Celestial: 6 nebula (20) · 7 constellation (25) · 8 galaxy (30). --f1/--f2 are the flame's tongue and core. */
 [data-heat="1"] { --heat: #f0b23a; --glow: rgba(240,178,58,.55); --f1: #d97757; --f2: #f0b23a; }
@@ -70,6 +80,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .brand img { width: 28px; height: 28px; border-radius: 7px; }
 
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 15px; z-index: 20; max-width: calc(100% - 32px); }
+.toast.tap { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
 
 /* ---------- buttons ---------- */
 .btn, .icon-btn, .opt, .part { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -149,7 +160,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* No rubber-band bounce on the quiz screen: the fixed bars do not wobble against the page at the ends. */
 html.on-play, html.on-play body { overscroll-behavior-y: none; }
 .top.play .top-in { position: relative; gap: 12px; min-height: 52px; }
-.wrap.play { min-height: calc(100vh - 52px); min-height: calc(100svh - 52px); padding-block: 22px calc(110px + env(safe-area-inset-bottom, 0px)); touch-action: pan-y; }
+.wrap.play { min-height: calc(100vh - 52px); min-height: calc(100svh - 52px); padding-block: 22px calc(110px + env(safe-area-inset-bottom, 0px)); touch-action: pan-y pinch-zoom; }
 .wrap.play.more-open { padding-bottom: calc(55vh + 110px); }   /* room to scroll an opened "Full answer" up */
 .stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .qcardp { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
@@ -273,8 +284,8 @@ sub { vertical-align: -.28em; }
 
 /* Ordering: compact rows so long lists fit, and moves that are easy to follow. */
 .order { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.order li { position: relative; display: flex; align-items: center; gap: 6px; min-height: 46px; padding: 4px 4px 4px 2px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); }
-.order .grip { flex: none; width: 24px; align-self: stretch; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--muted); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 8px; }
+.order li { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; position: relative; display: flex; align-items: center; gap: 4px; min-height: 52px; padding: 4px 4px 4px 2px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); }
+.order .grip { flex: none; width: 30px; align-self: stretch; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--muted); cursor: grab; touch-action: none; border-radius: 8px; }
 .order .p { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface2); color: var(--ink); font: 700 12px var(--font); }
 .order .t { flex: 1; min-width: 0; font-size: 15px; line-height: 1.3; font-weight: 500; padding-block: 4px; }
 .order li.lift { z-index: 3; border-color: var(--accent); box-shadow: 0 10px 26px rgba(0,0,0,.55); }
@@ -285,7 +296,7 @@ sub { vertical-align: -.28em; }
 @keyframes moved2 { 0%, 35% { background: var(--accent-soft); border-color: var(--accent); } 100% { background: var(--surface); border-color: var(--line); } }
 @keyframes ppop { 0%, 35% { background: var(--accent); color: var(--accent-ink); } 100% { background: var(--surface2); color: var(--ink); } }
 @keyframes nudged { 0% { border-color: var(--muted); } 100% { border-color: var(--line); } }
-.mv { flex: none; width: 38px; height: 38px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--accent-ink); cursor: pointer; touch-action: manipulation; }
+.mv { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--accent-ink); cursor: pointer; touch-action: manipulation; }
 .mv.up { background: var(--blue); }
 .mv.dn { background: var(--accent); }
 .mv:active:not(:disabled) { transform: scale(.9); }
