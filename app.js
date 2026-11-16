@@ -327,25 +327,38 @@ function route() {
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
     if (openQuiz(m[2])) return m[1] === "play" ? renderPlay() : renderHome();
-    if (!samplesLoaded) return;
+    if (!samplesLoaded) { app().innerHTML = `<main class="wrap lib"><div class="grid">${ghosts}</div></main>`; return; }
     toast("That quiz isn't on this device. Import it first.");
   }
   renderLibrary();
 }
 // rep = replace the history entry instead of adding one, so Back from a round goes to the library, not round -> home -> round -> home.
-function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); } else if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
-window.addEventListener("hashchange", () => { cancelScroll(); route(); window.scrollTo(0, 0); });
+/* Screens flow into each other: a move you start with a tap cross-fades (a view transition, which the phone runs as
+   two flat pictures: opacity and transform only), and a quiz's name travels from its card to the top of its page and
+   back. The phone's own back swipe already animates, so that one is left alone. Where view transitions are missing,
+   or motion is reduced, screens swap at once as before. */
+let FLOW = false;
+function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); return; } FLOW = true; if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
+window.addEventListener("hashchange", () => {
+  cancelScroll();
+  const flow = FLOW, show = () => { route(); window.scrollTo(0, 0); }; FLOW = false;
+  if (flow && document.startViewTransition && !reduceMotion()) { try { mark("screen", 400); document.startViewTransition(show); return; } catch (e) {} }
+  show();
+});
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
 const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
 /* ---------------- library: just the list ---------------- */
+let LIST_SHOWN = false;   // the list rises in card by card the first time it appears, and never again
+const ghosts = `<span class="sr">Loading</span>` + `<div class="qcard ghost" aria-hidden="true"></div>`.repeat(4);
 function renderLibrary() {
+  const from = current ? current.quiz.id : null;   // the quiz just left: its name travels back into its card
   current = null; document.title = "Kiron";
   const list = allQuizzes();
   if (samplesLoaded && !TROUBLE.listAt) TROUBLE.listAt = Math.round(performance.now());   // how long the list took to show, for the performance report
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    <div class="grid">${list.length ? list.map(x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span>${hx()}</button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
+    <div class="grid${list.length && samplesLoaded && !LIST_SHOWN ? " rise" : ""}">${list.length ? list.map((x, i) => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button" style="--i:${Math.min(i, 9)}"><h3${x.quiz.id === from ? ' style="view-transition-name:qt"' : ""}>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span>${hx()}</button>`).join("") : samplesLoaded ? `<p class="empty">No quizzes yet.</p>` : ghosts}</div>
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
@@ -640,7 +653,7 @@ function settle(fb, delay) {
 }
 // Confetti on a right answer: 16 pieces built once and kept (hidden) in the page; each burst only moves them.
 let CONF = null, CONF_RUN = [];
-function burst(el) {
+function burst(el, big) {
   if (reduceMotion() || !document.body.animate) return;
   const cols = ["#d97757", "#faf9f5", "#6a9bcc", "#788c5d", "#e3b04b"];
   if (!CONF || !CONF[0].isConnected) {
@@ -648,10 +661,10 @@ function burst(el) {
     for (let i = 0; i < 16; i++) { const p = document.createElement("i"); p.className = "cfp"; p.setAttribute("aria-hidden", "true"); p.style.background = cols[i % cols.length]; document.body.append(p); CONF.push(p); }
   }
   CONF_RUN.forEach(a => a.cancel()); CONF_RUN = [];
-  const b = el.getBoundingClientRect(), x = b.right - 28, y = b.top + b.height / 2;
+  const b = el.getBoundingClientRect(), x = big ? b.left + b.width / 2 : b.right - 28, y = b.top + b.height / 2, far = big ? 1.9 : 1;
   CONF.forEach((p, i) => {
-    const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = 50 + Math.random() * 70, dx = Math.cos(ang) * d, dy = Math.sin(ang) * d - 20;
-    CONF_RUN.push(p.animate([{ opacity: 1, transform: `translate3d(${x}px,${y}px,0) rotate(0deg)` }, { opacity: 0, transform: `translate3d(${x + dx}px,${y + dy}px,0) rotate(360deg)` }], { duration: 750, easing: "ease-out" }));
+    const ang = (Math.PI * 2 * i) / 16 + Math.random() * .4, d = (50 + Math.random() * 70) * far, dx = Math.cos(ang) * d, dy = Math.sin(ang) * d - 20;
+    CONF_RUN.push(p.animate([{ opacity: 1, transform: `translate3d(${x}px,${y}px,0) rotate(0deg)` }, { opacity: 0, transform: `translate3d(${x + dx}px,${y + dy}px,0) rotate(360deg)` }], { duration: big ? 1100 : 750, easing: "ease-out" }));
   });
 }
 /* Streak: from 3 in a row, each right answer is rewarded: "N in a row" pops up at the top centre, then swoops
@@ -1114,11 +1127,13 @@ function renderRoundEnd() {
     ${bestRun}
     <div class="cta">${keep}${rev}</div>
   </div></main>`;
-  mark("round-end", 1300);
+  mark("round-end", 1500);
+  // A round with nothing missed gets a bigger shower, from the middle of the bar once it has filled.
+  if (!r.review && res.length >= 3 && res.every(x => x === "right") && !r.cheered) { r.cheered = true; saveProg(); setTimeout(() => { const bar = $(".ratio"); if (bar && r.ended) burst(bar, true); }, 700); }
   // Grow from last time's split to this one: the fills slide (transform), the ✓ is held still by an equal and opposite slide.
   const rg = $("#rg"), rr = $("#rr");
   if (rg && rr && rg.animate && !reduceMotion() && (prev.g !== gNow || prev.r !== rNow)) {
-    const W = rg.parentNode.getBoundingClientRect().width, e = { duration: 1200, easing: OUT };
+    const W = rg.parentNode.getBoundingClientRect().width, e = { duration: 1200, delay: 200, easing: OUT, fill: "backwards" };
     rg.animate([{ transform: slid(prev.g) }, { transform: slid(gNow) }], e);
     rg.firstElementChild.animate([{ transform: `translateX(${((gNow - prev.g) / 100 * W).toFixed(1)}px)` }, { transform: "none" }], e);
     rr.animate([{ transform: slid(prev.g + prev.r) }, { transform: slid(gNow + rNow) }], e);
@@ -1151,7 +1166,11 @@ document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
   if (HAPTIC && navigator.vibrate && t.querySelector(".hx")) try { navigator.vibrate(8); } catch (err) {}
-  if (d.go !== undefined) { go(d.go, d.replace !== undefined); return; }
+  if (d.go !== undefined) {
+    // the tapped card's name is the one that travels to the quiz page
+    if (t.classList.contains("qcard")) app().querySelectorAll(".qcard h3").forEach(h => { h.style.viewTransitionName = t.contains(h) ? "qt" : ""; });
+    go(d.go, d.replace !== undefined); return;
+  }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
@@ -1217,7 +1236,7 @@ document.addEventListener("touchstart", () => {}, { passive: true });
 HAPTIC = !!LS.get(K_HAPTIC, 0);
 perfBoot();
 route();
-loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
+loadSamples().then(() => { route(); LIST_SHOWN = true; if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
 if (hasSW) {
   try {
     // A new version never reloads the page under someone who is reading or answering. It is picked up the next time

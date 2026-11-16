@@ -129,6 +129,27 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .qcard:active { transform: scale(.97); border-color: var(--blue); transition-duration: var(--quick); }
 .qcard h3 { margin: 0; font-size: 18px; line-height: 1.3; font-weight: 600; text-wrap: balance; }
 .qcard .chev { font-size: 28px; color: var(--blue); line-height: 1; }
+/* A soft opening: while the list loads, quiet placeholder cards breathe (opacity only); then the real cards rise in,
+   one after another, the first time only. */
+.qcard.ghost { cursor: default; border-color: transparent; animation: breathe 1.3s ease-in-out infinite alternate; }
+@keyframes breathe { from { opacity: .35; } to { opacity: .9; } }
+@media (prefers-reduced-motion: no-preference) {
+  .grid.rise .qcard { animation: rise var(--slow) var(--out) calc(var(--i, 0) * 45ms) backwards; }
+  .endcard > * { animation: rise var(--slow) var(--out) backwards; }
+  .endcard > :nth-child(2) { animation-delay: .09s; }
+  .endcard > :nth-child(3) { animation-delay: .18s; }
+  .endcard > :nth-child(4) { animation-delay: .27s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  /* screens flow into each other (see go in app.js): a quick cross-fade, and the quiz's name travels */
+  ::view-transition { pointer-events: none; }
+  ::view-transition-old(root) { animation: vtout var(--quick) linear both; }
+  ::view-transition-new(root) { animation: vtin var(--move) var(--out) both; }
+  ::view-transition-group(qt) { animation-duration: var(--move); animation-timing-function: var(--out); }
+  @keyframes vtout { to { opacity: 0; } }
+  @keyframes vtin { from { opacity: 0; } }
+}
+@media (prefers-reduced-motion: reduce) { .qcard.ghost { animation: none; opacity: .6; } }
+.qtitle { view-transition-name: qt; }
 .credit { margin: auto 0 0; padding-top: 28px; text-align: center; font-size: 12.5px; letter-spacing: .02em; color: var(--muted); opacity: .55; }
 
 /* ---------- quiz home: one button, a folded part list, reset ---------- */
@@ -456,7 +477,7 @@ details.more[open] > p { animation: fullin var(--move) var(--out); }
   .glint b { will-change: transform, opacity; animation: glint 4.2s linear infinite; }
   .glint[data-heat="5"] b { animation-duration: 3.4s; }
   @keyframes glint { 0% { transform: translate3d(-18%,0,0); opacity: 1; } 45% { transform: translate3d(100%,0,0); opacity: 1; } 45.1%, 100% { transform: translate3d(100%,0,0); opacity: 0; } }
-  .bestrun.rec { animation: recin .6s cubic-bezier(.3,1.5,.5,1) .15s both; }
+  .endcard > .bestrun.rec { animation: recin .6s var(--spring) .3s both; }
   @keyframes recin { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
 }
 .sky.still * { animation: none !important; }
