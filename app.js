@@ -313,7 +313,6 @@ function openQuiz(id) {
 function route() {
   clearTimer();
   if (!/^#play-/.test(location.hash)) { if (updateIfWaiting("")) return; if (FRESH) { SAMPLES = FRESH; FRESH = null; } }
-  dropGhost();
   if (!/^#play-/.test(location.hash)) {
     clearFeed();
     // Leaving the quiz ends the streak.
@@ -337,11 +336,14 @@ function route() {
    two flat pictures: opacity and transform only), and a quiz's name travels from its card to the top of its page and
    back. The phone's own back swipe already animates, so that one is left alone. Where view transitions are missing,
    or motion is reduced, screens swap at once as before. */
-let FLOW = false;
+let FLOW = false, HASH_WAS = location.hash;
 function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); return; } FLOW = true; if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
 window.addEventListener("hashchange", () => {
   cancelScroll();
-  const flow = FLOW, show = () => { route(); window.scrollTo(0, 0); }; FLOW = false;
+  // Only between the list and a quiz's page, which stand still. Going into or out of a round swaps at once: a view
+  // transition there makes the phone redraw the whole moving screen (timer, flame) as a picture on every frame.
+  const onPlay = /^#play-/, was = HASH_WAS; HASH_WAS = location.hash;
+  const flow = FLOW && !onPlay.test(was) && !onPlay.test(location.hash), show = () => { route(); window.scrollTo(0, 0); }; FLOW = false;
   if (flow && document.startViewTransition && !reduceMotion()) { try { mark("screen", 400); const vt = document.startViewTransition(show), ok = () => {}; [vt.ready, vt.finished, vt.updateCallbackDone].forEach(p => p && p.catch(ok)); return; } catch (e) {} }
   show();
 });
@@ -358,7 +360,7 @@ function renderLibrary() {
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    <div class="grid${list.length && samplesLoaded && !LIST_SHOWN ? " rise" : ""}">${list.length ? list.map((x, i) => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button" style="--i:${Math.min(i, 9)}"><h3${x.quiz.id === from ? ' style="view-transition-name:qt"' : ""}>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span>${hx()}</button>`).join("") : samplesLoaded ? `<p class="empty">No quizzes yet.</p>` : ghosts}</div>
+    <div class="grid${list.length && samplesLoaded && !LIST_SHOWN ? " rise" : ""}">${list.length ? list.map((x, i) => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button" style="--i:${Math.min(i, 9)}"><h3${x.quiz.id === from ? ' style="view-transition-name:qt"' : ""}>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : samplesLoaded ? `<p class="empty">No quizzes yet.</p>` : ghosts}</div>
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
@@ -531,7 +533,6 @@ function renderPlay(keepScroll) {
   const onPlay = app().querySelector(".top.play") && app().querySelector(".qcardp");
   const heat0 = app().querySelector(".heat"), heatWas = !!(heat0 && heat0.classList.contains("on")), barW0 = heatWas !== !!heatNow && onPlay ? barWidth() : 0;
   const sameQ = !!(onPlay && keepScroll && app().dataset.qid === id);
-  dropGhost(); if (onPlay && !sameQ && DIR) leaveGhost(DIR);
   if (onPlay) { const t = document.createElement("div"); t.innerHTML = html; patchKids(app(), t, sameQ); }
   else app().innerHTML = html;
   app().dataset.qid = id;
@@ -553,22 +554,9 @@ function renderPlay(keepScroll) {
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
   if (feeding) streakFeed(stk, 420);
 }
-/* Changing question is one move: the old question carries on out the way the new one is coming in. The old card is
-   copied, pinned where it was, and slid and faded away (transform and opacity) while the new one arrives under it. */
-let GHOST = null;
-function dropGhost() { if (GHOST) { GHOST.remove(); GHOST = null; } }
-function leaveGhost(dir) {
-  const old = app().querySelector(".qcardp");
-  if (!old || reduceMotion() || !old.animate) return;
-  const b = old.getBoundingClientRect(), g = old.cloneNode(true);
-  g.querySelectorAll("[id]").forEach(n => n.removeAttribute("id")); g.querySelectorAll(".hx").forEach(n => n.remove());
-  g.className = "qcardp qghost"; g.setAttribute("aria-hidden", "true"); g.inert = true;
-  g.style.cssText = `left:${b.left}px;top:${b.top}px;width:${b.width}px`;
-  document.body.append(g); GHOST = g;
-  g.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: `translate3d(${-dir * 24}px,0,0)` }], { duration: MOVE * .7, easing: OUT, fill: "forwards" }).onfinish = () => { if (GHOST === g) dropGhost(); };
-}
-/* A right pick fills with green from the spot the finger touched: one round layer inside the option grows from
-   that point (transform only) until it covers it, then the option itself takes the colour and the layer goes. */
+/* A right pick: a soft light spreads from the spot the finger touched and fades (one round layer over the green,
+   transform and opacity only). The option itself is painted green once, at the tap, and is not touched again: nothing
+   is redrawn when the light finishes, so the glide down to the explanation has the phone to itself. */
 let TAP = null;   // where the last tap landed, in screen points
 function bloom(el) {
   if (reduceMotion() || !el.animate) return;
@@ -577,10 +565,8 @@ function bloom(el) {
   const rad = Math.ceil(Math.hypot(Math.max(x, b.width - x), Math.max(y, b.height - y))) + 4;
   const c = document.createElement("i"); c.className = "bloom"; c.setAttribute("aria-hidden", "true");
   c.style.cssText = `left:${x - rad}px;top:${y - rad}px;width:${rad * 2}px;height:${rad * 2}px`;
-  el.classList.add("blooming"); el.prepend(c);
-  const done = () => { c.remove(); el.classList.remove("blooming"); };
-  const an = c.animate([{ transform: "scale(.04)" }, { transform: "scale(1)" }], { duration: MOVE, easing: OUT });
-  an.onfinish = done; an.oncancel = done;
+  el.append(c);
+  c.animate([{ transform: "scale(.05)", opacity: .6 }, { transform: "scale(1)", opacity: 0 }], { duration: SLOW, easing: OUT, fill: "forwards" });
 }
 /* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
    and transitions carry on). Nodes marked data-keep (the sky) are left alone. The timer bar is always swapped
@@ -1231,8 +1217,6 @@ document.addEventListener("keydown", e => {
 window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
-// iPhone Safari only shows a button's pressed look (:active) when the page listens for touches.
-document.addEventListener("touchstart", () => {}, { passive: true });
 HAPTIC = LS.get(K_HAPTIC, 1) !== 0;
 perfBoot();
 route();
