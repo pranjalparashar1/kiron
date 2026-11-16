@@ -101,6 +101,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
    under a scrolling finger. The spring back is played by app.js from the tap itself, so a scroll never springs. */
 .icon-btn:active, .actionbar .btn.back:active { transform: scale(.9); }
 .jump-btn:active, .part-row:active { transform: scale(.97); }
+/* The light on a right pick (bloom in app.js): one layer over the option, in page coordinates so it scrolls with it. */
+.bloom { position: absolute; z-index: 3; border-radius: 14px; overflow: hidden; pointer-events: none; }
+.bloom b { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, #fff 60%, rgba(255,255,255,0)); opacity: 0; }
 /* A tap on the side of the screen lights that edge for a moment. Two fixed layers, opacity only. */
 .edge { position: fixed; top: 0; bottom: 0; width: 14vw; z-index: 4; pointer-events: none; opacity: 0; }
 .edge.l { left: 0; background: linear-gradient(90deg, rgba(250,249,245,.07), transparent); }

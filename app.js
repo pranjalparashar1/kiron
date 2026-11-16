@@ -532,7 +532,7 @@ function renderPlay(keepScroll) {
       settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
-  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
+  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
   if (feeding) streakFeed(stk, 420);
 }
 /* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
@@ -606,6 +606,24 @@ function settle(fb, delay) {
 }
 // Confetti on a right answer: 16 pieces built once and kept (hidden) in the page; each burst only moves them.
 let CONF = null, CONF_RUN = [];
+/* ---- Kiron 1.4.2: a right pick lights up from under your finger. One reused layer that sits over the option (it is not
+   inside it, so the option is never redrawn): a frame the shape of the option, and inside it a soft white circle that
+   grows from the tap and fades. Transform and opacity only. The frame pops with the option so their edges stay together. ---- */
+let TAPXY = null, BLOOM = null;
+document.addEventListener("click", e => { TAPXY = e.clientX || e.clientY ? { x: e.clientX, y: e.clientY, t: Date.now() } : null; }, true);
+function bloom(el) {
+  if (reduceMotion() || !el.animate) return;
+  const r = el.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight, left = r.left + (r.width - w) / 2, top = r.top + (r.height - h) / 2;
+  const t = TAPXY && Date.now() - TAPXY.t < 600 ? TAPXY : null, lim = (v, m) => Math.max(0, Math.min(m, v));
+  const x = t ? lim(t.x - left, w) : w / 2, y = t ? lim(t.y - top, h) : h / 2, rad = Math.ceil(Math.hypot(Math.max(x, w - x), Math.max(y, h - y)));
+  if (!BLOOM || !BLOOM.isConnected) { BLOOM = document.createElement("i"); BLOOM.className = "bloom"; BLOOM.setAttribute("aria-hidden", "true"); BLOOM.append(document.createElement("b")); document.body.append(BLOOM); }
+  const c = BLOOM.firstChild;
+  BLOOM.style.cssText = `left:${left + scrollX}px;top:${top + scrollY}px;width:${w}px;height:${h}px`;
+  c.style.cssText = `left:${x - rad}px;top:${y - rad}px;width:${rad * 2}px;height:${rad * 2}px`;
+  [BLOOM, c].forEach(n => n.getAnimations().forEach(a => a.cancel()));
+  const pe = "cubic-bezier(.3,1.6,.5,1)"; BLOOM.animate([{ transform: "scale(.96)", easing: pe }, { transform: "scale(1.04)", easing: pe }, { transform: "scale(1)" }], { duration: 450 });   // the option's own pop (pop2 in styles.css)
+  c.animate([{ opacity: .4, transform: "scale(.08)" }, { opacity: 0, transform: "none" }], { duration: 480, easing: "cubic-bezier(.25,.6,.3,1)" });
+}
 function burst(el) {
   if (reduceMotion() || !document.body.animate) return;
   const cols = ["#d97757", "#faf9f5", "#6a9bcc", "#788c5d", "#e3b04b"];
