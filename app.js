@@ -280,7 +280,7 @@ function renderLibrary() {
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    <div class="grid">${list.length ? list.map(x => `<button class="card qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
+    <div class="grid">${list.length ? list.map(x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
@@ -380,13 +380,13 @@ function renderPlay(keepScroll) {
   const a = P.a[id];
   if (f.kind === "pick") {
     const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
-    input = `<div class="opts" role="group" aria-label="Options">` + ord.map((oi, pos) => {
+    input = `<div class="opts" role="group" aria-label="Options">` + ord.map(oi => {
       let cls = "opt", ic = "";
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
-      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}><span class="k${ic ? " ic" : ""}">${ic || pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
     const sel = a || [];
@@ -411,13 +411,12 @@ function renderPlay(keepScroll) {
   if (cur.done) {
     const why = f.kind === "pick" ? f.why : q.answer, more = f.kind === "pick" ? f.more : "";
     const detail = f.kind === "order" && status !== "right" ? `<div class="yours">Right order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>` : "";
-    fb = `<section class="fb ${status}${keepScroll === "fb" && !reduceMotion() ? " wait" : ""}" aria-live="polite">${detail}<div class="model"><span class="k">Why</span>${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}</section>`;
+    fb = `<section class="fb ${status}${keepScroll === "fb" && !reduceMotion() ? " wait" : ""}" aria-live="polite">${detail}<div class="model">${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}</section>`;
   }
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
   const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
-  const nudge = status && status !== "right" ? " pulse" : "";
   const bar = cur.done
-    ? `${back}<button class="btn primary grow${nudge}" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
+    ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number";
@@ -525,7 +524,7 @@ function settle(fb, delay) {
     SETTLE = 0;
     if (!fb.isConnected) return;
     const keepEl = app().querySelector(".opt.ok, .opt.wrong, .order") || fb;
-    fb.style.animation = "none"; fb.classList.remove("wait");
+    fb.classList.remove("wait");
     if (!reduceMotion() && fb.animate) fb.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.25,.6,.3,1)", fill: "backwards" });
     reveal(fb, keepEl);
   }, delay);
@@ -1010,7 +1009,6 @@ document.addEventListener("keydown", e => {
 window.SB = { TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
-document.documentElement.dataset.view = "phone";
 route();
 loadSamples().then(route);
 if ("serviceWorker" in navigator && location.protocol === "https:") {
