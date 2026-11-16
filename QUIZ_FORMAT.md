@@ -51,7 +51,7 @@ Older quizzes use `text`/`number` questions with an `mcq` field; the app still p
 
 ## Maths
 
-Simple maths needs nothing special. Plain text is typeset on its own: `x^2`, `x^(n+1)`, `z_m`, `104/1.06^3`, `Δp/Δy`, `(a + b)/(c − d)`, and `√250` or `√(a/b)` (the bar covers the whole bracket).
+Simple maths needs nothing special. Plain text is typeset on its own: `x^2`, `x^(n+1)`, `z_m`, `104/1.06^3`, `Δp/Δy`, `(a + b)/(c − d)`, and `√250` or `√(a/b)` (the bar covers the whole bracket). Brackets around a stacked fraction grow to its height on their own, as in `(1 + r/2)^4` or `[(1.03)^10 ÷ (1.02)^4]^(1/6)`. A fraction in a power, `1.03^(89/180)`, stays on one line, small and raised, so it can't be read as 1.03 times a fraction; in TeX write it the same way, `1.03^{89/180}`.
 
 For roots over fractions, sums, integrals, derivatives and anything nested, write TeX between `\(` and `\)`. It works in prompts, options, hints and answers, and mixes with normal text. Use `\[` and `\]` instead to put a formula on its own centred line (good in a prompt).
 
