@@ -346,6 +346,14 @@ function flowIn() {
 }
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
 const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
+/* ---- Kiron 1.4.4: haptics. A web page on an iPhone cannot ask for a vibration, but the phone itself gives a tick when a
+   finger flips a real iOS switch. So each button carries an invisible switch stretched over it: the finger lands on the
+   switch, the phone ticks, and the tap carries on to the button as always. Where there is no tick (older phones, laptops)
+   nothing else changes. Kept off the quiz list (a long scrolling list) and off anything that cannot be pressed.
+   Android phones have a real vibration call, so they get a short buzz, a double one for a right answer and one when a streak lands. ---- */
+const HX = `<input class="hx" type="checkbox" switch tabindex="-1" aria-hidden="true">`;
+const hxAll = html => html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g, (m, at, inner) => /qcard|aria-disabled="true"|\sdisabled\b/.test(at) ? m : `<button${at}>${inner}${HX}</button>`);
+const buzz = p => { if (navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} };
 /* ---------------- library: just the list ---------------- */
 function renderLibrary() {
   current = null; document.title = "Kiron";
@@ -376,13 +384,13 @@ function renderHome() {
       : `${st[0] === "some" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Continue</button>` : ""}${answered ? `<button class="btn" data-act="partreview" data-pi="${i}" type="button">Review</button>` : ""}<button class="btn ghost" data-act="partredo" data-pi="${i}" type="button">Redo</button>`;
     return `<div class="part"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button><div class="unfurl" inert><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div>`;
   }).join("");
-  app().innerHTML = topBar(backBtn(), `<span class="grow"></span>`) + `
+  app().innerHTML = hxAll(topBar(backBtn(), `<span class="grow"></span>`) + `
   <main class="wrap home">
     <h1 class="qtitle">${esc(quiz.title)}</h1>
     <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
     ${quiz.sections.length > 1 ? `<div class="jump"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button><div class="unfurl" inert><div class="unfurl-in"><div class="parts">${parts}</div></div></div></div>` : ""}
     <div class="foot">${started || inRound ? `<button class="btn ghost danger" data-act="reset" type="button">Reset quiz</button>` : ""}${mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
-  </main>`;
+  </main>`);
 }
 function startRound(opt) {
   const { quiz, P } = current;
@@ -516,8 +524,8 @@ function renderPlay(keepScroll) {
   const onPlay = app().querySelector(".top.play") && app().querySelector(".qcardp");
   const heat0 = app().querySelector(".heat"), heatWas = !!(heat0 && heat0.classList.contains("on")), barW0 = heatWas !== !!heatNow && onPlay ? barWidth() : 0;
   const sameQ = !!(onPlay && keepScroll && app().dataset.qid === id);
-  if (onPlay) { const t = document.createElement("div"); t.innerHTML = html; patchKids(app(), t, sameQ); }
-  else app().innerHTML = html;
+  if (onPlay) { const t = document.createElement("div"); t.innerHTML = hxAll(html); patchKids(app(), t, sameQ); }
+  else app().innerHTML = hxAll(html);
   app().dataset.qid = id;
   DIR = 0;
   if (!r.review) { placeSky(heatNow); placeGlint(heatNow); }
@@ -533,7 +541,7 @@ function renderPlay(keepScroll) {
       settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
-  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
+  if (fx && fx.kind === "right") { buzz([12, 45, 18]); const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
   if (feeding) streakFeed(stk, 420);
 }
 /* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
@@ -841,6 +849,7 @@ function landState(n, lvl, up) {
 // light sweeps back along the bar. All of it grows a little with each streak level.
 function land(n, lvl, up, tx, ty, id) {
   const fx = FX_EL; if (!fx) return;
+  buzz(28);
   const { dots, slot, fl } = landState(n, lvl, up); if (!dots) return clearFeed();
   const k = Math.min(lvl, 8) / 8, done = [], big = up ? .2 : 0;
   // The hit: everything it lands on jumps at once (count, flame, the whole bar), harder than before.
@@ -1097,13 +1106,13 @@ function renderRoundEnd() {
   const bl = heatLevel(best), bestRun = best >= 2 ? `<div class="bestrun${newRec ? " rec" : ""}" data-heat="${bl}"><span class="fl" aria-hidden="true">${heatIcon(Math.max(1, bl))}</span><span><b>${best}</b> in a row</span>${newRec || (r.bestShown && best === P.bestRun) ? `<em>longest yet</em>` : ""}</div>` : "";
   const keep = c.left || c.skip ? `<button class="btn primary xl" data-act="${r.only !== undefined && counts(quiz, P, r.only).left ? "keeppart" : "start"}" type="button">Keep going</button>` : "";
   const rev = missed ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisitround" type="button">Revisit</button>` : c.revisit ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisit" type="button">Revisit</button>` : "";
-  app().innerHTML = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" data-replace="1" type="button">Done</button></div></header>
+  app().innerHTML = hxAll(`<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" data-replace="1" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
     <h2 id="endh" tabindex="-1">${allDone ? "End of quiz." : "Round done"}</h2>
     <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="transform:${slid(gNow)}"><b aria-hidden="true" style="margin-left:${100 - gNow}%">✓</b></i><i class="r" id="rr" style="transform:${slid(gNow + rNow)}"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
     ${bestRun}
     <div class="cta">${keep}${rev}</div>
-  </div></main>`;
+  </div></main>`);
   // Grow from last time's split to this one: the fills slide (transform), the ✓ is held still by an equal and opposite slide.
   const rg = $("#rg"), rr = $("#rr");
   if (rg && rr && rg.animate && !reduceMotion() && (prev.g !== gNow || prev.r !== rNow)) {
@@ -1139,6 +1148,7 @@ function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000)
 document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
+  if (e.target.classList.contains("hx")) buzz(10);
   if (d.go !== undefined) { flowFrom(t); go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
   if (!current) return;
