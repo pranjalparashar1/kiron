@@ -99,7 +99,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .icon-btn.done { font-weight: 800; padding: 0 16px; }
 /* Haptics (Kiron 1.4.4): an invisible iOS switch stretched over a button (see app.js). It must stay a real switch
    (no appearance: none), or the phone gives no tick. */
-.btn, .icon-btn, .opt, .jump-btn, .part-row, .mv { position: relative; }
+.btn, .icon-btn, .opt, .jump-btn, .part-row { position: relative; }
 .hx { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* Kiron 1.4.1: the controls that did not answer a tap. The press is at once, with no transition, because these can sit
    under a scrolling finger. The spring back is played by app.js from the tap itself, so a scroll never springs. */
@@ -340,29 +340,22 @@ sub { vertical-align: -.28em; }
 /* Confetti: 16 pieces made once and reused; each shot only moves them (transform and opacity). */
 .cfp { position: fixed; left: 0; top: 0; width: 8px; height: 8px; border-radius: 2px; z-index: 30; pointer-events: none; opacity: 0; }
 
-/* Ordering: compact rows so long lists fit, and moves that are easy to follow. */
+/* Ordering (Kiron 1.5): the whole row is the control. A waiting row has an empty ring; a placed row has its number.
+   Rows only ever move by transform, and a row's look changes once, on the tap, never while it is moving. */
 .order { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.order li { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; position: relative; display: flex; align-items: center; gap: 4px; min-height: 52px; padding: 4px 4px 4px 2px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); }
-.order .grip { flex: none; width: 30px; align-self: stretch; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--muted); cursor: grab; touch-action: none; border-radius: 8px; }
-.order .p { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface2); color: var(--ink); font: 700 12px var(--font); }
-.order .t { flex: 1; min-width: 0; font-size: 15px; line-height: 1.3; font-weight: 500; padding-block: 4px; }
-.order li.lift { z-index: 3; border-color: var(--accent); box-shadow: 0 10px 26px rgba(0,0,0,.55); }
+.order li { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; position: relative; display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 6px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); cursor: pointer; }
+.order .p { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; border: 1.5px dashed var(--muted); color: var(--accent-ink); font: 800 14px var(--font); }
+.order .t { flex: 1; min-width: 0; font-size: 16px; line-height: 1.3; font-weight: 500; padding-block: 4px; }
+.order li.set { background: var(--surface2); }
+.order li.set .p { background: var(--accent); border: 1.5px solid var(--accent); }
+.order:not(.done):not(.sorting) li:active { scale: .985; }
+.order li.fly { z-index: 3; }
 /* While a row is held: the others slide aside by transform alone, and the held one carries no shadow (nothing that moves does). */
 .order.sorting li { transition: transform .26s cubic-bezier(.2,.8,.2,1); will-change: transform; }
-.order.sorting li.moved, .order.sorting li.nudged { animation: none; }
 .order li.drag { z-index: 8; border-color: var(--accent); background: var(--accent-soft); cursor: grabbing; transition: none; }
-.order li.moved { animation: moved2 1.4s ease-out; }
-.order li.moved .p { animation: ppop 1.4s ease-out; }
-.order li.nudged { animation: nudged .9s ease-out; }
-@keyframes moved2 { 0%, 35% { background: var(--accent-soft); border-color: var(--accent); } 100% { background: var(--surface); border-color: var(--line); } }
-@keyframes ppop { 0%, 35% { background: var(--accent); color: var(--accent-ink); } 100% { background: var(--surface2); color: var(--ink); } }
-@keyframes nudged { 0% { border-color: var(--muted); } 100% { border-color: var(--line); } }
-.mv { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--accent-ink); cursor: pointer; touch-action: manipulation; }
-.mv.up { background: var(--blue); }
-.mv.dn { background: var(--accent); }
-.mv:active:not(:disabled) { transform: scale(.9); }
-.mv:disabled { opacity: .25; cursor: default; }
-.order.done li { padding: 8px 10px; }
+.btn.soft { opacity: .4; }
+.order.done li { padding: 8px 10px; gap: 8px; cursor: default; }
+.order.done .p { width: 22px; height: 22px; border: 0; font-size: 12px; }
 .order.done li.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
 .order.done li.ok .p { background: var(--ok-ink); color: var(--ok); }
 .order.done li.wrong { background: var(--no-soft); border: 2px solid var(--no); color: var(--no-ink); }
