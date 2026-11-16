@@ -17,7 +17,10 @@
    Blue #6a9bcc (calm, informational: hints, pause, selection). Right and not-yet are off-brand on purpose:
    solid bright green, and a red outline on a red tint. */
 :root {
-  --bg: #000; --surface: #181817; --surface2: #242322; --line: #33322e;
+  /* Layers rise from true black in small, even steps: page, card, raised (a panel on a card), then the hairline that
+     edges them. Each step is only just lighter than the one below, so a card reads as a surface lifted off the page
+     and not as a lit panel. Colour is kept for state (picked, right, not yet), never for a resting layer. */
+  --bg: #000; --surface: #10100f; --surface2: #1a1a18; --line: #272725;
   --ink: #faf9f5; --muted: #b0aea5;
   --accent: #d97757; --accent-ink: #141413; --accent-soft: #33241d;
   --blue: #6a9bcc; --blue-soft: rgba(106,155,204,.14);
