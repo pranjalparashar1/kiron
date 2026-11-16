@@ -325,9 +325,17 @@ sub { vertical-align: -.28em; }
 .opt.dim:active { transform: none; border-color: var(--line); }
 @media (prefers-reduced-motion: no-preference) {
   .opt.pop { animation: pop2 var(--slow) var(--spring); }
-  .opt.shake { animation: shake .45s cubic-bezier(.36,.07,.19,.97); }
+  .opt.sink { animation: sink var(--slow) var(--out); }
+  .opt.lift { animation: lift var(--slow) var(--spring) .1s backwards; }
   @keyframes pop2 { 0% { transform: scale(.96); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
-  @keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(5px); } 30%, 50%, 70% { transform: translateX(-9px); } 40%, 60% { transform: translateX(9px); } }
+  @keyframes sink { 0% { transform: none; } 35% { transform: scale(.96); } 100% { transform: none; } }
+  @keyframes lift { from { transform: translateY(5px) scale(.97); } to { transform: none; } }
+  /* the green fill that spreads from the finger (see bloom in app.js) */
+  .opt.ok.blooming { background: var(--surface); overflow: hidden; }
+  .opt.ok.blooming > :not(.bloom) { position: relative; z-index: 1; }
+  .bloom { position: absolute; z-index: 0; border-radius: 50%; background: var(--ok); pointer-events: none; will-change: transform; }
+  /* the question that is leaving (see leaveGhost in app.js) */
+  .qghost { position: fixed; z-index: 1; margin: 0; pointer-events: none; will-change: transform, opacity; }
   /* a soft slide between questions */
   .qcardp.in-next { animation: inr var(--move) var(--out); }
   .qcardp.in-prev { animation: inl var(--move) var(--out); }

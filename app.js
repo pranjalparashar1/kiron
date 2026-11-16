@@ -313,6 +313,7 @@ function openQuiz(id) {
 function route() {
   clearTimer();
   if (!/^#play-/.test(location.hash)) { if (updateIfWaiting("")) return; if (FRESH) { SAMPLES = FRESH; FRESH = null; } }
+  dropGhost();
   if (!/^#play-/.test(location.hash)) {
     clearFeed();
     // Leaving the quiz ends the streak.
@@ -460,7 +461,9 @@ function renderPlay(keepScroll) {
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
-      if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
+      // A right pick pops. A pick that was off sinks back softly (no shake), and the right answer rises to meet you.
+      if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " sink";
+      else if (fx && fx.kind === "wrong" && fx.oi !== undefined && oi === f.correct) cls += " lift";
       return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span>${cur.done ? "" : hx()}</button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
@@ -515,6 +518,7 @@ function renderPlay(keepScroll) {
   const onPlay = app().querySelector(".top.play") && app().querySelector(".qcardp");
   const heat0 = app().querySelector(".heat"), heatWas = !!(heat0 && heat0.classList.contains("on")), barW0 = heatWas !== !!heatNow && onPlay ? barWidth() : 0;
   const sameQ = !!(onPlay && keepScroll && app().dataset.qid === id);
+  dropGhost(); if (onPlay && !sameQ && DIR) leaveGhost(DIR);
   if (onPlay) { const t = document.createElement("div"); t.innerHTML = html; patchKids(app(), t, sameQ); }
   else app().innerHTML = html;
   app().dataset.qid = id;
@@ -533,8 +537,37 @@ function renderPlay(keepScroll) {
       settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
-  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) burst(ok); }
+  if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
   if (feeding) streakFeed(stk, 420);
+}
+/* Changing question is one move: the old question carries on out the way the new one is coming in. The old card is
+   copied, pinned where it was, and slid and faded away (transform and opacity) while the new one arrives under it. */
+let GHOST = null;
+function dropGhost() { if (GHOST) { GHOST.remove(); GHOST = null; } }
+function leaveGhost(dir) {
+  const old = app().querySelector(".qcardp");
+  if (!old || reduceMotion() || !old.animate) return;
+  const b = old.getBoundingClientRect(), g = old.cloneNode(true);
+  g.querySelectorAll("[id]").forEach(n => n.removeAttribute("id")); g.querySelectorAll(".hx").forEach(n => n.remove());
+  g.className = "qcardp qghost"; g.setAttribute("aria-hidden", "true"); g.inert = true;
+  g.style.cssText = `left:${b.left}px;top:${b.top}px;width:${b.width}px`;
+  document.body.append(g); GHOST = g;
+  g.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: `translate3d(${-dir * 24}px,0,0)` }], { duration: MOVE * .7, easing: OUT, fill: "forwards" }).onfinish = () => { if (GHOST === g) dropGhost(); };
+}
+/* A right pick fills with green from the spot the finger touched: one round layer inside the option grows from
+   that point (transform only) until it covers it, then the option itself takes the colour and the layer goes. */
+let TAP = null;   // where the last tap landed, in screen points
+function bloom(el) {
+  if (reduceMotion() || !el.animate) return;
+  const b = el.getBoundingClientRect(), t = TAP && Date.now() - TAP.t < 600 ? TAP : null;
+  const x = t ? Math.min(b.width, Math.max(0, t.x - b.left)) : b.width / 2, y = t ? Math.min(b.height, Math.max(0, t.y - b.top)) : b.height / 2;
+  const rad = Math.ceil(Math.hypot(Math.max(x, b.width - x), Math.max(y, b.height - y))) + 4;
+  const c = document.createElement("i"); c.className = "bloom"; c.setAttribute("aria-hidden", "true");
+  c.style.cssText = `left:${x - rad}px;top:${y - rad}px;width:${rad * 2}px;height:${rad * 2}px`;
+  el.classList.add("blooming"); el.prepend(c);
+  const done = () => { c.remove(); el.classList.remove("blooming"); };
+  const an = c.animate([{ transform: "scale(.04)" }, { transform: "scale(1)" }], { duration: MOVE, easing: OUT });
+  an.onfinish = done; an.oncancel = done;
 }
 /* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
    and transitions carry on). Nodes marked data-keep (the sky) are left alone. The timer bar is always swapped
@@ -1037,6 +1070,7 @@ function edgeGlow(dir) {
 const EDGE = 0.25; // width of each tap zone, as a share of the screen
 let tapDown = null, ghostUntil = 0;
 document.addEventListener("pointerdown", e => { tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
+document.addEventListener("click", e => { if (e.clientX || e.clientY) TAP = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
 document.addEventListener("pointerup", e => {
   const d = tapDown; tapDown = null;
   if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
