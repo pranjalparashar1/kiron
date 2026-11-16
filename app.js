@@ -183,21 +183,38 @@ function allQuizzes() {
 function findQuiz(id) { return allQuizzes().find(x => x.quiz.id === id); }
 // A quiz file that can't be read is left out of the list, and the reason is written to the console and kept in SB.trouble.
 function badQuiz(file, errors) { TROUBLE.quizzes.push({ file, errors }); try { console.warn("[Kiron] quiz left out: " + file + "\n  " + (errors || []).join("\n  ")); } catch (e) {} }
+// net = ask the network first (the quiet check for new quizzes); otherwise the saved copy answers at once.
+async function fetchSamples(net) {
+  const q = net ? "?net=1" : "";
+  const r = await fetch("quizzes.json" + q, { cache: "no-cache" });
+  const list = await r.json();
+  const got = await Promise.all((list.quizzes || []).map(async f => {
+    try {
+      const res = await fetch(f + q);
+      if (!res.ok) { if (!net) badQuiz(f, ["could not be fetched (" + res.status + ")"]); return null; }
+      const text = await res.text(), v = validateQuiz(JSON.parse(text)); if (v.quiz) return { file: f, quiz: v.quiz, text };
+      if (!net) badQuiz(f, v.errors);
+    } catch (e) { if (!net) badQuiz(f, [e && e.message || String(e)]); else if (!(e instanceof SyntaxError)) throw e; }
+    return null;
+  }));
+  return got.filter(Boolean);
+}
 async function loadSamples() {
-  try {
-    const r = await fetch("quizzes.json", { cache: "no-cache" });
-    const list = await r.json();
-    const got = await Promise.all((list.quizzes || []).map(async f => {
-      try {
-        const res = await fetch(f); if (!res.ok) throw new Error("could not be fetched (" + res.status + ")");
-        const v = validateQuiz(await res.json()); if (v.quiz) return { file: f, quiz: v.quiz };
-        badQuiz(f, v.errors);
-      } catch (e) { badQuiz(f, [e && e.message || String(e)]); }
-      return null;
-    }));
-    SAMPLES = got.filter(Boolean);
-  } catch (e) { SAMPLES = []; }
+  try { SAMPLES = await fetchSamples(false); } catch (e) { SAMPLES = []; }
   samplesLoaded = true;
+}
+// The list above came straight from this phone's saved copy, so it shows at once. Then, quietly, look for newer
+// quizzes. They are swapped in only while the person is not inside a round.
+let FRESH = null;
+const sig = list => list.map(x => x.file + "\n" + x.text).join("\n\n");
+async function checkFresh() {
+  try { const got = await fetchSamples(true); if (got.length && sig(got) !== sig(SAMPLES)) { FRESH = got; takeFresh(); } } catch (e) {}
+}
+function takeFresh() {
+  if (!FRESH || /^#play-/.test(location.hash)) return false;
+  SAMPLES = FRESH; FRESH = null;
+  if (!location.hash || location.hash === "#") renderLibrary();
+  return true;
 }
 
 /* ---------------- progress + grading ---------------- */
@@ -278,6 +295,14 @@ function buildReview(quiz, P, si) {
 }
 
 /* ---------------- routing ---------------- */
+const hasSW = "serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost");
+let UPDATE = false;   // a newer version of the app is saved and waiting
+// Reload into the waiting version, but only on the library (hash = the one place it may happen while on screen) or out of sight, and never inside a round.
+function updateIfWaiting(hash) {
+  if (!UPDATE || /^#play-/.test(location.hash)) return false;
+  if (hash !== undefined && (location.hash || "").replace(/^#/, "") !== hash) return false;
+  UPDATE = false; location.reload(); return true;
+}
 let current = null; // { quiz, mine, P }
 const app = () => $("#app");
 function openQuiz(id) {
@@ -287,6 +312,7 @@ function openQuiz(id) {
 }
 function route() {
   clearTimer();
+  if (!/^#play-/.test(location.hash)) { if (updateIfWaiting("")) return; if (FRESH) { SAMPLES = FRESH; FRESH = null; } }
   if (!/^#play-/.test(location.hash)) {
     clearFeed();
     // Leaving the quiz ends the streak.
@@ -1089,14 +1115,18 @@ window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, 
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
 route();
-loadSamples().then(route);
-if ("serviceWorker" in navigator && location.protocol === "https:") {
+loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
+if (hasSW) {
   try {
-    // When a new version takes over, reload once so the new files show straight away.
-    const hadSW = !!navigator.serviceWorker.controller; let reloaded = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hadSW || reloaded) return; reloaded = true; location.reload(); });
+    // A new version never reloads the page under someone who is reading or answering. It is picked up the next time
+    // the app is opened; if the app is simply left open, it reloads while out of sight, or on the way back to the library.
+    const hadSW = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadSW) UPDATE = true; });
     navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => { reg.update().catch(() => {}); }).catch(() => {});
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {}); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) updateIfWaiting();
+      else navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
+    });
   } catch (e) {}
 }
 })();
