@@ -102,9 +102,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .icon-btn:active, .actionbar .btn.back:active { transform: scale(.9); }
 .jump-btn:active, .part-row:active { transform: scale(.97); }
 /* A tap on the side of the screen lights that edge for a moment. Two fixed layers, opacity only. */
-.edge { position: fixed; top: 0; bottom: 0; width: 22vw; z-index: 4; pointer-events: none; opacity: 0; }
-.edge.l { left: 0; background: linear-gradient(90deg, rgba(250,249,245,.14), transparent); }
-.edge.r { right: 0; background: linear-gradient(270deg, rgba(250,249,245,.14), transparent); }
+.edge { position: fixed; top: 0; bottom: 0; width: 14vw; z-index: 4; pointer-events: none; opacity: 0; }
+.edge.l { left: 0; background: linear-gradient(90deg, rgba(250,249,245,.07), transparent); }
+.edge.r { right: 0; background: linear-gradient(270deg, rgba(250,249,245,.07), transparent); }
 /* pause control for the timer. Once answered the timer has stopped, so it steps out; its space stays, so the bar does not move. */
 .icon-btn.pause { flex: none; padding: 0; }
 .icon-btn.pause svg { width: 20px; height: 20px; fill: currentColor; }

@@ -320,7 +320,30 @@ function route() {
 }
 // rep = replace the history entry instead of adding one, so Back from a round goes to the library, not round -> home -> round -> home.
 function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) { route(); window.scrollTo(0, 0); } else if (rep) location.replace(location.pathname + location.search + "#" + h); else location.hash = h; }
-window.addEventListener("hashchange", () => { cancelScroll(); route(); window.scrollTo(0, 0); });
+window.addEventListener("hashchange", () => { cancelScroll(); route(); window.scrollTo(0, 0); flowIn(); });
+/* ---- Kiron 1.4.1: the library and a quiz's first screen flow into each other. Only for a tap between those two still
+   screens, never into or out of a round. The new screen is drawn first, as always; then it fades up once, and the quiz
+   title glides in from the side of the card you tapped. Transform and opacity only, played once, nothing redrawn while it runs. ---- */
+let FLOW = null;
+function flowFrom(t) {
+  FLOW = null;
+  if (/^#play-/.test(location.hash) || reduceMotion() || !t.animate) return;
+  const h = t.classList.contains("qcard") && t.querySelector("h3");
+  FLOW = { at: Date.now(), r: h ? h.getBoundingClientRect() : null };
+}
+function flowIn() {
+  const f = FLOW; FLOW = null;
+  if (!f || Date.now() - f.at > 400 || /^#play-/.test(location.hash)) return;
+  const main = app().querySelector("main.lib, main.home"); if (!main) return;
+  const rise = { duration: 380, easing: "cubic-bezier(.25,.6,.3,1)" }, from = { opacity: 0, transform: "translateY(10px)" }, to = { opacity: 1, transform: "none" };
+  const title = f.r && main.querySelector(".qtitle");
+  if (!title) { main.animate([from, to], rise); return; }
+  // The title comes in from the side of the card you tapped. A short glide, not the whole way: the full path would cross the big button.
+  const r = title.getBoundingClientRect(), lim = (v, m) => Math.max(-m, Math.min(m, v));
+  const dx = lim(f.r.left + f.r.width / 2 - (r.left + r.width / 2), 36), dy = lim(f.r.top + f.r.height / 2 - (r.top + r.height / 2), 28);
+  title.animate([{ opacity: 0, transform: `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(.86)` }, { opacity: 1, transform: "none" }], { duration: 460, easing: "cubic-bezier(.32,.72,0,1)" });
+  [...main.children].forEach(k => { if (k !== title) k.animate([from, to], rise); });
+}
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
 const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
 /* ---------------- library: just the list ---------------- */
@@ -1035,7 +1058,7 @@ let EDGES = null;
 function edgeGlow(dir) {
   if (reduceMotion() || !document.body.animate) return;
   if (!EDGES || !EDGES[0].isConnected) EDGES = ["l", "r"].map(s => { const el = document.createElement("i"); el.className = "edge " + s; el.setAttribute("aria-hidden", "true"); document.body.append(el); return el; });
-  EDGES[dir < 0 ? 0 : 1].animate([{ opacity: 1 }, { opacity: 0 }], { duration: 520, easing: "ease-out" });
+  EDGES[dir < 0 ? 0 : 1].animate([{ opacity: 1 }, { opacity: 0 }], { duration: 420, easing: "ease-out" });
 }
 
 const slid = v => `translateX(${(v - 100).toFixed(3)}%)`;   // a full-width fill showing v% of the bar
@@ -1097,7 +1120,7 @@ function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000)
 document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
-  if (d.go !== undefined) { go(d.go, d.replace !== undefined); return; }
+  if (d.go !== undefined) { flowFrom(t); go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
