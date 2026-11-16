@@ -460,7 +460,8 @@ function renderPlay(keepScroll) {
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
-      if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
+      if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " sink";
+      else if (fx && fx.oi !== undefined && fx.kind !== "right" && oi === f.correct) cls += " lift";   // a wrong pick: the right answer rises gently
       return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
@@ -528,7 +529,7 @@ function renderPlay(keepScroll) {
     const el = app().querySelector(".fb");
     if (keepScroll === "fb" && el) {
       const wrong = status && status !== "right", picked = fx && fx.oi !== undefined;
-      // let the pop (or the shake) play while the other options fade and shrink, then fade the explanation in and glide down to it
+      // let the pop (or the soft settle of a wrong pick) play while the other options fade and shrink, then fade the explanation in and glide down to it
       settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
