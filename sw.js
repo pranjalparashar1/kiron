@@ -3,7 +3,7 @@
 //  - Fonts and icons never change: saved copy only (fetched once).
 //  - "?net=1" (the app's quiet check for new quizzes): network first, saved copy if that fails.
 // The page is never reloaded from here. Bump VERSION when you change app files.
-const VERSION = "kiron-v28";
+const VERSION = "kiron-v29";
 const SHELL = ["./", "index.html", "styles.css", "maths.js", "app.js", "prompt.js", "import.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "quizzes.json", "poppins-500.woff2", "poppins-600.woff2", "poppins-700.woff2", "poppins-800.woff2", "poppins-400.woff2", "poppins-400-italic.woff2"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
