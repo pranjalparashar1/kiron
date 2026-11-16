@@ -419,6 +419,8 @@ document.addEventListener("visibilitychange", () => {
 });
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
+// The app's motion language, shared with styles.css (--quick, --move, --slow, --out, --spring).
+const MOVE = 300, SLOW = 460, OUT = "cubic-bezier(.22,.8,.24,1)", SPRING = "cubic-bezier(.3,1.5,.5,1)";
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function renderPlay(keepScroll) {
   endDrag();
@@ -590,7 +592,7 @@ function settle(fb, delay) {
     if (!fb.isConnected) return;
     const keepEl = app().querySelector(".opt.ok, .opt.wrong, .order") || fb;
     fb.classList.remove("wait");
-    if (!reduceMotion() && fb.animate) fb.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.25,.6,.3,1)", fill: "backwards" });
+    if (!reduceMotion() && fb.animate) fb.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: SLOW, easing: OUT, fill: "backwards" });
     reveal(fb, keepEl);
   }, delay);
 }
@@ -1065,7 +1067,7 @@ function renderRoundEnd() {
   // Grow from last time's split to this one: the fills slide (transform), the ✓ is held still by an equal and opposite slide.
   const rg = $("#rg"), rr = $("#rr");
   if (rg && rr && rg.animate && !reduceMotion() && (prev.g !== gNow || prev.r !== rNow)) {
-    const W = rg.parentNode.getBoundingClientRect().width, e = { duration: 1200, easing: "cubic-bezier(.22,.8,.24,1)" };
+    const W = rg.parentNode.getBoundingClientRect().width, e = { duration: 1200, easing: OUT };
     rg.animate([{ transform: slid(prev.g) }, { transform: slid(gNow) }], e);
     rg.firstElementChild.animate([{ transform: `translateX(${((gNow - prev.g) / 100 * W).toFixed(1)}px)` }, { transform: "none" }], e);
     rr.animate([{ transform: slid(prev.g + prev.r) }, { transform: slid(gNow + rNow) }], e);
