@@ -1017,9 +1017,26 @@ document.addEventListener("pointerup", e => {
   const x = e.clientX / innerWidth, dir = x < EDGE ? -1 : x > 1 - EDGE ? 1 : 0;
   if (!dir) return;
   ghostUntil = Date.now() + 250; // the browser sends a click after this tap: swallow it so it can't hit the next screen's option
+  if (dir > 0 || current.P.round.i > 0) edgeGlow(dir);
   nav(dir);
 });
 document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+
+/* ---- Kiron 1.4.1: every tap answers. The press itself is CSS (:active, instant). These two play only on a finished tap,
+   never on a touch that became a scroll, and move transform or opacity only. ---- */
+// Spring back from the pressed size.
+document.addEventListener("click", e => {
+  const b = e.target && e.target.closest ? e.target.closest(".icon-btn, .actionbar .btn.back, .jump-btn, .part-row") : null;
+  if (!b || !b.animate || reduceMotion()) return;
+  b.animate([{ transform: `scale(${b.matches(".jump-btn, .part-row") ? .97 : .9})` }, { transform: "none" }], { duration: 340, easing: "cubic-bezier(.3,1.6,.5,1)" });
+}, true);
+// The side you tapped lights up and fades: two fixed layers, built once.
+let EDGES = null;
+function edgeGlow(dir) {
+  if (reduceMotion() || !document.body.animate) return;
+  if (!EDGES || !EDGES[0].isConnected) EDGES = ["l", "r"].map(s => { const el = document.createElement("i"); el.className = "edge " + s; el.setAttribute("aria-hidden", "true"); document.body.append(el); return el; });
+  EDGES[dir < 0 ? 0 : 1].animate([{ opacity: 1 }, { opacity: 0 }], { duration: 520, easing: "ease-out" });
+}
 
 const slid = v => `translateX(${(v - 100).toFixed(3)}%)`;   // a full-width fill showing v% of the bar
 function renderRoundEnd() {
