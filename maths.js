@@ -34,7 +34,46 @@ const BIGOP = {
 const radical = (body, index) => `<span class="m-rad">${index ? `<span class="m-ri">${index}</span>` : ""}${RAD_SVG}<span class="m-rb">${body}</span></span>`;
 const fraction = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
 
+const fenceH = (l, body, r, sup, sub) => `<span class="m-fence">${FENCE[l] ? mSvg("m-fd", 6, 20, FENCE[l]) : ""}<span class="m-fb">${body}</span>${FENCE[r] ? mSvg("m-fd", 6, 20, FENCE[r]) : ""}${sup ? `<span class="m-ft">${sup}</span>` : ""}${sub ? `<span class="m-ft m-fu">${sub}</span>` : ""}</span>`;
+
 /* ---- 1. plain quiz text ---- */
+// An exponent written ^(89/180) stays on one line, small and raised: 1.03 to the 89/180. This stand-in keeps the
+// slash from being read as a fraction to stack (a stacked fraction up there reads as "1.03 times 89 over 180").
+const HELD_SLASH = "\u0002";
+// Brackets grow to the height of what they hold. Walks the typeset text; a ( ) or [ ] pair with a stacked fraction
+// inside (and nothing that reads as a sentence) is redrawn as a stretched pair, and a power or subscript right
+// after it moves to the bracket's corner.
+const TALL_RE = /class="(?:frac|m-fence|m-op)/;
+function mathsOnly(body) {
+  const t = body.replace(/<[^>]*>/g, "");
+  return t.length <= 48 && !/[.;:!?](?:\s|$)/.test(t) && (t.match(/[A-Za-z]{4,}/g) || []).length <= 2;
+}
+function grow(h, i, close) {
+  let out = "", depth = 0, closed = false;
+  const n = h.length;
+  while (i < n) {
+    const c = h[i];
+    if (c === "<") {
+      const j = h.indexOf(">", i), tag = h.slice(i, j + 1);
+      if (tag[1] === "/") { if (!depth) break; depth--; } // the element this bracket opened in is ending: no partner here
+      else if (!/\/>$/.test(tag)) depth++;
+      out += tag; i = j + 1; continue;
+    }
+    if (c === close && !depth) { i++; closed = true; break; }
+    if (c === "(" || c === "[") {
+      const shut = c === "(" ? ")" : "]", r = grow(h, i + 1, shut);
+      i = r.end;
+      if (r.closed && TALL_RE.test(r.out) && mathsOnly(r.out)) {
+        let sup = "", sub = "", m;
+        while ((m = /^<(su[bp])>(.*?)<\/\1>/.exec(h.slice(i)))) { if (m[1] === "sup") sup += m[2]; else sub += m[2]; i += m[0].length; }
+        out += fenceH(c, r.out, shut, sup, sub);
+      } else out += c + r.out + (r.closed ? shut : "");
+      continue;
+    }
+    out += c; i++;
+  }
+  return { out, end: i, closed };
+}
 // After a √: what does it cover? A bracket (to its partner), a stacked fraction, or the number / letters that follow.
 function rootOperand(h, i) {
   if (h[i] === "(") {
@@ -66,9 +105,9 @@ function mathify(h) {
   const supm = c => SUPM[c] || c, subm = c => SUBM[c] || c;
   h = h.replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻⁺ⁿᵗ]+/g, m => "<sup>" + [...m].map(supm).join("") + "</sup>")
        .replace(/[₀₁₂₃₄₅₆₇₈₉₋₊ₙₜₘₓₐₑₒᵢⱼₖₗₛₚₕ]+/g, m => "<sub>" + [...m].map(subm).join("") + "</sub>")
-       .replace(/\^\(([^)]*)\)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
+       .replace(/\^\(([^)]*)\)/g, (_, a) => "<sup>" + a.replace(/-/g, "−").replace(/\s*\/\s*/g, HELD_SLASH) + "</sup>")
        .replace(/\^(-?\d+(?:\.\d+)?|[A-Za-z]\w*)/g, (_, a) => "<sup>" + a.replace(/-/g, "−") + "</sup>")
-       .replace(/_\(([^)]*)\)/g, "<sub>$1</sub>")
+       .replace(/_\(([^)]*)\)/g, (_, a) => "<sub>" + a.replace(/\s*\/\s*/g, HELD_SLASH) + "</sub>")
        .replace(/_([A-Za-z0-9]+)/g, "<sub>$1</sub>")
        .replace(/(^|[\s(=×÷+<>\/])-(?=\.?\d)/g, "$1−");
   if (LB) h = h.replace(new RegExp("(?<=[\\d)])\\s[x*]\\s(?=[\\d(])", "g"), " × ").replace(new RegExp("(?<=[\\d)>%])\\s-\\s(?=[\\d(.])", "g"), " − ");
@@ -89,7 +128,9 @@ function mathify(h) {
       if (h === before) break;
     }
   }
-  return h.indexOf("√") < 0 ? h : roots(h);
+  if (h.indexOf("√") >= 0) h = roots(h);
+  if (h.indexOf('class="frac"') >= 0) h = grow(h, 0, "").out;
+  return h.indexOf(HELD_SLASH) < 0 ? h : h.split(HELD_SLASH).join("/");
 }
 
 /* ---- 2. TeX between \( and \) ---- */
@@ -115,7 +156,7 @@ function texRow(src) {
   // one argument: {…} or a single thing
   const arg = () => { ws(); if (src[i] === "{") { i++; return row("}"); } return atom(true) || { h: "", tall: false }; };
   const delim = () => { ws(); if (src[i] === "\\") { i++; const c = name(); return c === "{" || c === "}" || c === "|" ? c : c === "langle" ? "(" : c === "rangle" ? ")" : ""; } return src[i++] || ""; };
-  const fence = (l, body, r) => ({ h: `<span class="m-fence">${FENCE[l] ? mSvg("m-fd", 6, 20, FENCE[l]) : ""}<span class="m-fb">${body}</span>${FENCE[r] ? mSvg("m-fd", 6, 20, FENCE[r]) : ""}</span>`, tall: true, kind: "fence" });
+  const fence = (l, body, r) => ({ h: fenceH(l, body, r), tall: true, kind: "fence" });
   const scripts = (base, sub, sup) => {
     if (!sub && !sup) return base;
     const k = base.kind;
@@ -124,6 +165,8 @@ function texRow(src) {
     // on a tall bracket the power sits at the top corner and the subscript at the bottom one
     if (k === "fence") return { h: base.h.slice(0, -7) + (sup ? `<span class="m-ft">${sup.h}</span>` : "") + (sub ? `<span class="m-ft m-fu">${sub.h}</span>` : "") + "</span>", tall: true };
     if (sub && sup) return { h: `${base.h}<span class="m-ss"><span>${sup.h}</span><span>${sub.h}</span></span>`, tall: base.tall };
+    // a stacked fraction as a power sits small and high, clear of the line, so it can't be read as a mixed number
+    if (sup && sup.tall) return { h: `${base.h}<span class="m-pw">${sup.h}</span>`, tall: true };
     return { h: base.h + (sup ? `<sup>${sup.h}</sup>` : `<sub>${sub.h}</sub>`), tall: base.tall };
   };
   // one thing, with any _ and ^ that follow it (unless it is itself an argument of _ or ^)
