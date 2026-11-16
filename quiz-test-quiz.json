@@ -1,0 +1,770 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "test-quiz",
+ "title": "Test quiz",
+ "source": "Playtest quiz for trying new Kiron features",
+ "purpose": "Playtest streaks, animations, ordering and maths rendering with obvious answers.",
+ "sections": [
+  {
+   "title": "Section 1",
+   "questions": [
+    {
+     "type": "order",
+     "prompt": "Put these 4 in ascending order.",
+     "hint": "Smallest first.",
+     "items": [
+      "1",
+      "2",
+      "3",
+      "4"
+     ],
+     "answer": "1 up to 4."
+    },
+    {
+     "type": "single",
+     "prompt": "Pick the answer.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Annualising.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 4 × (1.0248^0.5 − 1)",
+      "4.96 ÷ 2",
+      "2 × (1.0248^2 − 1)",
+      "4 × 1.0248^0.5"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Still easy.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Final text question.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Keep the streak alive.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Tap it.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Money market price.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 10,000,000 ÷ (1 + 91/360 × 0.0225)",
+      "10,000,000 × (1 − 91/360 × 0.0225)",
+      "10,000,000 ÷ (1 − 91/360 × 0.0225)",
+      "10,000,000 × (1 + 91/360 × 0.0225)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Simple fraction.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 4/1.06",
+      "4/1.04",
+      "1.06/4",
+      "4 × 1.06"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "multi",
+     "prompt": "Which contain μ? Pick all.",
+     "hint": "Every one with μ.",
+     "options": [
+      "4/1.06^2",
+      "μ/(1 + r)^n",
+      "104/1.06^3 + μ",
+      "√(1 + r_1)",
+      "μ_1 + μ_2"
+     ],
+     "correct": [
+      1,
+      2,
+      4
+     ],
+     "answer": "All the ones with μ.",
+     "tags": [
+      "calc"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Section 2",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Streak check: keep going.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Medium-length prompt to check spacing between the question and the options.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Percent fraction.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = (8 + (100 − 90.165)/3) ÷ 90.165",
+      "8 ÷ 90.165",
+      "(8 + 100 − 90.165) ÷ 3",
+      "90.165 ÷ 8"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "order",
+     "prompt": "Put these 6 in ascending order.",
+     "hint": "Smallest first.",
+     "items": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+     ],
+     "answer": "1 up to 6."
+    },
+    {
+     "type": "single",
+     "prompt": "Tap the right one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Spot-rate bootstrap with subscripts.",
+     "hint": "Look for μ.",
+     "options": [
+      "100 = 1.75/1.015 + 101.75/(1+z_3)^3 + μ",
+      "100 = 1.75/1.015 + 101.75/(1+z_3)^3",
+      "100 = 3.5/1.03 + 103.5/(1+z_3)^3",
+      "100 = 101.75/(1+z_2)^2"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Which is right this time?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "multi",
+     "prompt": "Select all that are correct.",
+     "hint": "Pick Correct ones.",
+     "options": [
+      "Incorrect",
+      "Correct",
+      "Correct",
+      "Correct",
+      "Incorrect"
+     ],
+     "correct": [
+      1,
+      2,
+      3
+     ],
+     "answer": "All the Correct ones."
+    },
+    {
+     "type": "single",
+     "prompt": "Square root of time.",
+     "hint": "Look for μ.",
+     "options": [
+      "σ_annual = σ_daily × √250 + μ",
+      "σ_annual = σ_daily × 250",
+      "σ_annual = σ_daily ÷ √250",
+      "σ_daily = σ_annual × √250"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Last few: which is right?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    }
+   ]
+  },
+  {
+   "title": "Section 3",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Bond price, wide denominators.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 4/1.06 + 4/1.06^2 + 104/1.06^3",
+      "4/1.04 + 4/1.04^2 + 104/1.04^3",
+      "104/1.06^3",
+      "4/1.06 + 104/1.06^2"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Current yield.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 7 ÷ 94.17",
+      "7 ÷ 100",
+      "94.17 ÷ 7",
+      "100 ÷ 94.17"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Forward rate.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 2 × ([(1.03)^10 ÷ (1.02)^4]^(1/6) − 1)",
+      "2 × ([(1.06)^5 ÷ (1.04)^2]^(1/3) − 1)",
+      "2 × [(1.03)^10 ÷ (1.02)^4 − 1]",
+      "(1.03)^10 − (1.02)^4"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Square root.",
+     "hint": "Look for μ.",
+     "options": [
+      "σ = √(μ^2 + 1)",
+      "σ = √(x^2 + 1)",
+      "σ = (x^2 + 1)^2",
+      "σ = x^2 + 1"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "One more text question.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Interpolation.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 3.8035 + (3 − 2)/(5 − 2) × (4.1885 − 3.8035)",
+      "(3.8035 + 4.1885) ÷ 2",
+      "3.8035 + (5 − 2)/(3 − 2) × 0.385",
+      "4.1885 − 3.8035"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "multi",
+     "prompt": "Pick every correct one.",
+     "hint": "Pick Correct ones.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Correct",
+      "Incorrect"
+     ],
+     "correct": [
+      0,
+      2
+     ],
+     "answer": "All the Correct ones."
+    },
+    {
+     "type": "single",
+     "prompt": "Another easy one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Discount factor with a long denominator.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 100/(1 + 0.0425 × 180/360)",
+      "100 × (1 − 0.0425 × 180/360)",
+      "100/(1 − 0.0425 × 360/180)",
+      "100 × (1 + 0.0425)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "order",
+     "prompt": "Put these 7 in ascending order.",
+     "hint": "Smallest first.",
+     "items": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+     ],
+     "answer": "1 up to 7."
+    }
+   ]
+  },
+  {
+   "title": "Section 4",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Accrued interest.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 103.1088 − (89/180 × 3)",
+      "103.1088 + (89/180 × 3)",
+      "103.1088 − (180/89 × 3)",
+      "103.1088 × 89/180"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Pick one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "A short one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Which option is right?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Negative exponent.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 100 × (1 + r)^(-n)",
+      "100 × (1 + r)^n",
+      "100 ÷ (1 − r)^n",
+      "100 × r^(-n)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "order",
+     "prompt": "Put these 3 in ascending order.",
+     "hint": "Smallest first.",
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "answer": "1 up to 3."
+    },
+    {
+     "type": "single",
+     "prompt": "Nearly there.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "multi",
+     "prompt": "Pick every option with μ.",
+     "hint": "Every one with μ.",
+     "options": [
+      "μ = Σx_i/n",
+      "σ^2 = Σ(x_i − μ)^2/n",
+      "x̄ = Σx_i/(n − 1)",
+      "s = √(Σ(x_i − x̄)^2/(n − 1))"
+     ],
+     "correct": [
+      0,
+      1
+     ],
+     "answer": "All the ones with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Greek letters.",
+     "hint": "Look for μ.",
+     "options": [
+      "β = Δp/Δμ",
+      "β = Δp/Δy",
+      "α = Δy/Δp",
+      "γ = Δ^2p/Δy^2"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Continuous compounding.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = 100 × e^-0.05",
+      "100 × e^0.05",
+      "100 ÷ e^-0.05",
+      "100 × (1 − 0.05)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Section 5",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Exponent in brackets.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ × 1.03^(89/180)",
+      "100 × 1.03^(180/89)",
+      "100 × 1.30^(89/180)",
+      "100 ÷ 1.03^(89/180)"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Quick: which is right?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Duration-style formula.",
+     "hint": "Look for μ.",
+     "options": [
+      "ΔP/P ≈ −D_mod × Δy + μ",
+      "ΔP/P ≈ −D_mod × Δy",
+      "ΔP/P ≈ D_mac × Δy",
+      "ΔP ≈ −C × (Δy)^2"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Which of these is **bold** and *italic* in the prompt?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "This prompt is deliberately long so you can see how a question wraps across three or four lines on a phone screen.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "multi",
+     "prompt": "Pick all correct options.",
+     "hint": "Pick Correct ones.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Correct"
+     ],
+     "correct": [
+      0,
+      3
+     ],
+     "answer": "All the Correct ones."
+    },
+    {
+     "type": "single",
+     "prompt": "Variance.",
+     "hint": "Look for μ.",
+     "options": [
+      "σ^2 = Σ(x_i − μ)^2/n",
+      "s^2 = Σ(x_i − x̄)^2/(n − 1)",
+      "σ = Σ(x_i − x̄)/n",
+      "σ^2 = Σx_i^2"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Which option?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "order",
+     "prompt": "Put these 5 in ascending order.",
+     "hint": "Smallest first.",
+     "items": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+     ],
+     "answer": "1 up to 5."
+    },
+    {
+     "type": "single",
+     "prompt": "Mean of a sample.",
+     "hint": "Look for μ.",
+     "options": [
+      "μ = Σx_i/n",
+      "x̄ = Σx_i/(n − 1)",
+      "s = Σx_i/n",
+      "m = n/Σx_i"
+     ],
+     "correct": 0,
+     "answer": "The one with μ.",
+     "tags": [
+      "calc"
+     ]
+    }
+   ]
+  }
+ ]
+}
