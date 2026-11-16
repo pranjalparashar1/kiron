@@ -29,11 +29,6 @@
   --font: "Poppins", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --code: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --r: 12px; --w: 560px;
-  /* Speeds and curves for the effects added in 1.4 only (press on bar buttons, the light on a right pick, the
-     kinder wrong moment, the staged round end, the list rising in, the quiz name travelling). Everything older
-     keeps the timings it was tuned to on a real iPhone, written out on its own rule: do not swap those for these. */
-  --quick: .16s; --move: .42s; --slow: .64s;
-  --out: cubic-bezier(.22,.8,.24,1); --spring: cubic-bezier(.3,1.5,.5,1);
   color-scheme: dark;
 }
 /* iPhone screens show a wider range of colour (P3) than the standard web range these hex codes are written in, and
@@ -92,17 +87,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* ---------- buttons ---------- */
 .btn, .icon-btn, .opt, .part { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-/* Everything you can tap answers the finger: it presses in at once (quick) and springs back on release.
-   Rows inside a card dim instead of shrinking, so the card's edge stays still. */
-.btn, .icon-btn { transition: transform var(--quick) var(--spring); }
-.btn:active:not(:disabled), .icon-btn:active:not(:disabled) { transform: scale(.97); transition-duration: var(--quick); }
-.icon-btn:active:not(:disabled) { transform: scale(.88); }
-/* Haptics: an invisible iOS switch stretched over a button (see app.js). It must stay a real switch (no
-   appearance: none), or the phone gives no tick. */
-.btn, .opt, .qcard { position: relative; }
-.hx { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-.jump-btn, .part-row, details summary { transition: opacity var(--move) var(--out); }
-.jump-btn:active, .part-row:active, details summary:active { opacity: .45; transition-duration: 0s; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 18px; cursor: pointer; font-size: 16px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--ink); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
 .btn.ghost { background: transparent; }
@@ -110,7 +94,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .btn.danger { color: var(--no); border-color: rgba(229,128,111,.45); background: transparent; }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn.xl { min-height: 68px; font-size: 21px; font-weight: 700; width: 100%; border-radius: 16px; box-shadow: 0 5px 0 #8f4630; }
-.btn.xl:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #8f4630; }
+.btn.xl:active { transform: translateY(3px); box-shadow: 0 2px 0 #8f4630; }
 .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; min-width: 44px; height: 44px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; color: var(--ink); }
 .icon-btn.done { font-weight: 800; padding: 0 16px; }
 /* pause control for the timer. Once answered the timer has stopped, so it steps out; its space stays, so the bar does not move. */
@@ -129,27 +113,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .qcard:active { transform: scale(.98); border-color: var(--blue); }
 .qcard h3 { margin: 0; font-size: 18px; line-height: 1.3; font-weight: 600; text-wrap: balance; }
 .qcard .chev { font-size: 28px; color: var(--blue); line-height: 1; }
-/* A soft opening: while the list loads, quiet placeholder cards breathe (opacity only); then the real cards rise in,
-   one after another, the first time only. */
-.qcard.ghost { cursor: default; border-color: transparent; animation: breathe 1.3s ease-in-out infinite alternate; }
-@keyframes breathe { from { opacity: .35; } to { opacity: .9; } }
-@media (prefers-reduced-motion: no-preference) {
-  .grid.rise .qcard { animation: rise var(--slow) var(--out) calc(var(--i, 0) * 65ms) backwards; }
-  .endcard > * { animation: rise var(--slow) var(--out) backwards; }
-  .endcard > :nth-child(2) { animation-delay: .13s; }
-  .endcard > :nth-child(3) { animation-delay: .26s; }
-  .endcard > :nth-child(4) { animation-delay: .39s; }
-  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
-  /* screens flow into each other (see go in app.js): a quick cross-fade, and the quiz's name travels */
-  ::view-transition { pointer-events: none; }
-  ::view-transition-old(root) { animation: vtout var(--move) var(--out) both; }
-  ::view-transition-new(root) { animation: vtin var(--move) var(--out) both; }
-  ::view-transition-group(qt) { animation-duration: var(--move); animation-timing-function: var(--out); }
-  @keyframes vtout { to { opacity: 0; } }
-  @keyframes vtin { from { opacity: 0; } }
-}
-@media (prefers-reduced-motion: reduce) { .qcard.ghost { animation: none; opacity: .6; } }
-.qtitle { view-transition-name: qt; }
 .credit { margin: auto 0 0; padding-top: 28px; text-align: center; font-size: 12.5px; letter-spacing: .02em; color: var(--muted); opacity: .55; }
 
 /* ---------- quiz home: one button, a folded part list, reset ---------- */
@@ -340,20 +303,15 @@ sub { vertical-align: -.28em; }
 .opt.wrong { background: var(--no-soft); border-color: var(--no); color: var(--no-ink); }
 .opt.wrong .k { background: var(--no); border-color: var(--no); color: #fff; font-size: 16px; }
 .opt.missed { background: var(--ok-soft); border: 2px dashed var(--ok); font-weight: 700; }
-.opt:active { transform: scale(.985); border-color: var(--accent); }   /* at once, no transition: an option is often under a scrolling finger */
+.opt:active { transform: scale(.985); border-color: var(--accent); }
 .opt.dim:not(.wrong) { opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; border-width: 1px; gap: 10px; transition: opacity .28s ease, background-color .2s, border-color .2s; }
 .opt.wrong.dim { opacity: .55; }
 .opt.dim:active { transform: none; border-color: var(--line); }
 @media (prefers-reduced-motion: no-preference) {
   .opt.pop { animation: pop2 .45s cubic-bezier(.3,1.6,.5,1); }
-  .opt.sink { animation: sink .45s var(--out); }
-  .opt.lift { animation: lift var(--slow) var(--spring) .1s backwards; }
+  .opt.shake { animation: shake .45s cubic-bezier(.36,.07,.19,.97); }
   @keyframes pop2 { 0% { transform: scale(.96); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
-  @keyframes sink { 0% { transform: none; } 35% { transform: scale(.96); } 100% { transform: none; } }
-  @keyframes lift { from { transform: translateY(5px) scale(.97); } to { transform: none; } }
-  /* the light that spreads from the finger on a right pick (see bloom in app.js) */
-  .opt.ok { overflow: hidden; }
-  .bloom { position: absolute; border-radius: 50%; background: #fff; opacity: 0; pointer-events: none; }
+  @keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(5px); } 30%, 50%, 70% { transform: translateX(-9px); } 40%, 60% { transform: translateX(9px); } }
   /* a soft slide between questions */
   .qcardp.in-next { animation: inr .34s cubic-bezier(.22,.8,.24,1); }
   .qcardp.in-prev { animation: inl .34s cubic-bezier(.22,.8,.24,1); }
@@ -419,11 +377,6 @@ details.more[open] > p { animation: fullin .32s cubic-bezier(.25,.6,.3,1); }
 /* Next pulses while you read. The ring is its own layer that grows and fades (transform + opacity), not a box-shadow
    that repaints the button. */
 .actionbar .btn[data-act="next"] { position: relative; will-change: transform; animation: nextpulse 1.15s ease-in-out .35s infinite; }
-.actionbar .btn[data-act="next"]:active { animation: none; }   /* the pulse steps aside so the press shows */
-/* A tap on the side of the screen (back or next) lights that edge for a moment. One layer, opacity only. */
-.edge { position: fixed; top: 0; bottom: 0; width: 26vw; z-index: 4; pointer-events: none; opacity: 0; }
-.edge.l { left: 0; background: linear-gradient(90deg, rgba(250,249,245,.13), transparent); }
-.edge.r { right: 0; background: linear-gradient(270deg, rgba(250,249,245,.13), transparent); }
 .actionbar .btn[data-act="next"]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 3px rgba(217,119,87,.65); opacity: 0; pointer-events: none; will-change: transform, opacity; animation: ring 1.15s ease-out .35s infinite; }
 @keyframes nextpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
 @keyframes ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05, 1.5); } }
@@ -474,7 +427,7 @@ details.more[open] > p { animation: fullin .32s cubic-bezier(.25,.6,.3,1); }
   .glint b { will-change: transform, opacity; animation: glint 4.2s linear infinite; }
   .glint[data-heat="5"] b { animation-duration: 3.4s; }
   @keyframes glint { 0% { transform: translate3d(-18%,0,0); opacity: 1; } 45% { transform: translate3d(100%,0,0); opacity: 1; } 45.1%, 100% { transform: translate3d(100%,0,0); opacity: 0; } }
-  .endcard > .bestrun.rec { animation: recin .6s var(--spring) .3s both; }
+  .bestrun.rec { animation: recin .6s cubic-bezier(.3,1.5,.5,1) .15s both; }
   @keyframes recin { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
 }
 .sky.still * { animation: none !important; }
