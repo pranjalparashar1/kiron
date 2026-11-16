@@ -37,9 +37,11 @@ const fraction = (a, b) => `<span class="frac"><span>${a}</span><span>${b}</span
 const fenceH = (l, body, r, sup, sub) => `<span class="m-fence">${FENCE[l] ? mSvg("m-fd", 6, 20, FENCE[l]) : ""}<span class="m-fb">${body}</span>${FENCE[r] ? mSvg("m-fd", 6, 20, FENCE[r]) : ""}${sup ? `<span class="m-ft">${sup}</span>` : ""}${sub ? `<span class="m-ft m-fu">${sub}</span>` : ""}</span>`;
 
 /* ---- 1. plain quiz text ---- */
-// An exponent written ^(89/180) stays on one line, small and raised: 1.03 to the 89/180. This stand-in keeps the
-// slash from being read as a fraction to stack (a stacked fraction up there reads as "1.03 times 89 over 180").
+// An exponent written ^(89/180) becomes a small stacked fraction, raised clear of the line: 1.03 to the 89 over 180.
+// This stand-in keeps its slash away from the full-size fraction pass (a full-size stack beside the base reads as
+// "1.03 times 89 over 180"); power() then draws it.
 const HELD_SLASH = "\u0002";
+const powFrac = t => { const p = t.split(HELD_SLASH); return p.length === 2 && p[0] && p[1] && !/</.test(t) ? fraction(p[0], p[1]) : t.split(HELD_SLASH).join("/"); };
 // Brackets grow to the height of what they hold. Walks the typeset text; a ( ) or [ ] pair with a stacked fraction
 // inside (and nothing that reads as a sentence) is redrawn as a stretched pair, and a power or subscript right
 // after it moves to the bracket's corner.
@@ -65,7 +67,7 @@ function grow(h, i, close) {
       i = r.end;
       if (r.closed && TALL_RE.test(r.out) && mathsOnly(r.out)) {
         let sup = "", sub = "", m;
-        while ((m = /^<(su[bp])>(.*?)<\/\1>/.exec(h.slice(i)))) { if (m[1] === "sup") sup += m[2]; else sub += m[2]; i += m[0].length; }
+        while ((m = /^<(su[bp])>(.*?)<\/\1>/.exec(h.slice(i)))) { if (m[1] === "sup") sup += powFrac(m[2]); else sub += m[2]; i += m[0].length; }
         out += fenceH(c, r.out, shut, sup, sub);
       } else out += c + r.out + (r.closed ? shut : "");
       continue;
@@ -130,7 +132,8 @@ function mathify(h) {
   }
   if (h.indexOf("√") >= 0) h = roots(h);
   if (h.indexOf('class="frac"') >= 0) h = grow(h, 0, "").out;
-  return h.indexOf(HELD_SLASH) < 0 ? h : h.split(HELD_SLASH).join("/");
+  if (h.indexOf(HELD_SLASH) < 0) return h;
+  return h.replace(new RegExp("<sup>([^<]*" + HELD_SLASH + "[^<]*)</sup>", "g"), (all, t) => { const f = powFrac(t); return f === t.split(HELD_SLASH).join("/") ? `<sup>${f}</sup>` : `<span class="m-pw">${f}</span>`; }).split(HELD_SLASH).join("/");
 }
 
 /* ---- 2. TeX between \( and \) ---- */
@@ -163,6 +166,8 @@ function texRow(src) {
     if (k === "over") return { h: `<span class="m-op"><span class="m-lim">${sup ? sup.h : ""}</span><span class="m-opb">${base.h}</span><span class="m-lim">${sub ? sub.h : ""}</span></span>`, tall: true };
     if (k === "side") return { h: `${base.h}<span class="m-ss m-il"><span>${sup ? sup.h : "&nbsp;"}</span><span>${sub ? sub.h : "&nbsp;"}</span></span>`, tall: true };
     // on a tall bracket the power sits at the top corner and the subscript at the bottom one
+    // a/b as a power is drawn as a small stacked fraction, the same as in plain text
+    if (sup && /^[^<\/]+\/[^<\/]+$/.test(sup.h)) { const p = sup.h.split("/"); sup = { h: fraction(p[0], p[1]), tall: true }; }
     if (k === "fence") return { h: base.h.slice(0, -7) + (sup ? `<span class="m-ft">${sup.h}</span>` : "") + (sub ? `<span class="m-ft m-fu">${sub.h}</span>` : "") + "</span>", tall: true };
     if (sub && sup) return { h: `${base.h}<span class="m-ss"><span>${sup.h}</span><span>${sub.h}</span></span>`, tall: base.tall };
     // a stacked fraction as a power sits small and high, clear of the line, so it can't be read as a mixed number
