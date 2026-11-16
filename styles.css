@@ -146,11 +146,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .jump-btn:focus-visible { outline: 2px solid var(--muted); outline-offset: -4px; border-radius: 12px; }
 .part-row:focus-visible { outline: 2px solid var(--muted); outline-offset: -3px; border-radius: 12px; }
 .unfurl { height: 0; overflow: hidden; }
-.unfurl-in { opacity: 0; transform: translateY(-8px); transition: opacity .22s ease, transform .3s cubic-bezier(.32,.72,0,1); }
+.unfurl-in { opacity: 0; transform: translateY(-8px); transition: opacity .3s ease, transform .3s ease; }
 @media (prefers-reduced-motion: reduce) { .unfurl-in { transition: none; } }
 .jump.open > .unfurl > .unfurl-in, .part.open > .unfurl > .unfurl-in { opacity: 1; transform: none; transition: opacity .34s ease .06s, transform .46s cubic-bezier(.32,.72,0,1); }
 /* Jump to a part (1.5.1): the parts arrive one after another, unhurried, so the eye follows them down. Opacity and transform only. */
-.jump .part { opacity: 0; transform: translateY(-10px); transition: opacity .2s ease, transform .2s ease; scroll-margin: 76px 0 24px; }
+/* Closing: the list fades as one piece (one layer, .unfurl-in). The parts themselves stay put and only reset, unseen, once it has gone. */
+.jump .part { opacity: 0; transform: translateY(-10px); transition: opacity 0s .32s, transform 0s .32s; scroll-margin: 76px 0 24px; }
 .jump.open .part { opacity: 1; transform: none; transition: opacity .5s ease calc(.1s + var(--i, 0) * .06s), transform .7s cubic-bezier(.32,.72,0,1) calc(.1s + var(--i, 0) * .06s); }
 .jump { scroll-margin: 76px 0 calc(24px + env(safe-area-inset-bottom, 0px)); }
 .jump.open > .unfurl > .unfurl-in { transition: opacity .5s ease .06s, transform .7s cubic-bezier(.32,.72,0,1); }

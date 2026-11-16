@@ -1185,7 +1185,13 @@ function unfurl(box, open) {
   clearTimeout(u._t);
   box.classList.toggle("open", open); u.inert = !open;
   if (open || reduceMotion()) u.style.height = open ? "auto" : "0px";
-  else u._t = setTimeout(() => { if (!box.classList.contains("open")) u.style.height = "0px"; }, 220);
+  else {
+    // The space folds away only after the fade has fully finished (it used to fold mid-fade, which is what stuttered).
+    // If folding would leave the page scrolled past its new end, the page glides back first, so nothing jumps.
+    const end = Math.max(0, document.documentElement.scrollHeight - u.offsetHeight - innerHeight), glide = window.scrollY > end + 1;
+    if (glide) smoothScrollTo(end);
+    u._t = setTimeout(() => { if (!box.classList.contains("open")) u.style.height = "0px"; }, glide ? 520 : 340);
+  }
 }
 // Opening a list draws the eye to it: the page glides (the phone's own smooth scroll) just far enough to show it.
 // If it is already in view, nothing moves.
