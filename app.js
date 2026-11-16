@@ -476,9 +476,11 @@ function renderPlay(keepScroll) {
     const sel = a || [];
     input = `<p class="lead">Pick all that apply.</p><div class="opts" role="group" aria-label="Options">` + q.options.map((o, i) => {
       let cls = "opt" + (sel.includes(i) ? " sel" : ""), ic = sel.includes(i) ? "✓" : "";
-      // Once checked, only the right options stay bright; everything else fades back. No tick boxes then.
-      if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong dim" : right ? " missed" : " dim"); }
-      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${cur.done ? "" : `<span class="k box">${ic}</span>`}<span>${fmt(o)}</span></button>`;
+      // Once checked it reads like a single-answer question: a right pick is solid green with a tick, a wrong pick is red with
+      // a cross, and a right option you did not pick is a quieter green with a tick. Everything else fades back, with no mark.
+      let mark = `<span class="k box">${ic}</span>`;
+      if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong dim" : right ? " missed" : " dim"); mark = right ? `<span class="k">✓</span>` : ch ? `<span class="k">✕</span>` : ""; }
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${mark}<span>${fmt(o)}</span></button>`;
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
