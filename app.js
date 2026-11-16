@@ -322,7 +322,7 @@ function route() {
   document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
   if (h === "perf") { const on = !LS.get(K_PERF, 0); if (on) LS.set(K_PERF, 1); else LS.del(K_PERF); perfBoot(); toast("Performance check " + (on ? "on" : "off")); return go("", true); }
-  if (h === "haptics") { HAPTIC = !HAPTIC; if (HAPTIC) LS.set(K_HAPTIC, 1); else LS.del(K_HAPTIC); toast("Haptics " + (HAPTIC ? "on" : "off")); return go("", true); }
+  if (h === "haptics") { HAPTIC = !HAPTIC; LS.set(K_HAPTIC, HAPTIC ? 1 : 0); toast("Haptics " + (HAPTIC ? "on" : "off")); return go("", true); }
   if (h === "import" || h === "make") return renderExtra(h);
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
@@ -436,12 +436,12 @@ document.addEventListener("visibilitychange", () => {
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 // The app's motion language, shared with styles.css (--quick, --move, --slow, --out, --spring).
-const MOVE = 300, SLOW = 460, OUT = "cubic-bezier(.22,.8,.24,1)", SPRING = "cubic-bezier(.3,1.5,.5,1)";
+const MOVE = 420, SLOW = 640, OUT = "cubic-bezier(.22,.8,.24,1)", SPRING = "cubic-bezier(.3,1.5,.5,1)";
 /* Haptics (a small tick under the finger). iPhone Safari has no vibrate call. The only route is a real iOS switch
    control: when a finger taps one, the phone ticks. So each main button carries an invisible switch stretched over
    it; the tap lands on the switch (tick) and the click carries on up to the button as usual. If the phone gives no
-   tick, the button still works exactly as before. Off unless #haptics has been opened once on this phone (again =
-   off), until it has been tried on real iPhones: see haptics.html. Android phones get a short vibrate instead. */
+   tick, the button still works exactly as before. On for everyone (tried on an iPhone, iOS 27); opening #haptics
+   turns it off on this phone, and again turns it back on. haptics.html is a test page. Android phones get a short vibrate instead. */
 let HAPTIC = false;
 const hx = () => HAPTIC ? `<input class="hx" type="checkbox" switch tabindex="-1" aria-hidden="true">` : "";
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -547,7 +547,7 @@ function renderPlay(keepScroll) {
     if (keepScroll === "fb" && el) {
       const wrong = status && status !== "right", picked = fx && fx.oi !== undefined;
       // let the pop (or the shake) play while the other options fade and shrink, then fade the explanation in and glide down to it
-      settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
+      settle(el, !picked ? 300 : wrong && !reduceMotion() ? 540 : 440);
     }
   }
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
@@ -1233,7 +1233,7 @@ window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, 
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
 // iPhone Safari only shows a button's pressed look (:active) when the page listens for touches.
 document.addEventListener("touchstart", () => {}, { passive: true });
-HAPTIC = !!LS.get(K_HAPTIC, 0);
+HAPTIC = LS.get(K_HAPTIC, 1) !== 0;
 perfBoot();
 route();
 loadSamples().then(() => { route(); LIST_SHOWN = true; if (hasSW && navigator.serviceWorker.controller) checkFresh(); });

@@ -32,7 +32,7 @@
   /* One motion language. Three speeds: quick (a press answering the finger), move (something arriving or leaving),
      slow (a big settle). Two curves: out (fast start, soft landing) and spring (a small overshoot, for rewards).
      The streak reward, the timer and the looping effects keep their own tuned timings. */
-  --quick: .12s; --move: .3s; --slow: .46s;
+  --quick: .16s; --move: .42s; --slow: .64s;
   --out: cubic-bezier(.22,.8,.24,1); --spring: cubic-bezier(.3,1.5,.5,1);
   color-scheme: dark;
 }
@@ -134,15 +134,15 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .qcard.ghost { cursor: default; border-color: transparent; animation: breathe 1.3s ease-in-out infinite alternate; }
 @keyframes breathe { from { opacity: .35; } to { opacity: .9; } }
 @media (prefers-reduced-motion: no-preference) {
-  .grid.rise .qcard { animation: rise var(--slow) var(--out) calc(var(--i, 0) * 45ms) backwards; }
+  .grid.rise .qcard { animation: rise var(--slow) var(--out) calc(var(--i, 0) * 65ms) backwards; }
   .endcard > * { animation: rise var(--slow) var(--out) backwards; }
-  .endcard > :nth-child(2) { animation-delay: .09s; }
-  .endcard > :nth-child(3) { animation-delay: .18s; }
-  .endcard > :nth-child(4) { animation-delay: .27s; }
+  .endcard > :nth-child(2) { animation-delay: .13s; }
+  .endcard > :nth-child(3) { animation-delay: .26s; }
+  .endcard > :nth-child(4) { animation-delay: .39s; }
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
   /* screens flow into each other (see go in app.js): a quick cross-fade, and the quiz's name travels */
   ::view-transition { pointer-events: none; }
-  ::view-transition-old(root) { animation: vtout var(--quick) linear both; }
+  ::view-transition-old(root) { animation: vtout var(--move) var(--out) both; }
   ::view-transition-new(root) { animation: vtin var(--move) var(--out) both; }
   ::view-transition-group(qt) { animation-duration: var(--move); animation-timing-function: var(--out); }
   @keyframes vtout { to { opacity: 0; } }
