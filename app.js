@@ -9,7 +9,6 @@ const LS = {
   del(k) { try { localStorage.removeItem(k); } catch (e) {} }
 };
 const K_IMPORTED = "sb:imported";
-const progKey = id => "sb:progress:" + id;
 
 /* ---------------- helpers ---------------- */
 const $ = s => document.querySelector(s);
@@ -58,57 +57,9 @@ function toast(msg) {
   t.textContent = msg; t.hidden = false;
   clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600);
 }
-async function copyText(text, fallbackEl) {
-  try { await navigator.clipboard.writeText(text); toast("Copied"); return true; }
-  catch (e) {
-    if (fallbackEl) { const r = document.createRange(); r.selectNodeContents(fallbackEl); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
-    toast("Couldn't copy automatically. The text is selected: copy it from the menu.");
-    return false;
-  }
-}
-
-/* ---------------- fuzzy key-point matching (pre-ticks only; the reader confirms) ---------------- */
-function norm(s) { return (s || "").toLowerCase().replace(/[’'`]/g, "").replace(/[^a-z0-9.]+/g, " ").replace(/(\d)\.(\d)/g, "$1d$2").replace(/\./g, " ").replace(/\s+/g, " ").trim(); }
-function lev(a, b) { if (a === b) return 0; const m = a.length, n = b.length; if (!m) return n; if (!n) return m; let p = Array.from({ length: n + 1 }, (_, j) => j); for (let i = 1; i <= m; i++) { const c = [i]; for (let j = 1; j <= n; j++) c[j] = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); p = c; } return p[n]; }
-function wordHit(w, toks) {
-  const num = /\d/.test(w);
-  const tol = num ? 0 : (w.length >= 8 ? 2 : (w.length >= 5 ? 1 : 0));
-  for (const t of toks) {
-    if (t === w) return true;
-    if (num) continue;
-    if (w.length >= 3 && t.startsWith(w)) return true;
-    if (tol) { if (lev(w, t) <= tol) return true; if (t.length > w.length && lev(w, t.slice(0, w.length)) <= tol) return true; }
-  }
-  return false;
-}
-function phraseHit(phrase, toks) {
-  const pn = norm(phrase); if (!pn) return false;
-  const ws = pn.split(" ");
-  if (ws.length > 1) { const glued = ws.join(""); if (toks.some(t => t.startsWith(glued))) return true; }
-  return ws.every(w => wordHit(w, toks));
-}
-function kpHit(kp, toks) { return !!(kp.match && kp.match.length) && kp.match.some(alt => alt.split("+").every(term => phraseHit(term, toks))); }
-
 /* ---------------- validation ---------------- */
 const TYPES = ["text", "single", "multi", "number", "order"];
 const TYPE_ALIASES = { mcq: "single", choice: "single", radio: "single", checkbox: "multi", multiple: "multi", num: "number", numeric: "number", calc: "number", calculation: "number", typed: "text", open: "text", short: "text", rank: "order", sequence: "order" };
-
-function parseQuizText(raw) {
-  let s = String(raw || "").trim();
-  if (!s) return { error: "Nothing to import yet. Paste the quiz text the AI gave you, or choose the file." };
-  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fence) s = fence[1].trim();
-  const a = s.indexOf("{"), b = s.lastIndexOf("}");
-  if (a < 0 || b < a) return { error: "This doesn't look like a quiz. The quiz text starts with { and ends with }. Copy the whole code block the AI gave you." };
-  s = s.slice(a, b + 1);
-  const attempts = [s, s.replace(/,\s*([}\]])/g, "$1"), s.replace(/[“”]/g, '"').replace(/,\s*([}\]])/g, "$1")];
-  let firstErr;
-  for (const t of attempts) { try { return { data: JSON.parse(t) }; } catch (e) { if (!firstErr) firstErr = e; } }
-  let where = "";
-  const m = String(firstErr && firstErr.message).match(/position (\d+)/);
-  if (m) { const p = +m[1]; const line = s.slice(0, p).split("\n").length; where = " Around line " + line + ": “" + s.slice(Math.max(0, p - 40), p + 30).replace(/\s+/g, " ") + "”."; }
-  return { error: "The quiz text is incomplete or has a typo, so it can't be read." + where + " This usually means it was cut off while copying, or the AI's reply was too long. Copy the code block again, or ask the AI to send the JSON again in full." };
-}
 
 function validateQuiz(d) {
   const errs = [];
@@ -174,28 +125,10 @@ function validateQuiz(d) {
           if (!ids.length || ids.some(i => !(i >= 0 && i < opts.length))) errs.push(where + ": “correct” must be a list of the right options' numbers, counting from 0 (" + range + ").");
           Q.correct = ids.sort((a, b) => a - b);
         }
-      } else if (type === "number") {
-        const c = typeof q.correct === "string" ? parseFloat(q.correct.replace(/,/g, "")) : q.correct;
-        if (typeof c !== "number" || !isFinite(c)) { errs.push(where + ": “correct” must be a number, like 4.93 (no units or commas)."); return; }
-        Q.correct = c;
-        const tol = typeof q.tolerance === "string" ? parseFloat(q.tolerance) : q.tolerance;
-        Q.tolerance = typeof tol === "number" && isFinite(tol) && tol >= 0 ? tol : Math.max(Math.abs(c) * 0.005, 0.005);
-        Q.unit = isStr(q.unit) ? q.unit.trim() : "";
-        Q.acceptSign = q.acceptSign === true;
       } else if (type === "order") {
         const items = Array.isArray(q.items) ? q.items.map(x => String(x == null ? "" : x).trim()) : [];
         if (items.length < 2 || items.some(x => !x)) { errs.push(where + ": “items” needs at least two entries, listed in the correct order."); return; }
         Q.items = items;
-      } else {
-        const kps = Array.isArray(q.keyPoints) ? q.keyPoints : [];
-        Q.keyPoints = [];
-        kps.forEach((k, ki) => {
-          if (typeof k === "string" && k.trim()) Q.keyPoints.push({ text: k.trim(), match: [] });
-          else if (k && typeof k === "object" && isStr(k.text)) Q.keyPoints.push({ text: k.text.trim(), match: (Array.isArray(k.match) ? k.match : isStr(k.match) ? [k.match] : []).map(x => String(x).trim()).filter(Boolean) });
-          else errs.push(where + ", key point " + (ki + 1) + ": needs some “text”.");
-        });
-        const need = parseInt(q.need, 10);
-        Q.need = Q.keyPoints.length ? (need >= 1 ? Math.min(need, Q.keyPoints.length) : Q.keyPoints.length) : 0;
       }
       if (q.mcq !== undefined && q.mcq !== null) {
         const m = q.mcq, mo = m && Array.isArray(m.options) ? m.options.map(o => String(o == null ? "" : o).trim()) : [];
@@ -207,7 +140,7 @@ function validateQuiz(d) {
           if (!(i >= 0 && i < mo.length)) errs.push(where + ": in “mcq”, “correct” must be the number of the right option, counting from 0 (there are " + mo.length + " options, so 0 to " + (mo.length - 1) + ").");
           else Q.mcq = { prompt: isStr(m.prompt) ? m.prompt.trim() : "", options: mo, correct: i, why: isStr(m.why) ? m.why.trim() : "" };
         }
-      }
+      } else if (type === "text" || type === "number") errs.push(where + ": Kiron is tap-to-answer only. Make it a “single” question with four “options” (or give it an “mcq” with options).");
       S.questions.push(Q); total++;
     });
     out.sections.push(S);
@@ -219,7 +152,9 @@ function validateQuiz(d) {
 /* ---------------- quiz library ---------------- */
 let SAMPLES = [];   // [{file, quiz}]
 let samplesLoaded = false;
-const getImported = () => LS.get(K_IMPORTED, []);
+// Kiron is tap-only: a quiz saved on this device before that, with typed questions that have no tap form, is left out.
+const tapOnly = quiz => { try { return quiz.sections.every(s => s.questions.every(q => q.type === "single" || q.type === "multi" || q.type === "order" || q.mcq)); } catch (e) { return false; } };
+const getImported = () => LS.get(K_IMPORTED, []).filter(tapOnly);
 function allQuizzes() {
   const imp = getImported().map(q => ({ quiz: q, mine: true }));
   const ids = new Set(imp.map(x => x.quiz.id));
@@ -239,48 +174,12 @@ async function loadSamples() {
   samplesLoaded = true;
 }
 
-/* ---------------- settings: revision mode and view ---------------- */
-const K_SET = "kiron:settings", K_LOG = "kiron:log";
-const SET = Object.assign({ mode: null, view: null }, LS.get(K_SET, {}));
-const saveSet = () => LS.set(K_SET, SET);
-const MODES = {
-  early: { name: "Early revision", line: "Tap to answer. No typing or calculating." },
-  deep: { name: "In-depth revision", line: "Type your answers to test yourself." }
-};
-// Switched off for now: the typed "In-depth revision" mode and the activity log. Their code is still here;
-// set DEEP_ON / ACTIVITY_ON to true to bring them back (chooser, mode cards, activity screen).
-const DEEP_ON = false, ACTIVITY_ON = false;
-const mode = () => DEEP_ON && SET.mode === "deep" ? "deep" : "early";
-// Phone-only now: one layout everywhere (it still runs on a laptop, just at phone width).
-function applyView() { document.documentElement.dataset.view = "phone"; }
-
-/* ---------------- activity log (stays on this device; lets you see if you get past 3 questions) ---------------- */
-const SESSION_GAP = 30 * 60 * 1000;
-function logEvent(kind, quizId) {
-  if (!ACTIVITY_ON) return;
-  const log = LS.get(K_LOG, []);
-  const now = Date.now();
-  let s = log[log.length - 1];
-  if (!s || now - s.t1 > SESSION_GAP) { s = { t0: now, t1: now, n: 0, right: 0, skip: 0, mode: mode(), quiz: quizId }; log.push(s); }
-  s.t1 = now; s.mode = mode(); s.quiz = quizId;
-  if (kind === "skip") s.skip++; else { s.n++; if (kind === "right") s.right++; }
-  LS.set(K_LOG, log.slice(-80));
-}
-function logSummary() {
-  const log = LS.get(K_LOG, []).filter(s => s.n + s.skip > 0);
-  const today = new Date().toDateString();
-  const todayN = log.filter(s => new Date(s.t0).toDateString() === today).reduce((a, s) => a + s.n, 0);
-  const past3 = log.filter(s => s.n > 3).length;
-  const avg = log.length ? log.reduce((a, s) => a + s.n, 0) / log.length : 0;
-  return { log, todayN, past3, avg, best: log.reduce((a, s) => Math.max(a, s.n), 0) };
-}
-
 /* ---------------- progress + grading ---------------- */
 const ROUND = 7;
-const progKey2 = (id, m) => "sb:p2:" + id + ":" + m;
+const progKey = id => "sb:p2:" + id + ":early";   // ":early" is left from when there were two modes; kept so saved progress carries over
 const blankProg = () => ({ st: {}, a: {}, h: {}, n: {}, round: null, cur: null, seen: 0 });
-function getProg(id, m) { return Object.assign(blankProg(), LS.get(progKey2(id, m || mode()), {})); }
-function saveProg() { if (!current) return; current.P.seen = Date.now(); LS.set(progKey2(current.quiz.id, current.mode), current.P); }
+function getProg(id) { return Object.assign(blankProg(), LS.get(progKey(id), {})); }
+function saveProg() { if (!current) return; current.P.seen = Date.now(); LS.set(progKey(current.quiz.id), current.P); }
 const qid = (si, qi) => "s" + si + "q" + qi;
 function eachQ(quiz, fn) { quiz.sections.forEach((s, si) => s.questions.forEach((q, qi) => fn(q, qid(si, qi), si, qi))); }
 function getQ(quiz, id) { const m = id.match(/^s(\d+)q(\d+)$/); const si = +m[1], qi = +m[2]; return { q: quiz.sections[si].questions[qi], id, si, qi }; }
@@ -292,27 +191,15 @@ function shuffledOrder(seedStr, n) {
   return idx;
 }
 function orderStart(id, n) { const o = shuffledOrder(id, n); if (o.every((v, i) => v === i)) o.reverse(); return o; }
-function parseNum(v) { const s = String(v == null ? "" : v).replace(/,/g, "").replace(/[−–—]/g, "-"); const m = s.match(/-?\d*\.?\d+/); return m ? parseFloat(m[0]) : null; }
-function autoTicks(q, text) {
-  const toks = norm(text).split(" ").filter(Boolean); const out = [];
-  if (toks.length) q.keyPoints.forEach((k, i) => { if (kpHit(k, toks)) out.push(i); });
-  return out;
-}
-// How a question is shown in the current mode.
-function formOf(q, m) {
+// How a question is shown. Everything is tap-to-answer: "single" as it is; older typed questions ("text", "number")
+// through their tap form ("mcq"); "multi" and "order" as themselves.
+function formOf(q) {
   if (q.type === "single") return { kind: "pick", prompt: q.prompt, options: q.options, correct: q.correct, why: q.answer, more: "" };
-  if (m === "early") {
-    if (q.mcq) return { kind: "pick", prompt: q.mcq.prompt || q.prompt, options: q.mcq.options, correct: q.mcq.correct, why: q.mcq.why || q.answer, more: q.mcq.why ? q.answer : "", setup: q.type === "number" && !q.mcq.prompt };
-    if (q.type === "multi" || q.type === "order") return { kind: q.type, prompt: q.prompt };
-    return { kind: "flip", prompt: q.prompt };
-  }
+  if (q.mcq) return { kind: "pick", prompt: q.mcq.prompt || q.prompt, options: q.mcq.options, correct: q.mcq.correct, why: q.mcq.why || q.answer, more: q.mcq.why ? q.answer : "", setup: q.type === "number" && !q.mcq.prompt };
   return { kind: q.type, prompt: q.prompt };
 }
-const lacksTap = q => (q.type === "text" || q.type === "number") && !q.mcq;
 function gradeMulti(q, v) { const sel = new Set(v || []), cor = new Set(q.correct); let g = 0, b = 0; sel.forEach(i => cor.has(i) ? g++ : b++); if (g === cor.size && !b) return "right"; return (g - b) / cor.size >= 0.5 ? "partial" : "miss"; }
 function gradeOrder(q, ord) { let k = 0; ord.forEach((it, i) => { if (it === i) k++; }); return k === q.items.length ? "right" : (k / q.items.length >= 0.5 ? "partial" : "miss"); }
-function gradeNumber(q, v) { const x = parseNum(v); if (x === null) return "miss"; let ok = Math.abs(x - q.correct) <= q.tolerance + 1e-9; if (!ok && q.acceptSign) ok = Math.abs(Math.abs(x) - Math.abs(q.correct)) <= q.tolerance + 1e-9; return ok ? "right" : "miss"; }
-function gradeTicks(q, ticks) { const n = ticks.length, need = q.need || q.keyPoints.length; return n >= need ? "right" : (n > 0 && n >= need / 2 ? "partial" : "miss"); }
 function counts(quiz, P, si) {
   const c = { right: 0, revisit: 0, skip: 0, left: 0, total: 0 };
   eachQ(quiz, (q, id, s) => { if (si !== undefined && s !== si) return; c.total++; const v = P.st[id]; if (v === "right") c.right++; else if (v === "partial" || v === "miss") c.revisit++; else if (v === "skip") c.skip++; else c.left++; });
@@ -356,11 +243,11 @@ function buildReview(quiz, P, si) {
 }
 
 /* ---------------- routing ---------------- */
-let current = null; // { quiz, mine, P, mode }
+let current = null; // { quiz, mine, P }
 const app = () => $("#app");
 function openQuiz(id) {
   const found = findQuiz(id); if (!found) return null;
-  current = { quiz: found.quiz, mine: found.mine, mode: mode(), P: getProg(found.quiz.id) };
+  current = { quiz: found.quiz, mine: found.mine, P: getProg(found.quiz.id) };
   return current;
 }
 function route() {
@@ -370,13 +257,9 @@ function route() {
     // Leaving the quiz ends the streak.
     if (current && current.P.round && current.P.round.streak) { current.P.round.streak = 0; saveProg(); }
   }
-  applyView();
   document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
-  if (DEEP_ON && !SET.mode) return renderChooser();
-  if (h === "import") return renderImport();
-  if (h === "make") return renderMake();
-  if (ACTIVITY_ON && h === "activity") return renderActivity();
+  if (h === "import" || h === "make") return renderExtra(h);
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
     if (openQuiz(m[2])) return m[1] === "play" ? renderPlay() : renderHome();
@@ -390,37 +273,17 @@ function go(h, rep) { if (location.hash === "#" + h || (!h && !location.hash)) {
 window.addEventListener("hashchange", () => { cancelScroll(); route(); window.scrollTo(0, 0); });
 const topBar = (left, title, right) => `<header class="top"><div class="top-in">${left || ""}${title}${right || ""}</div></header>`;
 const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" aria-label="${label || "Back to library"}" type="button">←</button>`;
-const seg = (name, cur, opts) => `<div class="seg" role="group" aria-label="${name}">${opts.map(o => `<button type="button" class="${o[0] === cur ? "on" : ""}" aria-pressed="${o[0] === cur}" data-set-${name}="${o[0]}">${o[1]}</button>`).join("")}</div>`;
-const modeCards = () => `<div class="modes">${Object.keys(MODES).map(k => `<button type="button" class="mode${SET.mode === k ? " on" : ""}" aria-pressed="${SET.mode === k}" data-set-mode="${k}"><b>${MODES[k].name}</b><span>${MODES[k].line}</span></button>`).join("")}</div>`;
-
-/* ---------------- first launch ---------------- */
-function renderChooser() {
-  current = null; document.title = "Kiron";
-  app().innerHTML = `<main class="wrap chooser">
-    <div class="brand big"><img src="icon-192.png" alt="">Kiron</div>
-    <h2 tabindex="-1">How do you want to revise today?</h2>
-    ${modeCards()}
-    <p class="note">Both use the same questions. You can switch whenever you like.</p>
-  </main>`;
-}
-
 /* ---------------- library: just the list ---------------- */
-const viewBtn = () => "";
 function renderLibrary() {
   current = null; document.title = "Kiron";
   const list = allQuizzes();
-  app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`, viewBtn()) + `
+  app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    <div class="grid">${list.length ? list.map(x => `<button class="card qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
+    <div class="grid">${list.length ? list.map(x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
-function segBar(c) {
-  const w = n => (c.total ? 100 * n / c.total : 0) + "%";
-  return `<div class="bar3" role="img" aria-label="${c.right} got, ${c.revisit} to revisit, ${c.skip} skipped, ${c.left} to go"><i class="g" style="width:${w(c.right)}"></i><i class="r" style="width:${w(c.revisit)}"></i><i class="s" style="width:${w(c.skip)}"></i></div>`;
-}
-
 /* ---------------- quiz home: one button, a hidden part list, reset ---------------- */
 function renderHome() {
   const { quiz, P, mine } = current;
@@ -440,7 +303,7 @@ function renderHome() {
       : `${st[0] === "some" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Continue</button>` : ""}${answered ? `<button class="btn" data-act="partreview" data-pi="${i}" type="button">Review</button>` : ""}<button class="btn ghost" data-act="partredo" data-pi="${i}" type="button">Redo</button>`;
     return `<div class="part"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button><div class="unfurl" inert><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div>`;
   }).join("");
-  app().innerHTML = topBar(backBtn(), `<span class="grow"></span>`, viewBtn()) + `
+  app().innerHTML = topBar(backBtn(), `<span class="grow"></span>`) + `
   <main class="wrap home">
     <h1 class="qtitle">${esc(quiz.title)}</h1>
     <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
@@ -464,7 +327,6 @@ function startRound(opt) {
 // Time per question scales with how much there is to read: 12s thinking + 0.35s per word, at least 20s, at most 60s (ordering and multi-select x1.5).
 const TIME = { base: 12000, perWord: 350, min: 20000, max: 60000, mult: { multi: 1.5, order: 1.5 }, fixed: null };
 function durFor(q, f) {
-  if (!(f.kind in { pick: 1, flip: 1, multi: 1, order: 1 })) return 0;
   if (TIME.fixed) return TIME.fixed;
   const parts = [f.prompt || "", ...(f.options || q.options || q.items || [])].join(" ").replace(/<[^>]*>/g, " ");
   const words = (parts.match(/\S+/g) || []).length;
@@ -474,7 +336,6 @@ function durFor(q, f) {
 let TIMER = null;   // { id, dur, t0, pausedAt, to }
 // The timer always plays by default. Pause holds only the question you are on; the next question starts playing again.
 let PAUSED = false;
-if ("paused" in SET) { delete SET.paused; saveSet(); }
 function clearTimer() { if (TIMER) { clearTimeout(TIMER.to); TIMER = null; } }
 function timerElapsed() { return TIMER ? (TIMER.pausedAt || Date.now()) - TIMER.t0 : 0; }
 function armTimer() {
@@ -496,7 +357,6 @@ document.addEventListener("visibilitychange", () => {
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 function renderPlay(keepScroll) {
   const { quiz, P } = current;
   const r = P.round;
@@ -507,12 +367,12 @@ function renderPlay(keepScroll) {
   const { q, id } = getQ(quiz, r.ids[r.i]);
   if (!P.cur || P.cur.id !== id) {
     const was = r.res[id];
-    P.cur = was && was !== "skip" ? { id, done: true, status: was, revealed: true, ticks: [] } : { id, done: false };
+    P.cur = was && was !== "skip" ? { id, done: true, status: was } : { id, done: false };
   }
-  const cur = P.cur, f = formOf(q, current.mode);
+  const cur = P.cur, f = formOf(q);
   const fx = FX && FX.id === id ? FX : null; FX = null;
   // Pause keeps the timer where it is: the bar freezes and Play carries on from the same spot.
-  const timedDur = !cur.done && !r.review && !cur.revealed ? durFor(q, f) : 0;
+  const timedDur = !cur.done && !r.review ? durFor(q, f) : 0;
   if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); const now = Date.now(); PAUSED = false; TIMER = { id, dur: timedDur, t0: now, pausedAt: 0, to: null }; } } else clearTimer();
   const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
@@ -520,13 +380,13 @@ function renderPlay(keepScroll) {
   const a = P.a[id];
   if (f.kind === "pick") {
     const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
-    input = `<div class="opts" role="group" aria-label="Options">` + ord.map((oi, pos) => {
+    input = `<div class="opts" role="group" aria-label="Options">` + ord.map(oi => {
       let cls = "opt", ic = "";
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " shake";
-      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}><span class="k${ic ? " ic" : ""}">${ic || pos + 1}</span><span>${fmt(f.options[oi])}</span></button>`;
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span></button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
     const sel = a || [];
@@ -544,40 +404,20 @@ function renderPlay(keepScroll) {
       return `<li data-it="${it}" class="${cur.done ? (ok ? "ok" : "wrong") : ""}">${cur.done ? "" : `<span class="grip" aria-hidden="true">⠿</span>`}<span class="p">${cur.done ? (ok ? "✓" : "✕") : pos + 1}</span><span class="t">${fmt(q.items[it])}</span>${cur.done ? "" : `<button class="mv up" type="button" data-mv="-1" aria-label="Move up"${pos === 0 ? " disabled" : ""}>▲</button><button class="mv dn" type="button" data-mv="1" aria-label="Move down"${pos === ord.length - 1 ? " disabled" : ""}>▼</button>`}</li>`;
     }).join("") + `</ol>`;
     primary = "check";
-  } else if (f.kind === "flip") {
-    input = cur.revealed ? "" : `<p class="lead">Say the answer in your head, then flip.</p>`;
-    primary = cur.revealed ? "" : "flip";
-  } else if (f.kind === "text") {
-    input = `<textarea id="ans" data-in="1" placeholder="Type what you remember. Rough is fine." aria-label="Your answer"${cur.done ? " readonly" : ""}>${esc(a || "")}</textarea>`;
-    primary = cur.revealed ? "" : "check";
-  } else if (f.kind === "number") {
-    input = `<div class="row"><input class="num" id="ans" type="text" inputmode="decimal" autocomplete="off" data-in="1" value="${esc(a || "")}" placeholder="Your answer" aria-label="Your answer"${cur.done ? " readonly" : ""}>${q.unit ? `<span class="unit">${esc(q.unit)}</span>` : ""}</div>`;
-    primary = "check";
   }
   const hint = q.hint && P.h[id] ? `<div class="hint"><b>Hint</b>${fmt(q.hint)}</div>` : "";
   // feedback: the explanation only (no verdict banner)
   let fb = "";
-  if (cur.done || cur.revealed) {
-    let detail = "", why = f.kind === "pick" ? f.why : q.answer, more = f.kind === "pick" ? f.more : "";
-    if (f.kind === "text" && q.keyPoints.length) {
-      const ticks = cur.ticks || [], need = q.need || q.keyPoints.length;
-      detail = `<p class="lead">Tick what you covered${need < q.keyPoints.length ? ` (${need} of ${q.keyPoints.length} is enough)` : ""}:</p><div class="kps">` + q.keyPoints.map((k, i) => `<button type="button" class="kp${ticks.includes(i) ? " on" : ""}" data-kp="${i}" aria-pressed="${ticks.includes(i)}"><span class="k box">${ticks.includes(i) ? "✓" : ""}</span><span>${fmt(k.text)}</span></button>`).join("") + `</div>`;
-    } else if (f.kind === "number") {
-      const x = parseNum(a);
-      detail = `<div class="yours">You: <b>${x === null ? "no answer" : esc(String(x))}</b> · Answer: <b>${esc(String(q.correct))}${q.unit ? " " + esc(q.unit) : ""}</b></div>${status !== "right" ? `<button class="btn small ghost" type="button" data-act="ihadit">I had this</button>` : ""}`;
-    } else if (f.kind === "order" && status !== "right") {
-      detail = `<div class="yours">Right order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>`;
-    }
-    const selfMark = (f.kind === "flip" || (f.kind === "text" && !q.keyPoints.length)) ? `<p class="lead">How did you do?</p><div class="selfmark">${[["right", "Got it"], ["partial", "Nearly"], ["miss", "Not yet"]].map(k => `<button class="btn${status === k[0] ? " on" : ""}" type="button" data-self="${k[0]}">${k[1]}</button>`).join("")}</div>` : "";
-    fb = `<section class="fb ${status || "open"}${keepScroll === "fb" && !reduceMotion() ? " wait" : ""}" aria-live="polite">${detail}<div class="model"><span class="k">${f.kind === "pick" || f.kind === "multi" || f.kind === "order" ? "Why" : "Answer"}</span>${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}${selfMark}</section>`;
+  if (cur.done) {
+    const why = f.kind === "pick" ? f.why : q.answer, more = f.kind === "pick" ? f.more : "";
+    const detail = f.kind === "order" && status !== "right" ? `<div class="yours">Right order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>` : "";
+    fb = `<section class="fb ${status}${keepScroll === "fb" && !reduceMotion() ? " wait" : ""}" aria-live="polite">${detail}<div class="model">${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}</section>`;
   }
-  const needsSelf = (cur.revealed && !cur.done);
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
   const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
-  const nudge = status && status !== "right" ? " pulse" : "";
   const bar = cur.done
-    ? `${back}<button class="btn primary grow${nudge}" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
-    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : primary === "flip" ? `<button class="btn primary grow" data-act="flip" type="button">Show answer</button>` : needsSelf ? `<span class="grow note">Mark yourself to continue</span>` : ""}`;
+    ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
+    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow" data-act="check" type="button">Check</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number";
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
@@ -684,7 +524,7 @@ function settle(fb, delay) {
     SETTLE = 0;
     if (!fb.isConnected) return;
     const keepEl = app().querySelector(".opt.ok, .opt.wrong, .order") || fb;
-    fb.style.animation = "none"; fb.classList.remove("wait");
+    fb.classList.remove("wait");
     if (!reduceMotion() && fb.animate) fb.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.25,.6,.3,1)", fill: "backwards" });
     reveal(fb, keepEl);
   }, delay);
@@ -715,23 +555,22 @@ function burst(el) {
    A wrong answer, or leaving the quiz, cools it back. */
 const BLACK_FIRE = 15, STAGES = [3, 5, 8, 11, BLACK_FIRE, 20, 25, 30];
 const heatLevel = n => { let l = 0; STAGES.forEach((t, i) => { if (n >= t) l = i + 1; }); return l; };
-const HEAT_COL = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b", "#9b7bff", "#dfe7ff", "#fff1c9"];
-const PILL_BG = ["#faf9f5", "#f0b23a", "#ffcf3f", "#ffe9a3", "#ffffff", "#0b0b0b", "linear-gradient(100deg,#7c5cff,#c86bd1 55%,#4fb6c9)", "#dfe7ff", "linear-gradient(100deg,#fff1c9,#ffffff 45%,#c9b8ff)"];
 // The flame: two shapes, an outer tongue and a hot core, that flicker out of step. From 25 it becomes a star; at 30 a ringed star.
 // Each moving part is its own small SVG stacked in an HTML box, and the flicker, twinkle and orbit move those boxes
 // (transform only), so iPhone Safari runs them on the GPU instead of repainting the inside of an SVG every frame.
 const STAR_D = "M0-11C1.1-3.2 3.2-1.1 11 0C3.2 1.1 1.1 3.2 0 11C-1.1 3.2-3.2 1.1-11 0C-3.2-1.1-1.1-3.2 0-11Z";
 function heatIcon(l) {
-  if (l >= 6) gooDefs();
+  if (l >= 6) gradDefs();
   if (l >= 8) { const sv = (c, inner) => `<svg${c ? ` class="${c}"` : ""} viewBox="-14 -14 28 28" aria-hidden="true">${inner}</svg>`;
     return `<span class="kstar ringed" aria-hidden="true">${sv("kr", `<ellipse class="ring" rx="12.5" ry="4.2" transform="rotate(-22)"/>`)}${sv("ks", `<path class="s" d="${STAR_D}"/>`)}${sv("kc", `<circle class="core" r="1.8"/>`)}<span class="kmo"><span class="moon">${sv("", `<circle cx="12.5" r="4.4"/>`)}</span></span></span>`; }
   if (l >= 7) return `<svg class="kstar" viewBox="-14 -14 28 28" aria-hidden="true"><path class="s" d="${STAR_D}"/><circle class="core" r="1.8"/></svg>`;
   return `<span class="kf" aria-hidden="true"><svg class="o" viewBox="0 0 24 32"><path d="M12 1.5c1.2 6.2 7.5 9.6 7.5 18a7.5 7.5 0 0 1-15 0c0-4.1 2-6.9 3.7-8.4.3 2.5 1.4 3.8 2.8 4.3C10.4 10.6 10.8 5.7 12 1.5z"/></svg><svg class="c" viewBox="0 0 24 32"><path d="M12.2 14.5c.7 3 4.1 4.7 4.1 8.4a4.3 4.3 0 0 1-8.6 0c0-2.1 1-3.4 2.1-4.2.2 1.1.8 1.7 1.4 1.9-.2-2.4.2-4.3 1-6.1z"/></svg></span>`;
 }
-function gooDefs() {
-  if ($("#kgoo-svg")) return;
+// Two colour gradients the flame and the ringed star are filled with (nebula at 20, gold at 30).
+function gradDefs() {
+  if ($("#kgrad-svg")) return;
   const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg");
-  svg.id = "kgoo-svg"; svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.setAttribute("aria-hidden", "true"); svg.style.position = "absolute";
+  svg.id = "kgrad-svg"; svg.setAttribute("width", "0"); svg.setAttribute("height", "0"); svg.setAttribute("aria-hidden", "true"); svg.style.position = "absolute";
   svg.innerHTML = `<defs>
     <linearGradient id="kneb" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#4fb6c9"/><stop offset=".5" stop-color="#c86bd1"/><stop offset="1" stop-color="#7c5cff"/></linearGradient>
     <linearGradient id="kgold" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#c9b8ff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient></defs>`;
@@ -752,7 +591,7 @@ function placeSky(lvl, fresh) {
   const top = $(".top.play .top-in"), dots = $(".dots"); if (!top || !dots) return;
   let sky = top.querySelector(".sky");
   if (lvl < 6) { if (sky) sky.remove(); return; }
-  gooDefs();
+  gradDefs();
   const t = top.getBoundingClientRect(), d = dots.getBoundingClientRect(), W = Math.round(d.width + 40), H = 56;
   if (!sky) { sky = document.createElement("span"); sky.className = "sky"; sky.setAttribute("aria-hidden", "true"); sky.dataset.keep = "1"; top.prepend(sky); }
   const css = `left:${d.left - t.left - 20}px;top:${d.top - t.top + d.height / 2 - H / 2}px;width:${W}px;height:${H}px`;
@@ -931,7 +770,7 @@ function finalize(status) {
   P.cur.done = true; P.cur.status = status;
   P.st[id] = status; r.res[id] = status;
   if (first) {
-    r.streak = status === "right" ? (r.streak || 0) + 1 : 0; r.best = Math.max(r.best || 0, r.streak); logEvent(status === "right" ? "right" : "other", quiz.id);
+    r.streak = status === "right" ? (r.streak || 0) + 1 : 0; r.best = Math.max(r.best || 0, r.streak);
     FX = { id, kind: status === "right" ? "right" : "wrong" };
   }
   else if (status !== "right") r.streak = 0;
@@ -943,7 +782,7 @@ function nav(dir) {
   const { quiz, P } = current, r = P.round; if (!r || r.ended || r.i >= r.ids.length) return;
   const id = r.ids[r.i];
   if (dir < 0) { if (r.i === 0) return; r.i--; P.cur = null; DIR = -1; saveProg(); return renderPlay(); }
-  if (!r.review && (!P.cur || !P.cur.done)) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; logEvent("skip", quiz.id); }
+  if (!r.review && (!P.cur || !P.cur.done)) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; }
   if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go("quiz-" + quiz.id, true); }
   r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) { r.ended = true; }
   saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true });
@@ -951,27 +790,19 @@ function nav(dir) {
 function playAct(act, el) {
   const { quiz, P } = current, r = P.round; if (!r) return;
   if (r.ended || r.i >= r.ids.length) return;
-  const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q, current.mode);
-  if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; buzz(ok ? 12 : [30, 40, 30]); return renderPlay("fb"); }
+  const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q);
+  if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; return renderPlay("fb"); }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
   if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) reveal(h, $(".opts, .order") || $("#qprompt")); return; }
   if (act === "pause") { if (cur.done) return; PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
   if (act === "back") return nav(-1);
-  if (act === "flip") { cur.revealed = true; saveProg(); return renderPlay("fb"); }
-  if (act === "self") { finalize(el.dataset.self); return renderPlay(true); }
   if (act === "check") {
     if (cur.done) return;
-    if (f.kind === "multi") { finalize(gradeMulti(q, P.a[id])); buzz(12); }
+    if (f.kind === "multi") finalize(gradeMulti(q, P.a[id]));
     else if (f.kind === "order") { if (!P.a[id]) P.a[id] = orderStart(id, q.items.length); finalize(gradeOrder(q, P.a[id])); }
-    else if (f.kind === "number") finalize(gradeNumber(q, P.a[id]));
-    else if (f.kind === "text") {
-      if (q.keyPoints.length) { cur.ticks = autoTicks(q, P.a[id]); finalize(gradeTicks(q, cur.ticks)); }
-      else { cur.revealed = true; saveProg(); }
-    }
+    else return;
     return renderPlay("fb");
   }
-  if (act === "kp") { const i = +el.dataset.kp, s = new Set(cur.ticks || []); s.has(i) ? s.delete(i) : s.add(i); cur.ticks = [...s].sort((x, y) => x - y); finalize(gradeTicks(q, cur.ticks)); renderPlay(true); const b = app().querySelector(`[data-kp="${i}"]`); if (b) b.focus(); return; }
-  if (act === "ihadit") { finalize("right"); return renderPlay(true); }
   if (act === "next") { if (!cur.done) return; return nav(1); }
 }
 
@@ -999,7 +830,7 @@ function flash(li, cls) { cls = cls || "moved"; li.classList.remove(cls); void l
 function arrowMove(btn) {
   const li = btn.closest("li"), ol = li.parentElement, dir = +btn.dataset.mv, i = [...ol.children].indexOf(li), other = ol.children[i + dir];
   if (!moveLi(ol, li, i + dir, li)) return;
-  syncOrder(ol, true); flash(li); if (other) flash(other, "nudged"); buzz(8);
+  syncOrder(ol, true); flash(li); if (other) flash(other, "nudged");
   const nb = li.querySelector(btn.classList.contains("up") ? ".up" : ".dn"); (nb && !nb.disabled ? nb : li.querySelector(".mv:not(:disabled)")) ?.focus({ preventScroll: true });
 }
 document.addEventListener("pointerdown", e => {
@@ -1017,7 +848,6 @@ document.addEventListener("pointerdown", e => {
     ol.insertBefore(li, to > from ? other.nextSibling : other);
     order.splice(from, 1); order.splice(to, 0, li);
     if (!reduceMotion()) other.animate([{ transform: `translateY(${shift}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.3,.7,.2,1)" });
-    buzz(6);
   };
   let lastY = startY, raf = 0;
   const place = () => {
@@ -1044,9 +874,9 @@ document.addEventListener("pointerup", e => {
   const d = tapDown; tapDown = null;
   if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
   const t = e.target && e.target.closest ? e.target : null; if (!t) return;
-  if (t.closest("a, input, textarea, label, summary, .actionbar, .top, .toast, .kp, .selfmark, .grip, .mv, [data-act], [data-self], [data-kp], [data-go]")) return;
+  if (t.closest("a, summary, .actionbar, .top, .toast, .grip, .mv, [data-act], [data-go]")) return;
   // Answer options, the ordering list and the hint never navigate, answered or not.
-  if (t.closest(".opt, .order, .hint, .kps, .sky")) return;
+  if (t.closest(".opt, .order, .hint, .sky")) return;
   const dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Date.now() - d.t;
   if (Math.abs(dx) > 10 || Math.abs(dy) > 10 || dt > 450) return;
   if (String(getSelection && getSelection())) return;
@@ -1093,104 +923,14 @@ function renderRoundEnd() {
   }
 }
 
-/* ---------------- activity ---------------- */
-function renderActivity() {
-  current = null; document.title = "Activity · Kiron";
-  const s = logSummary(), rows = s.log.slice(-12).reverse();
-  const fmtD = t => new Date(t).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
-  const text = "Kiron activity\nSessions: " + s.log.length + "\nSessions past 3 questions: " + s.past3 + "\nAverage questions per session: " + s.avg.toFixed(1) + "\nBest session: " + s.best + "\n" + rows.map(r => `${fmtD(r.t0)} | ${r.n} answered, ${r.right} got, ${r.skip} skipped | ${Math.max(1, Math.round((r.t1 - r.t0) / 60000))} min | ${MODES[r.mode] ? MODES[r.mode].name : r.mode}`).join("\n");
-  app().innerHTML = topBar(backBtn(), `<h1>Activity</h1>`) + `<main class="wrap">
-    <div class="page-h"><h2 tabindex="-1">Did it hold your attention?</h2><p>A session is one sitting (a 30-minute gap starts a new one). This log never leaves your device.</p></div>
-    <div class="big3 card"><div><b>${s.past3}<small>/${s.log.length}</small></b><span>sessions past 3 questions</span></div><div><b>${s.avg.toFixed(1)}</b><span>questions per session</span></div><div><b>${s.best}</b><span>best session</span></div></div>
-    ${rows.length ? `<div class="card"><table class="log"><thead><tr><th>When</th><th>Answered</th><th>Got</th><th>Skipped</th><th>Min</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(fmtD(r.t0))}</td><td>${r.n}</td><td>${r.right}</td><td>${r.skip}</td><td>${Math.max(1, Math.round((r.t1 - r.t0) / 60000))}</td></tr>`).join("")}</tbody></table></div>
-    <div class="row"><button class="btn" id="act-copy" type="button">Copy my activity</button></div><pre class="prompt-text" id="act-text" hidden>${esc(text)}</pre>` : `<p class="empty">Nothing yet. Answer a few questions and come back.</p>`}
-  </main>`;
-  const b = $("#act-copy"); if (b) b.onclick = () => { $("#act-text").hidden = false; copyText(text, $("#act-text")); };
-}
-
-/* ---------------- share / add tap options ---------------- */
-function exportQuiz(q) { return JSON.stringify(q, null, 1); }
-function sheet(title, bodyHTML, text, copyLabel) {
-  const old = $("#sheet"); if (old) old.remove();
-  const box = document.createElement("div"); box.className = "card sheet"; box.id = "sheet";
-  box.innerHTML = `<b>${esc(title)}</b>${bodyHTML}<div class="row"><button class="btn primary" type="button" id="sheet-copy">${copyLabel}</button><button class="btn ghost" type="button" id="sheet-close">Close</button></div><pre class="prompt-text" id="sheet-text">${esc(text.length > 6000 ? text.slice(0, 6000) + "\n… (the Copy button copies all of it)" : text)}</pre>`;
-  app().querySelector("main").prepend(box); window.scrollTo(0, 0);
-  $("#sheet-copy").onclick = () => copyText(text, $("#sheet-text"));
-  $("#sheet-close").onclick = () => box.remove();
-}
-function shareQuiz() { const { quiz } = current; sheet("Share “" + quiz.title + "”", `<p class="note">Send this quiz text to a friend. They open Kiron, tap <b>Import a quiz</b> and paste it. Your answers aren't included.</p>`, exportQuiz(quiz), "Copy quiz text"); }
-function addTapPrompt(quiz) { return (window.SB_PROMPT_ADD || "") + "\n\n" + exportQuiz(quiz); }
-
-/* ---------------- import ---------------- */
-function renderImport() {
-  current = null; document.title = "Import a quiz · Kiron";
-  app().innerHTML = topBar(backBtn(), `<h1>Import a quiz</h1>`) + `<main class="wrap">
-    <div class="page-h"><h2 tabindex="-1">Add a quiz</h2><p>Paste the quiz text an AI made for you (see <a href="#make">Make a quiz</a>), or one a friend sent you. You can also open a <b>.json</b> quiz file.</p></div>
-    <textarea id="imp-text" class="mono" placeholder='Paste here. It starts with {"format": "study-buddy-quiz", …' aria-label="Quiz text"></textarea>
-    <div class="row">
-      <button class="btn primary" id="imp-go" type="button">Import</button>
-      <label class="btn file-btn" for="imp-file">Open a file…<input type="file" id="imp-file" accept=".json,.txt,application/json,text/plain"></label>
-    </div>
-    <div id="imp-out" aria-live="polite"></div>
-    <p class="note">The quiz is stored on this device only. To use it on another phone, share it from the quiz screen.</p>
-  </main>`;
-  $("#imp-go").onclick = () => doImport($("#imp-text").value);
-  $("#imp-file").onchange = e => {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
-    if (f.size > 3e6) { showImportErrors(["That file is too big to be a quiz (over 3 MB)."]); return; }
-    const r = new FileReader(); r.onload = () => { $("#imp-text").value = r.result; doImport(r.result); }; r.readAsText(f);
-  };
-}
-function showImportErrors(errs) {
-  const shown = errs.slice(0, 12);
-  const forAI = "The quiz JSON you gave me has these problems. Please fix them and send the complete corrected JSON in one code block:\n- " + errs.join("\n- ");
-  $("#imp-out").innerHTML = `<div class="errors"><b>${errs.length === 1 ? "One thing to fix" : errs.length + " things to fix"}</b><ul>${shown.map(e => `<li>${esc(e)}</li>`).join("")}${errs.length > shown.length ? `<li>…and ${errs.length - shown.length} more.</li>` : ""}</ul>
-    <span>Easiest fix: copy these problems back to the AI that made the quiz and ask it to correct them.</span>
-    <div><button class="btn small" id="imp-copyerr" type="button">Copy problems for the AI</button></div></div>`;
-  $("#imp-copyerr").onclick = () => copyText(forAI);
-}
-function doImport(raw) {
-  const p = parseQuizText(raw);
-  if (p.error) return showImportErrors([p.error]);
-  const v = validateQuiz(p.data);
-  if (v.errors) return showImportErrors(v.errors);
-  const quiz = v.quiz;
-  const clash = getImported().find(q => q.id === quiz.id) || SAMPLES.find(s => s.quiz.id === quiz.id);
-  let n = 0, noTap = 0; eachQ(quiz, q => { n++; if (lacksTap(q)) noTap++; });
-  $("#imp-out").innerHTML = `<div class="ok-box"><b>Looks good: “${esc(quiz.title)}”</b><span>${n} questions in ${quiz.sections.length} ${quiz.sections.length === 1 ? "part" : "parts"}.</span>
-    ${noTap ? `<span><b>${noTap} ${noTap === 1 ? "question has" : "questions have"} no tap options</b>, so in Early revision ${noTap === 1 ? "it will show as a flip card" : "they will show as flip cards"}. You can save it as it is, or ask an AI to add them first.</span><div><button class="btn small" id="imp-addtap" type="button">Copy a prompt to add tap options</button></div>` : ""}
-    ${clash ? `<span>You already have a quiz with this name.</span><div class="row"><button class="btn primary" id="imp-replace" type="button">Replace it</button><button class="btn" id="imp-both" type="button">Keep both</button></div>` : `<div class="row"><button class="btn primary" id="imp-save" type="button">Save and open</button></div>`}</div>`;
-  const save = asNew => {
-    let list = getImported();
-    if (asNew) { let k = 2; while (allQuizzes().some(x => x.quiz.id === quiz.id + "-" + k)) k++; quiz.id = quiz.id + "-" + k; quiz.title = quiz.title + " (" + k + ")"; }
-    list = list.filter(q => q.id !== quiz.id); list.unshift(quiz);
-    if (!LS.set(K_IMPORTED, list)) { showImportErrors(["This device's storage is full or blocked (private browsing?), so the quiz couldn't be saved."]); return; }
-    toast("Saved"); go("quiz-" + quiz.id, true);
-  };
-  if ($("#imp-save")) $("#imp-save").onclick = () => save(false);
-  if ($("#imp-replace")) $("#imp-replace").onclick = () => save(false);
-  if ($("#imp-both")) $("#imp-both").onclick = () => save(true);
-  if ($("#imp-addtap")) $("#imp-addtap").onclick = () => copyText(addTapPrompt(quiz));
-}
-
-/* ---------------- make a quiz (prompt) ---------------- */
-function renderMake() {
-  current = null; document.title = "Make a quiz · Kiron";
-  const prompt = window.SB_PROMPT || "";
-  app().innerHTML = topBar(backBtn(), `<h1>Make a quiz</h1>`) + `<main class="wrap">
-    <div class="page-h"><h2 tabindex="-1">Turn your notes into a quiz</h2><p>Kiron has no AI of its own. Any AI chat can write the quiz for you, and this prompt tells it exactly how. About two minutes.</p></div>
-    <ol class="steps">
-      <li><div><b>Copy the prompt</b><span>The button below copies it.</span></div></li>
-      <li><div><b>Open ChatGPT, Claude or Gemini</b><span>The free version is fine. Paste the prompt and attach your PDF, slides or Word file.</span></div></li>
-      <li><div><b>Answer its two questions</b><span>What you're reading it for, and how long a quiz you want.</span></div></li>
-      <li><div><b>Copy the code block it gives back</b><span>All of it, from the first { to the last }.</span></div></li>
-      <li><div><b>Import it here</b><span>Tap <b>Import a quiz</b> and paste. If something's off, Kiron tells you what to ask the AI to fix.</span></div></li>
-    </ol>
-    <div class="row"><button class="btn primary" id="mk-copy" type="button">Copy the prompt</button><button class="btn" data-go="import" type="button">Import a quiz</button></div>
-    <details class="how"><summary>Read the prompt</summary><pre class="prompt-text" id="mk-text">${esc(prompt)}</pre></details>
-    <p class="note">Big file? Upload a chapter at a time and make one quiz per part.</p>
-  </main>`;
-  $("#mk-copy").onclick = () => { document.querySelector("details.how").open = true; copyText(prompt, $("#mk-text")); };
+/* ---------------- import / make a quiz: hidden screens (#import, #make) ----------------
+   Their code (import.js) and the prompt text (prompt.js) are fetched only when one of them is opened. */
+let extras = null;
+const loadScript = src => new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = no; document.head.append(el); });
+function renderExtra(name) {
+  current = null;
+  if (!extras) extras = Promise.all([loadScript("prompt.js"), loadScript("import.js")]);
+  extras.then(() => { if (location.hash === "#" + name) window.KironExtra[name](); }, () => { extras = null; toast("That screen couldn't load. Check your connection."); renderLibrary(); });
 }
 
 /* ---------------- events ---------------- */
@@ -1208,15 +948,12 @@ function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000)
 document.addEventListener("click", e => {
   const t = e.target.closest("button, a, [data-go]"); if (!t) return;
   const d = t.dataset;
-  if (d.setMode && DEEP_ON) { const first = !SET.mode; SET.mode = d.setMode; saveSet(); if (current) { current.mode = mode(); current.P = getProg(current.quiz.id); } route(); if (first) window.scrollTo(0, 0); else toast(MODES[SET.mode].name + " is on"); return; }
   if (d.go !== undefined) { go(d.go, d.replace !== undefined); return; }
-  if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); ["early", "deep"].forEach(m => LS.del(progKey2(d.del, m))); toast("Deleted"); go(""); return; }
+  if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
   if (d.toggle !== undefined) return playAct("toggle", t);
   if (d.mv !== undefined) return arrowMove(t);
-  if (d.kp !== undefined) return playAct("kp", t);
-  if (d.self) return playAct("self", t);
   if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); unfurl(j, o); t.setAttribute("aria-expanded", o); return; }
   if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"); app().querySelectorAll(".part.open").forEach(x => { if (x !== p) { unfurl(x, false); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); } }); unfurl(p, o); t.setAttribute("aria-expanded", o); return; }
   if (d.act === "partstart") return startRound({ only: +d.pi });
@@ -1228,8 +965,6 @@ document.addEventListener("click", e => {
   if (act === "revisit") return startRound({ kind: "revisit" });
   if (act === "revisitround") { const { P } = current; const ids = P.round.ids.filter(x => P.round.res[x] === "miss" || P.round.res[x] === "partial"); ids.forEach(x => { delete P.a[x]; delete P.h[x]; P.n[x] = (P.n[x] || 0) + 1; }); P.round = { ids, i: 0, res: {}, kind: "revisit", streak: 0, ended: false }; P.cur = null; saveProg(); return renderPlay(); }
   if (act === "resume") return go("play-" + current.quiz.id, true);
-  if (act === "share") return shareQuiz();
-  if (act === "addtap") return sheet("Add tap options", `<p class="note">Paste this into any AI chat. It returns the same quiz with tap-to-answer options added. Import the result and choose <b>Replace it</b>.</p>`, addTapPrompt(current.quiz), "Copy prompt and quiz");
   if (act === "reset") {
     if (!twoTap(t, "Tap again to reset")) return;
     current.P = blankProg(); saveProg(); t.disabled = true;
@@ -1254,17 +989,15 @@ document.addEventListener("toggle", e => {
   cancelScroll();
   requestAnimationFrame(() => requestAnimationFrame(() => reveal(d, d.querySelector("summary"))));
 }, true);
-document.addEventListener("input", e => { if (current && e.target.dataset && e.target.dataset.in && current.P.cur) { current.P.a[current.P.cur.id] = e.target.value; saveProg(); } });
 document.addEventListener("keydown", e => {
   if (!current || !/^#play-/.test(location.hash) || e.metaKey || e.altKey) return;
-  const tag = (e.target.tagName || "").toLowerCase(), typing = tag === "textarea" || (tag === "input" && e.target.type === "text");
+  const tag = (e.target.tagName || "").toLowerCase();
   const click = sel => { const b = app().querySelector(sel); if (b && !b.disabled) { e.preventDefault(); b.click(); return true; } return false; };
   if (e.key === "Enter") {
-    if (tag === "textarea" && !e.ctrlKey) return;
     if (tag === "button" || tag === "a" || tag === "summary") return;
-    click('[data-act="next"]') || click('[data-act="check"]') || click('[data-act="flip"]') || click('.endcard .btn.primary'); return;
+    click('[data-act="next"]') || click('[data-act="check"]') || click('.endcard .btn.primary'); return;
   }
-  if (typing || e.ctrlKey) return;
+  if (e.ctrlKey) return;
   if (e.key === "ArrowLeft") { e.preventDefault(); return nav(-1); }
   if (e.key === "ArrowRight") { e.preventDefault(); return nav(1); }
   if (/^[1-9]$/.test(e.key)) { const opts = app().querySelectorAll(".opts .opt"); const b = opts[+e.key - 1]; if (b && !b.disabled) { e.preventDefault(); b.click(); } return; }
@@ -1273,8 +1006,9 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { TIME, durOf: durFor, fmt, validateQuiz, parseQuizText, formOf, buildRound, logSummary, nav, streakFeed };
-applyView();
+window.SB = { TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
+  // what import.js needs from here
+  ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
 route();
 loadSamples().then(route);
 if ("serviceWorker" in navigator && location.protocol === "https:") {

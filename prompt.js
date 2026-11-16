@@ -42,18 +42,3 @@ STEP 3. Reply with ONE code block of valid JSON and nothing else inside it. Stra
 }
 
 For "order", list "items" in the CORRECT order; the app shuffles them. After the code block, tell me in one line how many questions you wrote and which pages you covered.`;
-
-// Used when an imported quiz has typed questions without tap options. The quiz JSON is appended after this text.
-window.SB_PROMPT_ADD = String.raw`Below is a quiz in JSON for an app called Kiron. Some "text" and "number" questions have no "mcq" field. Add one to each of them and change nothing else.
-
-Rules for each "mcq":
-- "prompt": the question rewritten so it works as multiple choice. Leave it out if the original prompt already works, and always leave it out for "number" questions.
-- "options": exactly 4, similar in length. The three wrong ones must be plausible confusions, taken from the quiz's own subject (a neighbouring concept, a swapped number, the reverse relationship). No joke options, no "all of the above".
-- For "number" questions the options are four formulas or setups, not four numeric answers: the right setup and three common wrong setups.
-- "correct": the position of the right option, counting from 0.
-- "why": one line, under 30 words, on why the right option is right.
-Base every option on the question's existing "answer" and "keyPoints". Do not invent facts.
-
-Reply with ONE code block containing the complete quiz JSON, with every other field unchanged. Straight double quotes, no comments, no trailing commas.
-
-The quiz:`;
