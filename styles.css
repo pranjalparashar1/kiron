@@ -317,7 +317,8 @@ sub { vertical-align: -.28em; }
 .opt.ok .k { background: var(--ok-ink); border-color: var(--ok-ink); color: var(--ok); font-size: 17px; }
 .opt.wrong { background: var(--no-soft); border-color: var(--no); color: var(--no-ink); }
 .opt.wrong .k { background: var(--no); border-color: var(--no); color: #fff; font-size: 16px; }
-.opt.missed { background: var(--ok-soft); border: 2px dashed var(--ok); font-weight: 700; }
+.opt.missed { background: var(--ok-soft); border-color: var(--ok); font-weight: 700; }   /* right, but not picked: a quieter green than a right pick */
+.opt.missed .k { background: transparent; border-color: var(--ok); color: var(--ok); font-size: 17px; }
 .opt:active { transform: scale(.985); border-color: var(--accent); }
 .opt.dim:not(.wrong) { opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; border-width: 1px; gap: 10px; transition: opacity .28s ease, background-color .2s, border-color .2s; }
 .opt.wrong.dim { opacity: .55; }
