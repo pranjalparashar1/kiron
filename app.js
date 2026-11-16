@@ -346,6 +346,7 @@ function armTimer() {
     if (!current || !current.P.round || !TIMER) return;
     const r = current.P.round, id = TIMER.id;
     if (r.ended || r.ids[r.i] !== id || (current.P.cur && current.P.cur.done)) return;
+    if (dragging) { TIMER.t0 = Date.now() - TIMER.dur + 1500; return armTimer(); }   // never change question under a held row
     nav(1);
   }, Math.max(0, TIMER.dur - timerElapsed()));
 }
@@ -358,6 +359,7 @@ let FX = null;      // one-shot effect for the next render: { kind: "right" | "w
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function renderPlay(keepScroll) {
+  endDrag();
   const { quiz, P } = current;
   const r = P.round;
   if (!r) return go("quiz-" + quiz.id, true);
@@ -806,21 +808,32 @@ function playAct(act, el) {
   if (act === "next") { if (!cur.done) return; return nav(1); }
 }
 
-/* ---- reordering: tap arrows (animated) or drag the handle; both move the real list item ---- */
-let dragging = null;
+/* ---- reordering: tap arrows (animated) or drag the handle; both move the real list item ----
+   The list has slots (first, second, ...). A row is always in exactly one slot: dragging only floats it above its
+   slot, and letting go, however that happens, drops it into the slot under the finger. Arrows swap two slots. */
+let dragging = null;   // the row being held, if any
+let DRAG = null;       // { end } for the drag in progress
+function endDrag() { if (DRAG) DRAG.end(); }
+// Nothing may be left floating: clear any leftover hold state and offsets before the list is measured or changed.
+function restRows(ol) {
+  for (const k of ol.children) { k.getAnimations().forEach(a => a.cancel()); k.style.transform = ""; k.classList.remove("drag", "lift"); }
+}
 function syncOrder(ol, save) {
   const kids = [...ol.children];
   kids.forEach((li, i) => { li.querySelector(".p").textContent = i + 1; li.querySelector(".up").disabled = i === 0; li.querySelector(".dn").disabled = i === kids.length - 1; });
-  if (save && current && current.P.cur) { current.P.a[current.P.cur.id] = kids.map(li => +li.dataset.it); saveProg(); }
+  if (save && current && current.P.cur && !current.P.cur.done) { current.P.a[current.P.cur.id] = kids.map(li => +li.dataset.it); saveProg(); }
 }
-// lift = the row the person moved with an arrow: it rises a little, glides to its new place and settles, so the swap is easy to follow.
+// lift = the row the person moved with an arrow: it rises a little, glides to its new slot and settles, so the swap is easy to follow.
 function moveLi(ol, li, to, lift) {
   const kids = [...ol.children], from = kids.indexOf(li);
   if (to < 0 || to >= kids.length || to === from) return false;
+  // Where each row looks right now (it may still be gliding from the last tap)...
   const before = new Map(kids.map(k => [k, k.getBoundingClientRect().top]));
   ol.insertBefore(li, to > from ? kids[to].nextSibling : kids[to]);
+  // ...then every row is put squarely in its slot, and only glides there from where it looked.
+  restRows(ol);
   if (!reduceMotion()) kids.forEach(k => {
-    if (k === dragging) return; const d = before.get(k) - k.getBoundingClientRect().top; if (!d) return;
+    const d = before.get(k) - k.getBoundingClientRect().top; if (!d) return;
     if (k === lift) { k.classList.add("lift"); const a = k.animate([{ transform: `translateY(${d}px) scale(1)` }, { transform: `translateY(${d * .55}px) scale(1.045)`, offset: .35 }, { transform: "translateY(0) scale(1.045)", offset: .8 }, { transform: "none" }], { duration: 520, easing: "cubic-bezier(.3,.7,.2,1)" }); a.onfinish = a.oncancel = () => k.classList.remove("lift"); }
     else k.animate([{ transform: `translateY(${d}px)` }, { transform: "none" }], { duration: lift ? 520 : 240, easing: "cubic-bezier(.3,.7,.2,1)" });
   });
@@ -828,6 +841,7 @@ function moveLi(ol, li, to, lift) {
 }
 function flash(li, cls) { cls = cls || "moved"; li.classList.remove(cls); void li.offsetWidth; li.classList.add(cls); }
 function arrowMove(btn) {
+  endDrag();
   const li = btn.closest("li"), ol = li.parentElement, dir = +btn.dataset.mv, i = [...ol.children].indexOf(li), other = ol.children[i + dir];
   if (!moveLi(ol, li, i + dir, li)) return;
   syncOrder(ol, true); flash(li); if (other) flash(other, "nudged");
@@ -835,13 +849,16 @@ function arrowMove(btn) {
 }
 document.addEventListener("pointerdown", e => {
   const g = e.target.closest && e.target.closest(".order .grip"); if (!g || !current) return;
-  const li = g.closest("li"), ol = li.parentElement; e.preventDefault();
+  endDrag();   // a second finger, or a hold that never got its "let go"
+  const li = g.closest("li"), ol = li.parentElement, pid = e.pointerId; e.preventDefault();
+  restRows(ol);
   const startY = e.clientY; dragging = li; li.classList.add("drag");
-  try { g.setPointerCapture(e.pointerId); } catch (_) {}
+  try { g.setPointerCapture(pid); } catch (_) {}
   // Read the rows once, at the start: their heights and the gap. Every position during the drag is worked out from
   // these, so moving the finger never makes the phone measure the page again.
   const order = [...ol.children], h = new Map(order.map(r => [r, r.offsetHeight])), top0 = order[0].offsetTop, startTop = li.offsetTop;
   const gap = order.length > 1 ? order[1].offsetTop - top0 - h.get(order[0]) : 0;
+  const total = order.reduce((s, r) => s + h.get(r), 0) + gap * (order.length - 1);
   const topOf = el => { let y = top0; for (const r of order) { if (r === el) return y; y += h.get(r) + gap; } return y; };
   const swap = to => {
     const from = order.indexOf(li), other = order[to], shift = (h.get(li) + gap) * (to < from ? -1 : 1);
@@ -849,21 +866,48 @@ document.addEventListener("pointerdown", e => {
     order.splice(from, 1); order.splice(to, 0, li);
     if (!reduceMotion()) other.animate([{ transform: `translateY(${shift}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.3,.7,.2,1)" });
   };
-  let lastY = startY, raf = 0;
+  let lastY = startY, raf = 0, off = 0;
   const place = () => {
-    raf = 0; const dy = lastY - startY, cy = startTop + h.get(li) / 2 + dy;
-    for (let n = 0; n < 6; n++) {
+    raf = 0;
+    // The held row follows the finger but never leaves the list.
+    const y = Math.min(top0 + total - h.get(li), Math.max(top0, startTop + lastY - startY)), cy = y + h.get(li) / 2;
+    // Its slot is whichever one its middle is over.
+    for (let n = 0; n < order.length; n++) {
       const idx = order.indexOf(li), prev = order[idx - 1], next = order[idx + 1];
       if (prev && cy < topOf(prev) + h.get(prev) / 2) { swap(idx - 1); continue; }
       if (next && cy > topOf(next) + h.get(next) / 2) { swap(idx + 1); continue; }
       break;
     }
-    li.style.transform = `translateY(${dy - (topOf(li) - startTop)}px)`;
+    off = y - topOf(li);
+    li.style.transform = `translateY(${off}px)`;
   };
   // At most one move per frame, however often the finger reports.
-  const move = ev => { lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
-  const up = () => { if (raf) { cancelAnimationFrame(raf); place(); } g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up); dragging = null; li.classList.remove("drag"); li.style.transform = ""; syncOrder(ol, true); flash(li); };
-  g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+  const mine = ev => ev.pointerId === undefined || ev.pointerId === pid;
+  const move = ev => { if (!mine(ev)) return; lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
+  const hidden = () => { if (document.hidden) end(); };
+  // Letting go can arrive in many ways on a phone (finger up, the system taking the touch over, a call, the app
+  // going to the background, the question changing). Every one of them ends here, and ends the same way.
+  const EVS = [["pointerup", true], ["pointercancel", true], ["touchend", false], ["touchcancel", false], ["blur", false], ["pagehide", false]];
+  const up = ev => { if (ev.type.startsWith("pointer") && !mine(ev)) return; end(); };
+  function end() {
+    if (!DRAG || DRAG.end !== end) return; DRAG = null; dragging = null;
+    if (raf) cancelAnimationFrame(raf);
+    if (li.isConnected) place();
+    window.removeEventListener("pointermove", move, true);
+    EVS.forEach(([t, cap]) => window.removeEventListener(t, up, cap));
+    document.removeEventListener("visibilitychange", hidden);
+    try { g.releasePointerCapture(pid); } catch (_) {}
+    li.classList.remove("drag"); li.style.transform = "";
+    if (!li.isConnected) return;
+    // Drop into the slot: one short glide from where it was floating.
+    if (off && !reduceMotion()) li.animate([{ transform: `translateY(${off}px)` }, { transform: "none" }], { duration: 180, easing: "cubic-bezier(.2,.8,.2,1)" });
+    syncOrder(ol, true); flash(li);
+  }
+  DRAG = { end };
+  // Listen on the window, not the handle: if the phone drops the handle's hold on the finger, the events still arrive.
+  window.addEventListener("pointermove", move, true);
+  EVS.forEach(([t, cap]) => window.addEventListener(t, up, cap));
+  document.addEventListener("visibilitychange", hidden);
 });
 
 /* ---- story-style edge taps: left quarter = back, right quarter = next (or "do this later" if unanswered). No swipes, no centre taps. ---- */
