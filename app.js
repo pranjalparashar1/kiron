@@ -1017,6 +1017,13 @@ document.addEventListener("pointerdown", e => {
   document.addEventListener("visibilitychange", hidden);
 });
 
+// The side you tapped lights up and fades: two fixed layers built once, opacity only.
+let EDGES = null;
+function edgeGlow(dir) {
+  if (reduceMotion() || !document.body.animate) return;
+  if (!EDGES || !EDGES[0].isConnected) EDGES = ["l", "r"].map(s => { const el = document.createElement("i"); el.className = "edge " + s; el.setAttribute("aria-hidden", "true"); document.body.append(el); return el; });
+  EDGES[dir < 0 ? 0 : 1].animate([{ opacity: 1 }, { opacity: 0 }], { duration: SLOW, easing: OUT });
+}
 /* ---- story-style edge taps: left quarter = back, right quarter = next (or "do this later" if unanswered). No swipes, no centre taps. ---- */
 const EDGE = 0.25; // width of each tap zone, as a share of the screen
 let tapDown = null, ghostUntil = 0;
@@ -1035,6 +1042,7 @@ document.addEventListener("pointerup", e => {
   const x = e.clientX / innerWidth, dir = x < EDGE ? -1 : x > 1 - EDGE ? 1 : 0;
   if (!dir) return;
   ghostUntil = Date.now() + 250; // the browser sends a click after this tap: swallow it so it can't hit the next screen's option
+  if (dir > 0 || current.P.round.i > 0) edgeGlow(dir);
   nav(dir);
 });
 document.addEventListener("click", e => { if (Date.now() < ghostUntil) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
@@ -1160,6 +1168,8 @@ document.addEventListener("keydown", e => {
 window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
+// iPhone Safari only shows a button's pressed look (:active) when the page listens for touches.
+document.addEventListener("touchstart", () => {}, { passive: true });
 perfBoot();
 route();
 loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });

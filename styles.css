@@ -92,6 +92,13 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* ---------- buttons ---------- */
 .btn, .icon-btn, .opt, .part { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* Everything you can tap answers the finger: it presses in at once (quick) and springs back on release.
+   Rows inside a card dim instead of shrinking, so the card's edge stays still. */
+.btn, .icon-btn, .opt, .mv { transition: transform var(--move) var(--spring); }
+.btn:active:not(:disabled), .icon-btn:active:not(:disabled) { transform: scale(.95); transition-duration: var(--quick); }
+.icon-btn:active:not(:disabled) { transform: scale(.88); }
+.jump-btn, .part-row, details summary { transition: opacity var(--move) var(--out); }
+.jump-btn:active, .part-row:active, details summary:active { opacity: .45; transition-duration: 0s; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 11px 18px; cursor: pointer; font-size: 16px; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--ink); }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
 .btn.ghost { background: transparent; }
@@ -99,7 +106,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .btn.danger { color: var(--no); border-color: rgba(229,128,111,.45); background: transparent; }
 .btn:disabled { opacity: .5; cursor: default; }
 .btn.xl { min-height: 68px; font-size: 21px; font-weight: 700; width: 100%; border-radius: 16px; box-shadow: 0 5px 0 #8f4630; }
-.btn.xl:active { transform: translateY(3px); box-shadow: 0 2px 0 #8f4630; }
+.btn.xl:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 #8f4630; }
 .icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; min-width: 44px; height: 44px; padding: 0 12px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; color: var(--ink); }
 .icon-btn.done { font-weight: 800; padding: 0 16px; }
 /* pause control for the timer. Once answered the timer has stopped, so it steps out; its space stays, so the bar does not move. */
@@ -115,7 +122,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .pick { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; font-weight: 700; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
 .qcard { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; width: 100%; min-height: 76px; padding: 20px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-align: left; cursor: pointer; transition: transform var(--move) var(--spring), border-color var(--quick); }
-.qcard:active { transform: scale(.98); border-color: var(--blue); }
+.qcard:active { transform: scale(.97); border-color: var(--blue); transition-duration: var(--quick); }
 .qcard h3 { margin: 0; font-size: 18px; line-height: 1.3; font-weight: 600; text-wrap: balance; }
 .qcard .chev { font-size: 28px; color: var(--blue); line-height: 1; }
 .credit { margin: auto 0 0; padding-top: 28px; text-align: center; font-size: 12.5px; letter-spacing: .02em; color: var(--muted); opacity: .55; }
@@ -297,7 +304,7 @@ sub { vertical-align: -.28em; }
    other options stay where they were, faded and smaller (a mis-tap is easy to spot, and the explanation still fits).
    They take the compact size in one step and only the fade is animated. */
 .opts { display: flex; flex-direction: column; gap: 8px; }
-.opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 12px 14px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; text-align: left; font-size: 16.5px; font-weight: 500; line-height: 1.4; cursor: pointer; transition: opacity var(--move) var(--out), background-color var(--quick), border-color var(--quick); }
+.opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 12px 14px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; text-align: left; font-size: 16.5px; font-weight: 500; line-height: 1.4; cursor: pointer; transition: transform var(--move) var(--spring), opacity var(--move) var(--out), background-color var(--quick), border-color var(--quick); }
 .opt[aria-disabled="true"] { cursor: default; }
 .opt .k { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--muted); font: 800 14px var(--font); }
 .opt .k.box { border-radius: 6px; color: var(--accent-ink); font-size: 16px; }
@@ -308,8 +315,8 @@ sub { vertical-align: -.28em; }
 .opt.wrong { background: var(--no-soft); border-color: var(--no); color: var(--no-ink); }
 .opt.wrong .k { background: var(--no); border-color: var(--no); color: #fff; font-size: 16px; }
 .opt.missed { background: var(--ok-soft); border: 2px dashed var(--ok); font-weight: 700; }
-.opt:active { transform: scale(.985); border-color: var(--accent); }
-.opt.dim:not(.wrong) { opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; border-width: 1px; gap: 10px; transition: opacity var(--move) var(--out), background-color var(--quick), border-color var(--quick); }
+.opt:active { transform: scale(.97); border-color: var(--accent); transition-duration: var(--quick); }
+.opt.dim:not(.wrong) { opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; border-width: 1px; gap: 10px; transition: transform var(--move) var(--spring), opacity var(--move) var(--out), background-color var(--quick), border-color var(--quick); }
 .opt.wrong.dim { opacity: .55; }
 .opt.dim:active { transform: none; border-color: var(--line); }
 @media (prefers-reduced-motion: no-preference) {
@@ -346,7 +353,7 @@ sub { vertical-align: -.28em; }
 .mv { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--accent-ink); cursor: pointer; touch-action: manipulation; }
 .mv.up { background: var(--blue); }
 .mv.dn { background: var(--accent); }
-.mv:active:not(:disabled) { transform: scale(.9); }
+.mv:active:not(:disabled) { transform: scale(.86); transition-duration: var(--quick); }
 .mv:disabled { opacity: .25; cursor: default; }
 .order.done li { padding: 8px 10px; }
 .order.done li.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
@@ -382,6 +389,11 @@ details.more[open] > p { animation: fullin var(--move) var(--out); }
 /* Next pulses while you read. The ring is its own layer that grows and fades (transform + opacity), not a box-shadow
    that repaints the button. */
 .actionbar .btn[data-act="next"] { position: relative; will-change: transform; animation: nextpulse 1.15s ease-in-out .35s infinite; }
+.actionbar .btn[data-act="next"]:active { animation: none; }   /* the pulse steps aside so the press shows */
+/* A tap on the side of the screen (back or next) lights that edge for a moment. One layer, opacity only. */
+.edge { position: fixed; top: 0; bottom: 0; width: 26vw; z-index: 4; pointer-events: none; opacity: 0; }
+.edge.l { left: 0; background: linear-gradient(90deg, rgba(250,249,245,.13), transparent); }
+.edge.r { right: 0; background: linear-gradient(270deg, rgba(250,249,245,.13), transparent); }
 .actionbar .btn[data-act="next"]::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 3px rgba(217,119,87,.65); opacity: 0; pointer-events: none; will-change: transform, opacity; animation: ring 1.15s ease-out .35s infinite; }
 @keyframes nextpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
 @keyframes ring { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.05, 1.5); } }
