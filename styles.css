@@ -29,9 +29,9 @@
   --font: "Poppins", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --code: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --r: 12px; --w: 560px;
-  /* One motion language. Three speeds: quick (a press answering the finger), move (something arriving or leaving),
-     slow (a big settle). Two curves: out (fast start, soft landing) and spring (a small overshoot, for rewards).
-     The streak reward, the timer and the looping effects keep their own tuned timings. */
+  /* Speeds and curves for the effects added in 1.4 only (press on bar buttons, the light on a right pick, the
+     kinder wrong moment, the staged round end, the list rising in, the quiz name travelling). Everything older
+     keeps the timings it was tuned to on a real iPhone, written out on its own rule: do not swap those for these. */
   --quick: .16s; --move: .42s; --slow: .64s;
   --out: cubic-bezier(.22,.8,.24,1); --spring: cubic-bezier(.3,1.5,.5,1);
   color-scheme: dark;
@@ -94,7 +94,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .btn, .icon-btn, .opt, .part { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 /* Everything you can tap answers the finger: it presses in at once (quick) and springs back on release.
    Rows inside a card dim instead of shrinking, so the card's edge stays still. */
-.btn, .icon-btn, .mv { transition: transform var(--quick) var(--spring); }
+.btn, .icon-btn { transition: transform var(--quick) var(--spring); }
 .btn:active:not(:disabled), .icon-btn:active:not(:disabled) { transform: scale(.97); transition-duration: var(--quick); }
 .icon-btn:active:not(:disabled) { transform: scale(.88); }
 /* Haptics: an invisible iOS switch stretched over a button (see app.js). It must stay a real switch (no
@@ -125,7 +125,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .lib, .home { min-height: calc(100vh - 72px); min-height: calc(100svh - 72px); }
 .pick { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; font-weight: 700; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
-.qcard { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; width: 100%; min-height: 76px; padding: 20px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-align: left; cursor: pointer; transition: transform var(--quick), border-color var(--quick); }
+.qcard { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; width: 100%; min-height: 76px; padding: 20px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); text-align: left; cursor: pointer; transition: transform .12s, border-color .12s; }
 .qcard:active { transform: scale(.98); border-color: var(--blue); }
 .qcard h3 { margin: 0; font-size: 18px; line-height: 1.3; font-weight: 600; text-wrap: balance; }
 .qcard .chev { font-size: 28px; color: var(--blue); line-height: 1; }
@@ -159,18 +159,18 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .home .cta { gap: 12px; }
 .donebox { background: var(--ok-soft); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; text-align: center; font-size: 19px; }
 /* "Jump to a part": opens in one layout step (no height animation); its contents fade and slide in. */
-.jump { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; transition: border-color var(--move) var(--out); }
+.jump { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; transition: border-color .3s ease; }
 .jump.open { border-color: rgba(106,155,204,.55); }
 .jump-btn { width: 100%; border: 0; background: transparent; color: var(--ink); min-height: 56px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 17px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.jump-btn .car { color: var(--muted); transition: transform var(--slow) var(--out); }
+.jump-btn .car { color: var(--muted); transition: transform .46s cubic-bezier(.32,.72,0,1); }
 .jump.open .jump-btn .car { transform: rotate(180deg); }
 .jump-btn:focus, .part-row:focus { outline: none; }
 .jump-btn:focus-visible { outline: 2px solid var(--muted); outline-offset: -4px; border-radius: 12px; }
 .part-row:focus-visible { outline: 2px solid var(--muted); outline-offset: -3px; border-radius: 12px; }
 .unfurl { height: 0; overflow: hidden; }
-.unfurl-in { opacity: 0; transform: translateY(-8px); transition: opacity var(--move) var(--out), transform var(--move) var(--out); }
+.unfurl-in { opacity: 0; transform: translateY(-8px); transition: opacity .22s ease, transform .3s cubic-bezier(.32,.72,0,1); }
 @media (prefers-reduced-motion: reduce) { .unfurl-in { transition: none; } }
-.jump.open > .unfurl > .unfurl-in, .part.open > .unfurl > .unfurl-in { opacity: 1; transform: none; transition: opacity var(--move) var(--out) .06s, transform var(--slow) var(--out); }
+.jump.open > .unfurl > .unfurl-in, .part.open > .unfurl > .unfurl-in { opacity: 1; transform: none; transition: opacity .34s ease .06s, transform .46s cubic-bezier(.32,.72,0,1); }
 .parts { display: flex; flex-direction: column; gap: 6px; padding: 0 10px 10px; }
 .part { background: var(--surface2); border-radius: 12px; overflow: hidden; }
 .part-row { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; border: 0; background: transparent; min-height: 54px; padding: 8px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -225,7 +225,7 @@ html.on-play, html.on-play body { overscroll-behavior-y: none; }
 
 /* The streak count sits at the end of the bar, in the bar's colour. It opens in one layout step; .pre holds it
    open but empty until the reward pill lands in it (first streak only). */
-.heat { flex: none; display: inline-flex; align-items: center; gap: 1px; max-width: 0; opacity: 0; margin-left: -12px; white-space: nowrap; transition: opacity var(--move) var(--out); transform-origin: 45% 60%; }
+.heat { flex: none; display: inline-flex; align-items: center; gap: 1px; max-width: 0; opacity: 0; margin-left: -12px; white-space: nowrap; transition: opacity .25s ease; transform-origin: 45% 60%; }
 .heat.on { max-width: 72px; opacity: 1; margin-left: -4px; }
 .heat.pre { opacity: 0; }
 /* Flame glow: a soft static halo behind it, not a drop-shadow filter on the flickering shape. */
@@ -329,7 +329,7 @@ sub { vertical-align: -.28em; }
    other options stay where they were, faded and smaller (a mis-tap is easy to spot, and the explanation still fits).
    They take the compact size in one step and only the fade is animated. */
 .opts { display: flex; flex-direction: column; gap: 8px; }
-.opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 12px 14px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; text-align: left; font-size: 16.5px; font-weight: 500; line-height: 1.4; cursor: pointer; transition: opacity var(--move) var(--out), background-color var(--quick), border-color var(--quick); }
+.opt { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 12px 14px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; text-align: left; font-size: 16.5px; font-weight: 500; line-height: 1.4; cursor: pointer; transition: opacity .35s ease, background-color .2s, border-color .2s; }
 .opt[aria-disabled="true"] { cursor: default; }
 .opt .k { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--muted); font: 800 14px var(--font); }
 .opt .k.box { border-radius: 6px; color: var(--accent-ink); font-size: 16px; }
@@ -341,12 +341,12 @@ sub { vertical-align: -.28em; }
 .opt.wrong .k { background: var(--no); border-color: var(--no); color: #fff; font-size: 16px; }
 .opt.missed { background: var(--ok-soft); border: 2px dashed var(--ok); font-weight: 700; }
 .opt:active { transform: scale(.985); border-color: var(--accent); }   /* at once, no transition: an option is often under a scrolling finger */
-.opt.dim:not(.wrong) { opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; border-width: 1px; gap: 10px; transition: opacity var(--move) var(--out), background-color var(--quick), border-color var(--quick); }
+.opt.dim:not(.wrong) { opacity: .5; min-height: 40px; padding: 6px 12px; font-size: 14px; border-width: 1px; gap: 10px; transition: opacity .28s ease, background-color .2s, border-color .2s; }
 .opt.wrong.dim { opacity: .55; }
 .opt.dim:active { transform: none; border-color: var(--line); }
 @media (prefers-reduced-motion: no-preference) {
-  .opt.pop { animation: pop2 var(--slow) var(--spring); }
-  .opt.sink { animation: sink var(--slow) var(--out); }
+  .opt.pop { animation: pop2 .45s cubic-bezier(.3,1.6,.5,1); }
+  .opt.sink { animation: sink .45s var(--out); }
   .opt.lift { animation: lift var(--slow) var(--spring) .1s backwards; }
   @keyframes pop2 { 0% { transform: scale(.96); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }
   @keyframes sink { 0% { transform: none; } 35% { transform: scale(.96); } 100% { transform: none; } }
@@ -354,6 +354,11 @@ sub { vertical-align: -.28em; }
   /* the light that spreads from the finger on a right pick (see bloom in app.js) */
   .opt.ok { overflow: hidden; }
   .bloom { position: absolute; border-radius: 50%; background: #fff; opacity: 0; pointer-events: none; }
+  /* a soft slide between questions */
+  .qcardp.in-next { animation: inr .34s cubic-bezier(.22,.8,.24,1); }
+  .qcardp.in-prev { animation: inl .34s cubic-bezier(.22,.8,.24,1); }
+  @keyframes inr { from { opacity: 0; transform: translate3d(24px,0,0); } to { opacity: 1; transform: none; } }
+  @keyframes inl { from { opacity: 0; transform: translate3d(-24px,0,0); } to { opacity: 1; transform: none; } }
 }
 /* Confetti: 16 pieces made once and reused; each shot only moves them (transform and opacity). */
 .cfp { position: fixed; left: 0; top: 0; width: 8px; height: 8px; border-radius: 2px; z-index: 30; pointer-events: none; opacity: 0; }
@@ -366,7 +371,7 @@ sub { vertical-align: -.28em; }
 .order .t { flex: 1; min-width: 0; font-size: 15px; line-height: 1.3; font-weight: 500; padding-block: 4px; }
 .order li.lift { z-index: 3; border-color: var(--accent); box-shadow: 0 10px 26px rgba(0,0,0,.55); }
 /* While a row is held: the others slide aside by transform alone, and the held one carries no shadow (nothing that moves does). */
-.order.sorting li { transition: transform var(--move) var(--out); will-change: transform; }
+.order.sorting li { transition: transform .26s cubic-bezier(.2,.8,.2,1); will-change: transform; }
 .order.sorting li.moved, .order.sorting li.nudged { animation: none; }
 .order li.drag { z-index: 8; border-color: var(--accent); background: var(--accent-soft); cursor: grabbing; transition: none; }
 .order li.moved { animation: moved2 1.4s ease-out; }
@@ -378,7 +383,7 @@ sub { vertical-align: -.28em; }
 .mv { flex: none; width: 44px; height: 44px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--accent-ink); cursor: pointer; touch-action: manipulation; }
 .mv.up { background: var(--blue); }
 .mv.dn { background: var(--accent); }
-.mv:active:not(:disabled) { transform: scale(.86); transition-duration: var(--quick); }
+.mv:active:not(:disabled) { transform: scale(.9); }
 .mv:disabled { opacity: .25; cursor: default; }
 .order.done li { padding: 8px 10px; }
 .order.done li.ok { background: var(--ok); border-color: var(--ok); color: var(--ok-ink); }
@@ -392,7 +397,7 @@ sub { vertical-align: -.28em; }
 .hint { background: var(--blue-soft); border-radius: 10px; padding: 9px 13px; font-size: 16px; scroll-margin: 80px 0 calc(118px + env(safe-area-inset-bottom, 0px)); }
 .hint b { color: var(--blue); font-size: 12px; letter-spacing: .07em; text-transform: uppercase; margin-right: 6px; }
 @media (prefers-reduced-motion: no-preference) {
-  .hint.fresh { animation: hintin var(--move) var(--out); }
+  .hint.fresh { animation: hintin .25s ease-out; }
   @keyframes hintin { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 }
 .fb { display: flex; flex-direction: column; gap: 12px; scroll-margin: 80px 0 calc(110px + env(safe-area-inset-bottom, 0px)); }
@@ -401,7 +406,7 @@ sub { vertical-align: -.28em; }
 details.more { font-size: 15.5px; color: var(--muted); scroll-margin-top: 72px; }
 details.more summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--accent); font-weight: 700; }
 details.more p { margin: 0; }
-details.more[open] > p { animation: fullin var(--move) var(--out); }
+details.more[open] > p { animation: fullin .32s cubic-bezier(.25,.6,.3,1); }
 @keyframes fullin { from { opacity: 0; transform: translateY(8px); } }
 
 /* action bar */

@@ -437,7 +437,7 @@ document.addEventListener("visibilitychange", () => {
 });
 let FX = null;      // one-shot effect for the next render: { kind: "right" | "wrong" | "mixed", oi }
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
-// The app's motion language, shared with styles.css (--quick, --move, --slow, --out, --spring).
+// Speeds and curves for the effects added in 1.4 only, shared with styles.css. Older moments keep their own tuned numbers.
 const MOVE = 420, SLOW = 640, OUT = "cubic-bezier(.22,.8,.24,1)", SPRING = "cubic-bezier(.3,1.5,.5,1)";
 /* Haptics (a small tick under the finger). iPhone Safari has no vibrate call. The only route is a real iOS switch
    control: when a finger taps one, the phone ticks. So each main button carries an invisible switch stretched over
@@ -548,7 +548,7 @@ function renderPlay(keepScroll) {
     if (keepScroll === "fb" && el) {
       const wrong = status && status !== "right", picked = fx && fx.oi !== undefined;
       // let the pop (or the shake) play while the other options fade and shrink, then fade the explanation in and glide down to it
-      settle(el, !picked ? 300 : wrong && !reduceMotion() ? 540 : 440);
+      settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
   if (fx && fx.kind === "right") { const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
@@ -633,7 +633,7 @@ function settle(fb, delay) {
     if (!fb.isConnected) return;
     const keepEl = app().querySelector(".opt.ok, .opt.wrong, .order") || fb;
     fb.classList.remove("wait");
-    if (!reduceMotion() && fb.animate) fb.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: SLOW, easing: OUT, fill: "backwards" });
+    if (!reduceMotion() && fb.animate) fb.animate([{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 420, easing: "cubic-bezier(.25,.6,.3,1)", fill: "backwards" });
     reveal(fb, keepEl);
   }, delay);
 }
