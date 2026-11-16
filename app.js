@@ -388,7 +388,7 @@ function renderHome() {
   <main class="wrap home">
     <h1 class="qtitle">${esc(quiz.title)}</h1>
     <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
-    ${quiz.sections.length > 1 ? `<div class="jump"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button><div class="unfurl" inert><div class="unfurl-in"><div class="parts">${parts}</div></div></div></div>` : ""}
+    ${quiz.sections.length > 1 ? `<div class="jump"><div class="jump-head"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="parts">${parts}</div></div></div></div><i class="jump-cap" aria-hidden="true"></i></div>` : ""}
     <div class="foot">${started || inRound ? `<button class="btn ghost danger" data-act="reset" type="button">Reset quiz</button>` : ""}${mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
   </main>`);
 }
@@ -1182,6 +1182,7 @@ function renderExtra(name) {
 // transform, see .unfurl-in). Closing lets the contents fade out first, then folds the space away.
 function unfurl(box, open) {
   const u = box.querySelector(":scope > .unfurl"); if (!u) return;
+  if (u.firstElementChild.classList.contains("fold")) return foldBox(box, u, open);
   clearTimeout(u._t);
   box.classList.toggle("open", open); u.inert = !open;
   if (open || reduceMotion()) u.style.height = open ? "auto" : "0px";
@@ -1192,6 +1193,41 @@ function unfurl(box, open) {
     if (glide) smoothScrollTo(end);
     u._t = setTimeout(() => { if (!box.classList.contains("open")) u.style.height = "0px"; }, glide ? 520 : 340);
   }
+}
+/* "Jump to a part" (Kiron 1.5.1.2): a real fold, with nothing but transforms.
+   The box is three pieces: the head, the list, and a cap (the rounded bottom edge). To fold, the cap slides up; the
+   list's window slides up with it while the list inside slides down by the same amount, so the list stands still and
+   is covered from the bottom, right at the cap. Anything below the box rides up with the cap. All of these are one
+   move each, started together with the same length and curve, so the phone keeps them in step by itself.
+   Only when the box looks completely shut is the space really taken away (and when opening, it is given first), so
+   the page never changes under a moving picture. A tap half-way turns the fold round from where it is. */
+const FOLD_MS = 520, FOLD_EASE = "cubic-bezier(.32,.72,0,1)";
+function foldBox(box, u, open) {
+  const win = u.firstElementChild, inner = win.firstElementChild, cap = box.querySelector(":scope > .jump-cap");
+  const below = []; for (let n = box.nextElementSibling; n; n = n.nextElementSibling) below.push(n);
+  // Where the fold is right now, if it is still moving (0 = fully open).
+  let at = null; if (u._fold && cap) { const m = new DOMMatrixReadOnly(getComputedStyle(cap).transform); at = -m.m42; }
+  (u._fold || []).forEach(a => { a.onfinish = null; a.cancel(); }); u._fold = null;
+  box.classList.toggle("open", open); u.inert = !open;
+  if (reduceMotion() || !win.animate || !cap) { u.style.height = open ? "auto" : "0px"; return; }
+  const wasShut = u.offsetHeight === 0;
+  u.style.height = "auto";
+  const H = u.offsetHeight, from = at !== null ? Math.min(H, Math.max(0, at)) : wasShut ? H : 0, to = open ? 0 : H;
+  if (from === to || !H) { if (!open) u.style.height = "0px"; return; }
+  // How far each thing below the box travels between open and shut (the page's foot may not move at all), and where the page ends when shut.
+  // (Measured by shutting it for an instant, unseen, and putting the page back exactly where it was.)
+  const y0 = window.scrollY, openTop = below.map(el => el.getBoundingClientRect().top + y0);
+  u.style.height = "0px";
+  const ride = below.map((el, i) => (openTop[i] - el.getBoundingClientRect().top - window.scrollY) / H), end = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+  u.style.height = "auto";
+  if (window.scrollY !== y0) window.scrollTo(0, y0);
+  // Closing: if the page would be left scrolled past its new end, it glides back while the box folds.
+  if (!open && window.scrollY > end + 1) smoothScrollTo(end);
+  const o = { duration: Math.round(FOLD_MS * (.45 + .55 * Math.abs(to - from) / H)), easing: FOLD_EASE, fill: "both" };
+  const mv = (el, k) => el.animate([{ transform: `translate3d(0,${(k * from).toFixed(2)}px,0)` }, { transform: `translate3d(0,${(k * to).toFixed(2)}px,0)` }], o);
+  const run = [mv(win, -1), mv(inner, 1), mv(cap, -1), ...below.map((el, i) => ride[i] ? mv(el, -ride[i]) : null).filter(Boolean)];
+  u._fold = run;
+  run[0].onfinish = () => { if (u._fold !== run) return; u._fold = null; if (!open) u.style.height = "0px"; run.forEach(a => a.cancel()); };
 }
 // Opening a list draws the eye to it: the page glides (the phone's own smooth scroll) just far enough to show it.
 // If it is already in view, nothing moves.
