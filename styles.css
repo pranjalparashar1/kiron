@@ -149,6 +149,13 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .unfurl-in { opacity: 0; transform: translateY(-8px); transition: opacity .22s ease, transform .3s cubic-bezier(.32,.72,0,1); }
 @media (prefers-reduced-motion: reduce) { .unfurl-in { transition: none; } }
 .jump.open > .unfurl > .unfurl-in, .part.open > .unfurl > .unfurl-in { opacity: 1; transform: none; transition: opacity .34s ease .06s, transform .46s cubic-bezier(.32,.72,0,1); }
+/* Jump to a part (1.5.1): the parts arrive one after another, unhurried, so the eye follows them down. Opacity and transform only. */
+.jump .part { opacity: 0; transform: translateY(-10px); transition: opacity .2s ease, transform .2s ease; scroll-margin: 76px 0 24px; }
+.jump.open .part { opacity: 1; transform: none; transition: opacity .5s ease calc(.1s + var(--i, 0) * .06s), transform .7s cubic-bezier(.32,.72,0,1) calc(.1s + var(--i, 0) * .06s); }
+.jump { scroll-margin: 76px 0 calc(24px + env(safe-area-inset-bottom, 0px)); }
+.jump.open > .unfurl > .unfurl-in { transition: opacity .5s ease .06s, transform .7s cubic-bezier(.32,.72,0,1); }
+.jump-btn .car { transition-duration: .7s; }
+@media (prefers-reduced-motion: reduce) { .jump .part, .jump.open .part { transition: none; } }
 .parts { display: flex; flex-direction: column; gap: 6px; padding: 0 10px 10px; }
 .part { background: var(--surface2); border-radius: 12px; overflow: hidden; }
 .part-row { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; border: 0; background: transparent; min-height: 54px; padding: 8px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -348,7 +355,9 @@ sub { vertical-align: -.28em; }
 .order .t { flex: 1; min-width: 0; font-size: 16px; line-height: 1.3; font-weight: 500; padding-block: 4px; }
 .order li.set { background: var(--surface2); }
 .order li.set .p { background: var(--accent); border: 1.5px solid var(--accent); }
-.order:not(.done):not(.sorting) li:active { scale: .985; }
+.order.taps:not(.sorting) li:active { scale: .985; }
+/* Drag (1.5.1): a touch on a row belongs to the row, so it can lift at once. The page scrolls from anywhere else. */
+.order:not(.done):not(.taps) li { touch-action: none; cursor: grab; }
 .order li.fly { z-index: 3; }
 /* While a row is held: the others slide aside by transform alone, and the held one carries no shadow (nothing that moves does). */
 .order.sorting li { transition: transform .26s cubic-bezier(.2,.8,.2,1); will-change: transform; }
