@@ -42,14 +42,14 @@
 } }
 /* Streak colours. Fire: 1 amber (3 in a row) · 2 gold (5) · 3 pale gold (8) · 4 white-hot (11) · 5 black fire (15).
    Celestial: 6 nebula (20) · 7 constellation (25) · 8 galaxy (30). --f1/--f2 are the flame's tongue and core. */
-[data-heat="1"] { --heat: #f0b23a; --glow: rgba(240,178,58,.55); --f1: #d97757; --f2: #f0b23a; }
-[data-heat="2"] { --heat: #ffcf3f; --glow: rgba(255,207,63,.7); --f1: #f0b23a; --f2: #ffe08a; }
-[data-heat="3"] { --heat: #ffe9a3; --glow: rgba(255,214,120,.8); --f1: #ffcf3f; --f2: #fff6d8; }
-[data-heat="4"] { --heat: #ffffff; --glow: rgba(170,205,255,.95); --f1: #ffffff; --f2: #b9d6ff; }
-[data-heat="5"] { --heat: #0b0b0b; --glow: rgba(255,92,40,.95); --f1: #0b0b0b; --f2: #7a3cff; }
-[data-heat="6"] { --heat: #9b7bff; --glow: rgba(140,100,255,.9); --f1: url(#kneb); --f2: #eaf7ff; }
-[data-heat="7"] { --heat: #dfe7ff; --glow: rgba(150,180,255,.95); }
-[data-heat="8"] { --heat: #fff1c9; --glow: rgba(255,220,150,.95); }
+[data-heat="1"] { --heat: #f0b23a; --glow: rgba(240,178,58,.55); --glow2: rgba(240,178,58,.24); --f1: #d97757; --f2: #f0b23a; }
+[data-heat="2"] { --heat: #ffcf3f; --glow: rgba(255,207,63,.7); --glow2: rgba(255,207,63,.32); --f1: #f0b23a; --f2: #ffe08a; }
+[data-heat="3"] { --heat: #ffe9a3; --glow: rgba(255,214,120,.8); --glow2: rgba(255,214,120,.38); --f1: #ffcf3f; --f2: #fff6d8; }
+[data-heat="4"] { --heat: #ffffff; --glow: rgba(170,205,255,.95); --glow2: rgba(170,205,255,.53); --f1: #ffffff; --f2: #b9d6ff; }
+[data-heat="5"] { --heat: #0b0b0b; --glow: rgba(255,92,40,.95); --glow2: rgba(255,92,40,.6); --f1: #0b0b0b; --f2: #7a3cff; }
+[data-heat="6"] { --heat: #9b7bff; --glow: rgba(140,100,255,.9); --glow2: rgba(140,100,255,.52); --f1: url(#kneb); --f2: #eaf7ff; }
+[data-heat="7"] { --heat: #dfe7ff; --glow: rgba(150,180,255,.95); --glow2: rgba(150,180,255,.54); }
+[data-heat="8"] { --heat: #fff1c9; --glow: rgba(255,220,150,.95); --glow2: rgba(255,220,150,.53); }
 
 /* ---------- base ---------- */
 * { box-sizing: border-box; scrollbar-width: none; -ms-overflow-style: none; }
@@ -174,15 +174,16 @@ html.on-play, html.on-play body { overscroll-behavior-y: none; }
 .dots i { position: relative; flex: 1; height: 5px; border-radius: 99px; background: var(--line); overflow: hidden; }
 .dots i.past { background: var(--ink); transition: background-color .6s ease; }
 .dots i.skip { background: var(--muted); opacity: .4; }
-.dots i.now::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: 99px; background: var(--ink); transform: scaleX(.4); transform-origin: 0 50%; will-change: transform; transition: background-color .6s ease, transform .45s cubic-bezier(.2,.8,.2,1); }
+.dots i.now::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 100%; border-radius: 99px; background: var(--ink); transform: scaleX(.4); transform-origin: 0 50%; will-change: transform; transition: background-color .6s ease; }
 .dots i.now.full::after { transform: none; }
 .dots i.now.timing::after { transform: scaleX(0); transition: none; animation: fillbar var(--dur, 15000ms) linear var(--delay, 0ms) forwards; }
 .dots.paused i.now.timing::after { animation-play-state: paused; }
 @keyframes fillbar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-.dots[data-heat]:not([data-heat="0"]) { filter: drop-shadow(0 0 5px var(--glow)); }
-.dots[data-heat]:not([data-heat="0"]) i { box-shadow: 0 0 5px var(--glow); }
+/* The bar's glow is drawn once per segment as shadows (a close one, and a wider, fainter one). It used to be a
+   filter on the whole bar, which the phone had to redo on every frame of the timer fill. */
+.dots[data-heat]:not([data-heat="0"]) i { box-shadow: 0 0 5px var(--glow), 0 0 10px var(--glow), 0 0 11px var(--glow2, var(--glow)); }
 .dots[data-heat]:not([data-heat="0"]) i.past, .dots[data-heat]:not([data-heat="0"]) i.now::after { background: var(--heat); }
-.dots[data-heat="5"] i.past { box-shadow: 0 0 0 1.5px #ff6a2b, 0 0 6px 1px rgba(150,70,255,.7), 0 0 5px var(--glow); }
+.dots[data-heat="5"] i.past { box-shadow: 0 0 0 1.5px #ff6a2b, 0 0 6px 1px rgba(150,70,255,.7), 0 0 5px var(--glow), 0 0 5px 1.5px var(--glow), 0 0 8px 1px var(--glow2); }
 .dots[data-heat="5"] i.now::after { box-shadow: 0 0 0 1.5px #ff6a2b, 0 0 6px 1px rgba(150,70,255,.7); }   /* the fill's leading edge */
 
 /* The streak count sits at the end of the bar, in the bar's colour. It opens in one layout step; .pre holds it

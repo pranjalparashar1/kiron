@@ -41,6 +41,16 @@ function wentOff(what) {
 }
 window.addEventListener("error", e => { if (e.error || e.message) wentOff(e.error || e.message); });
 window.addEventListener("unhandledrejection", e => wentOff(e.reason));
+/* ---------------- hidden performance check ----------------
+   Off unless #perf has been opened once on this phone (open #perf again to turn it off). The checker is perf.js,
+   fetched only while it is on. mark() names the stretch of time that follows, so dropped frames can be counted
+   per moment (an answer, the streak flight, ...). While the check is off, mark() does nothing. */
+const K_PERF = "sb:perf";
+const mark = (label, ms) => { if (window.KironPerf) window.KironPerf.mark(label, ms); };
+function perfBoot() {
+  if (LS.get(K_PERF, 0)) { if (!window.KironPerf) loadScript("perf.js").catch(() => {}); }
+  else if (window.KironPerf) window.KironPerf.off();
+}
 /* ---------------- validation ---------------- */
 const TYPES = ["text", "single", "multi", "number", "order"];
 const TYPE_ALIASES = { mcq: "single", choice: "single", radio: "single", checkbox: "multi", multiple: "multi", num: "number", numeric: "number", calc: "number", calculation: "number", typed: "text", open: "text", short: "text", rank: "order", sequence: "order" };
@@ -192,9 +202,33 @@ const qid = (si, qi) => "s" + si + "q" + qi;
 function eachQ(quiz, fn) { quiz.sections.forEach((s, si) => s.questions.forEach((q, qi) => fn(q, qid(si, qi), si, qi))); }
 function getQ(quiz, id) { const m = id.match(/^s(\d+)q(\d+)$/); const si = +m[1], qi = +m[2]; return { q: quiz.sections[si].questions[qi], id, si, qi }; }
 const hasQ = (quiz, id) => { const m = /^s(\d+)q(\d+)$/.exec(id || ""); return !!(m && quiz.sections[+m[1]] && quiz.sections[+m[1]].questions[+m[2]]); };
-// Saved progress points at questions by position. If the quiz file has changed since and a saved round names a
-// question that is no longer there, drop that round (answers so far are kept) so the next tap starts a fresh one.
+// Saved progress points at questions by position (s0q12), so each saved question also keeps a fingerprint of what
+// it asked. If the quiz file is edited later (a question added, removed, moved or reworded), progress follows each
+// question to its new place; a question that is gone, or now asks something else, simply counts as not done yet.
+const FP = new WeakMap();
+function prints(quiz) {
+  let m = FP.get(quiz); if (m) return m;
+  m = {};
+  eachQ(quiz, (q, id) => {
+    const s = [q.type, q.prompt, (q.options || q.items || []).join("\u0001"), q.correct, q.mcq ? q.mcq.prompt + "\u0001" + q.mcq.options.join("\u0001") + "\u0001" + q.mcq.correct : ""].join("\u0002");
+    let a = 2166136261, b = 5381;
+    for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); a = Math.imul(a ^ c, 16777619); b = (Math.imul(b, 33) + c) | 0; }
+    m[id] = (a >>> 0).toString(36) + (b >>> 0).toString(36);
+  });
+  FP.set(quiz, m); return m;
+}
 function freshen(quiz, P) {
+  const now = prints(quiz), old = P.fp;
+  if (old && Object.keys(old).some(id => old[id] !== now[id])) {
+    // Questions that have not moved keep their place; the others look for the same question elsewhere in the quiz.
+    const free = {}, to = {};
+    for (const id in now) if (old[id] !== now[id]) (free[now[id]] = free[now[id]] || []).push(id);
+    for (const id in old) to[id] = old[id] === now[id] ? id : (free[old[id]] || []).shift();
+    ["st", "a", "h", "n"].forEach(k => { const was = P[k] || {}, o = {}; for (const id in was) { const t = id in to ? to[id] : hasQ(quiz, id) && !(id in old) ? id : ""; if (t) o[t] = was[id]; } P[k] = o; });
+    // The round in hand was built from the old layout: drop it (answers so far are kept), so the next tap starts a fresh one.
+    P.round = null; P.cur = null; P.fp = now; LS.set(progKey(quiz.id), P);
+  }
+  P.fp = now;
   const r = P.round;
   if (r && !(Array.isArray(r.ids) && r.ids.length && r.ids.every(id => hasQ(quiz, id)))) { P.round = null; P.cur = null; }
   if (P.cur && !hasQ(quiz, P.cur.id)) P.cur = null;
@@ -285,6 +319,7 @@ function route() {
   }
   document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+  if (h === "perf") { const on = !LS.get(K_PERF, 0); if (on) LS.set(K_PERF, 1); else LS.del(K_PERF); perfBoot(); toast("Performance check " + (on ? "on" : "off")); return go("", true); }
   if (h === "import" || h === "make") return renderExtra(h);
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
@@ -303,6 +338,7 @@ const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" a
 function renderLibrary() {
   current = null; document.title = "Kiron";
   const list = allQuizzes();
+  if (samplesLoaded && !TROUBLE.listAt) TROUBLE.listAt = Math.round(performance.now());   // how long the list took to show, for the performance report
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
@@ -471,6 +507,7 @@ function renderPlay(keepScroll) {
   if (onPlay) { const t = document.createElement("div"); t.innerHTML = html; patchKids(app(), t, sameQ); }
   else app().innerHTML = html;
   app().dataset.qid = id;
+  if (keepScroll === "fb") mark("answer", 1100); else if (DIR) mark("slide-in", 420);
   DIR = 0;
   if (!r.review) { placeSky(heatNow); placeGlint(heatNow); }
   if (barW0) slideFrom(barW0);
@@ -728,7 +765,8 @@ function streakFeed(n, wait) {
   pill.innerHTML = `<span class="fl">${heatIcon(lvl)}</span>${n} in a row`;
   // The first time a streak shows, the counter slides open at the end of the bar now (while the eye is on the
   // pill), empty, so the pill has somewhere to land. It fills in when the pill arrives.
-  if (!slot.classList.contains("on")) slideBar(() => slot.classList.add("on", "pre"));
+  if (!slot.classList.contains("on")) { mark("counter-open", 350); slideBar(() => slot.classList.add("on", "pre")); }
+  mark("streak-appear", 720);
   const hdr = ($(".top.play") || dots).getBoundingClientRect(), px = innerWidth / 2, py = hdr.bottom + 44;
   [main, ...fx.querySelectorAll(".fx-tr")].forEach(el => { el.style.transform = `translate3d(${px}px,${py}px,0)`; });
   fx.classList.add("run");
@@ -750,6 +788,7 @@ function streakFeed(n, wait) {
 // 3 FLY: one accelerating swoop along an arc into the flame and count, shrinking as it goes, with a short comet tail.
 function fly(n, lvl, up, dur, id) {
   const fx = FX_EL, slot = $(".heat"), dots = $(".dots"); if (!fx || !slot || !dots) return clearFeed();
+  mark("streak-fly", dur);
   const main = fx.querySelector(".fx-main"), sl = slot.getBoundingClientRect(), d = dots.getBoundingClientRect();
   const px = innerWidth / 2, py = ($(".top.play") || dots).getBoundingClientRect().bottom + 44;
   const tx = sl.width > 4 ? sl.left + sl.width / 2 : d.right - 6, ty = d.top + d.height / 2, dx = tx - px, dy = ty - py;
@@ -776,6 +815,7 @@ function landState(n, lvl, up) {
 function land(n, lvl, up, tx, ty, id) {
   const fx = FX_EL; if (!fx) return;
   const { dots, slot, fl } = landState(n, lvl, up); if (!dots) return clearFeed();
+  mark("streak-land", 800);
   const k = Math.min(lvl, 8) / 8, done = [], big = up ? .2 : 0;
   // The hit: everything it lands on jumps at once (count, flame, the whole bar), harder than before.
   kick(slot, "scale", .26 + .14 * k + big, 560); kick(fl, "scale", .6 + .35 * k + big, 640, true); kick(dots, "scaleY", 1.6 + 1.1 * k, 520);
@@ -904,7 +944,7 @@ document.addEventListener("pointerdown", e => {
   // Where the held row will sit if let go now: the top of slot `to`.
   const slotTop = to => to <= f ? top[to] : top[to] + h[to] - hl;
   const place = () => {
-    raf = 0;
+    raf = 0; mark("drag", 300);
     const raw = top[f] + lastY - startY;
     y = raw < minY ? minY - band(minY - raw) : raw > maxY ? maxY + band(raw - maxY) : raw;
     // A row gives way once the held row's leading edge passes its middle (and comes back a little later than it
@@ -1021,6 +1061,7 @@ function renderRoundEnd() {
     ${bestRun}
     <div class="cta">${keep}${rev}</div>
   </div></main>`;
+  mark("round-end", 1300);
   // Grow from last time's split to this one: the fills slide (transform), the ✓ is held still by an equal and opposite slide.
   const rg = $("#rg"), rr = $("#rr");
   if (rg && rr && rg.animate && !reduceMotion() && (prev.g !== gNow || prev.r !== rNow)) {
@@ -1046,7 +1087,7 @@ function renderExtra(name) {
 // transform, see .unfurl-in). Closing lets the contents fade out first, then folds the space away.
 function unfurl(box, open) {
   const u = box.querySelector(":scope > .unfurl"); if (!u) return;
-  clearTimeout(u._t);
+  clearTimeout(u._t); mark("jump", 500);
   box.classList.toggle("open", open); u.inert = !open;
   if (open || reduceMotion()) u.style.height = open ? "auto" : "0px";
   else u._t = setTimeout(() => { if (!box.classList.contains("open")) u.style.height = "0px"; }, 220);
@@ -1082,7 +1123,7 @@ document.addEventListener("click", e => {
     done.className = "rdone"; done.setAttribute("role", "status");
     done.innerHTML = `<span class="tkw"><svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg></span><span class="sr">Reset</span>`;
     done.style.top = (t.offsetTop + t.offsetHeight / 2) + "px";
-    foot.classList.add("resetting"); t.classList.add("folding"); foot.append(done);
+    foot.classList.add("resetting"); t.classList.add("folding"); foot.append(done); mark("reset", 900);
     return setTimeout(() => { if (current && /^#quiz-/.test(location.hash)) renderHome(); }, 900);
   }
   playAct(act, t);
@@ -1117,6 +1158,7 @@ document.addEventListener("keydown", e => {
 window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
   // what import.js needs from here
   ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported: list => LS.set(K_IMPORTED, list) } };
+perfBoot();
 route();
 loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
 if (hasSW) {
