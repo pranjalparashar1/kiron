@@ -719,7 +719,8 @@ function springCurve(kind, zeta) {
 const EASE = {
   appear: SPRING_OK ? springCurve("settle", .52) : "cubic-bezier(.34,1.45,.64,1)",
   kick: SPRING_OK ? springCurve("kick", .42) : null,
-  flyX: "cubic-bezier(.62,0,.82,.55)",   // sideways: starts slow, keeps speeding up into the counter
+  drop: SPRING_OK ? springCurve("settle", .74) : "cubic-bezier(.3,1.2,.5,1)",   // a dropped row: quick, one small overshoot
+  flyX: "cubic-bezier(.7,0,.9,.5)",   // sideways: starts slow, keeps speeding up into the counter
   flyY: "cubic-bezier(.3,.05,.5,1)",     // upward: lifts early, so the path bends in an arc
   flyS: "cubic-bezier(.55,0,.85,.45)",   // shrinking: speeds up with the flight
   out: "cubic-bezier(.16,.8,.3,1)"
@@ -740,7 +741,7 @@ function fxLayer() {
   const root = document.createElement("div"); root.className = "fx"; root.setAttribute("aria-hidden", "true");
   let h = `<div class="fx-x fx-main"><div class="fx-y"><div class="fx-k"><div class="fx-s"><b class="fx-halo"></b><span class="fxpill"></span></div></div></div></div>`;
   for (let i = 0; i < 3; i++) h += `<div class="fx-x fx-tr"><div class="fx-y"><b class="fx-dot"></b></div></div>`;
-  h += `<div class="fx-sweep"><b class="fx-band"></b></div><div class="fx-burst"><b class="fx-ring"></b>${"<i></i>".repeat(12)}</div>`;
+  h += `<div class="fx-sweep"><b class="fx-band"></b></div><div class="fx-burst"><b class="fx-flash"></b><b class="fx-ring"></b><b class="fx-ring fx-ring2"></b>${"<i></i>".repeat(16)}</div>`;
   root.innerHTML = h; document.body.append(root); FX_EL = root; return root;
 }
 let FEED = [], FXRUN = [], FXID = 0;
@@ -778,7 +779,7 @@ function streakFeed(n, wait) {
   fxAnim(s, [{ opacity: 0, transform: "scale(.8)" }, { opacity: 1, transform: "scale(.94)", offset: .22 }, { opacity: 1, transform: "scale(.94)" }], { duration: 560, easing: EASE.appear });
   // 2 BEAT: a slow swell while you read it, so it never sits frozen.
   fxAnim(pill, [{ transform: "scale(1)" }, { transform: "scale(1.035)" }], { duration: 1300, easing: "cubic-bezier(.3,0,.5,1)" });
-  const BEAT = 860, FLY = 430;
+  const BEAT = 720, FLY = 290;
   FEED.push(setTimeout(() => fly(n, lvl, up, FLY, id), BEAT));
 }
 // 3 FLY: one accelerating swoop along an arc into the flame and count, shrinking as it goes, with a short comet tail.
@@ -792,7 +793,7 @@ function fly(n, lvl, up, dur, id) {
   const ax = x(main); y(main.firstElementChild);
   fxAnim(main.querySelector(".fx-k"), [{ opacity: 1, transform: "scale(1)" }, { opacity: 1, transform: "scale(.16)", offset: .82 }, { opacity: 0, transform: "scale(.1)" }], { duration: dur, easing: EASE.flyS });
   fx.querySelectorAll(".fx-tr").forEach((tr, i) => {
-    const lag = 40 + i * 38; tr._lag = lag; x(tr); y(tr.firstElementChild, lag);
+    const lag = 26 + i * 26; tr._lag = lag; x(tr); y(tr.firstElementChild, lag);
     fxAnim(tr.querySelector(".fx-dot"), [{ opacity: 0, transform: "scale(1.5)" }, { opacity: .75 - i * .2, transform: "scale(1.1)", offset: .45 }, { opacity: 0, transform: "scale(.35)" }], { duration: dur, easing: "linear", delay: lag });
   });
   ax.finished.then(() => land(n, lvl, up, tx, ty, id)).catch(() => {});
@@ -810,16 +811,21 @@ function landState(n, lvl, up) {
 function land(n, lvl, up, tx, ty, id) {
   const fx = FX_EL; if (!fx) return;
   const { dots, slot, fl } = landState(n, lvl, up); if (!dots) return clearFeed();
-  const k = Math.min(lvl, 8) / 8, done = [];
-  kick(slot, "scale", .14 + .1 * k, 520); kick(fl, "scale", .35 + .25 * k + (up ? .15 : 0), 600, true); kick(dots, "scaleY", .9 + .7 * k, 480);
+  const k = Math.min(lvl, 8) / 8, done = [], big = up ? .2 : 0;
+  // The hit: everything it lands on jumps at once (count, flame, the whole bar), harder than before.
+  kick(slot, "scale", .26 + .14 * k + big, 560); kick(fl, "scale", .6 + .35 * k + big, 640, true); kick(dots, "scaleY", 1.6 + 1.1 * k, 520);
   const burst = fx.querySelector(".fx-burst");
   burst.style.transform = `translate3d(${tx}px,${ty}px,0)`;
-  done.push(fxAnim(burst.querySelector(".fx-ring"), [{ opacity: .95, transform: "scale(.14)" }, { opacity: 0, transform: `scale(${.55 + .45 * k + (up ? .15 : 0)})` }], { duration: 560, easing: EASE.out }));
-  const sparks = burst.querySelectorAll("i"), ns = Math.min(12, 4 + lvl + (up ? 2 : 0));
+  // A flash at the point of impact, then two rings: a tight fast one and a wide slow one, like a clap and its echo.
+  done.push(fxAnim(burst.querySelector(".fx-flash"), [{ opacity: .95, transform: "scale(.2)" }, { opacity: 0, transform: `scale(${1.15 + .6 * k + big})` }], { duration: 300, easing: EASE.out }));
+  const rings = burst.querySelectorAll(".fx-ring");
+  done.push(fxAnim(rings[0], [{ opacity: 1, transform: "scale(.14)" }, { opacity: 0, transform: `scale(${.8 + .5 * k + big})` }], { duration: 480, easing: EASE.out }));
+  done.push(fxAnim(rings[1], [{ opacity: 0, transform: "scale(.2)" }, { opacity: .6, transform: "scale(.5)", offset: .12 }, { opacity: 0, transform: `scale(${1.5 + .9 * k + big * 2})` }], { duration: 760, easing: EASE.out, delay: 60 }));
+  const sparks = burst.querySelectorAll("i"), ns = Math.min(16, 7 + lvl + (up ? 3 : 0));
   sparks.forEach((sp, i) => {
     if (i >= ns) return;
-    const a = -Math.PI * (.08 + .84 * (i + .5) / ns) + (i % 2 ? .12 : -.12), r = 16 + 14 * k + (i % 3) * 5;
-    done.push(fxAnim(sp, [{ opacity: 1, transform: "translate3d(0,0,0) scale(1)" }, { opacity: 0, transform: `translate3d(${(Math.cos(a) * r * 1.3).toFixed(1)}px,${(Math.sin(a) * r).toFixed(1)}px,0) scale(.3)` }], { duration: 480 + (i % 3) * 60, easing: EASE.out }));
+    const a = -Math.PI * (.04 + .92 * (i + .5) / ns) + (i % 2 ? .12 : -.12), r = 30 + 22 * k + (i % 3) * 9;
+    done.push(fxAnim(sp, [{ opacity: 1, transform: "translate3d(0,0,0) scale(1.5)" }, { opacity: 0, transform: `translate3d(${(Math.cos(a) * r * 1.35).toFixed(1)}px,${(Math.sin(a) * r).toFixed(1)}px,0) scale(.3)` }], { duration: 520 + (i % 3) * 70, easing: EASE.out }));
   });
   const d = dots.getBoundingClientRect(), sw = fx.querySelector(".fx-sweep");
   sw.style.transform = `translate3d(${d.left}px,${d.top - 5}px,0)`; sw.style.width = d.width + "px"; sw.style.height = d.height + 10 + "px";
@@ -877,6 +883,7 @@ let DRAG = null;       // { end } for the drag in progress
 function endDrag() { if (DRAG) DRAG.end(); }
 // Nothing may be left floating: clear any leftover hold state and offsets before the list is measured or changed.
 function restRows(ol) {
+  ol.classList.remove("sorting");
   for (const k of ol.children) { k.getAnimations().forEach(a => a.cancel()); k.style.transform = ""; k.classList.remove("drag", "lift"); }
 }
 function syncOrder(ol, save) {
@@ -908,66 +915,98 @@ function arrowMove(btn) {
   syncOrder(ol, true); flash(li); if (other) flash(other, "nudged");
   const nb = li.querySelector(btn.classList.contains("up") ? ".up" : ".dn"); (nb && !nb.disabled ? nb : li.querySelector(".mv:not(:disabled)")) ?.focus({ preventScroll: true });
 }
+/* Dragging works the way reordering does in iPhone lists. Nothing in the list is re-arranged while the finger is
+   down: the held row rides under the finger, and the rows it passes slide aside into the gap it left (each a single
+   transform the phone animates by itself). Letting go springs the held row into the open slot; only then is the
+   list re-arranged for real, in the exact spot everything is already showing, so nothing jumps.
+   Rows are measured once, when the hold starts. */
+const DRAG_EASE = "cubic-bezier(.2,.8,.2,1)";
 document.addEventListener("pointerdown", e => {
   const g = e.target.closest && e.target.closest(".order .grip"); if (!g || !current) return;
-  endDrag();   // a second finger, or a hold that never got its "let go"
+  endDrag();   // a second finger, a hold that never got its "let go", or a row still settling
   const li = g.closest("li"), ol = li.parentElement, pid = e.pointerId; e.preventDefault();
   restRows(ol);
-  const startY = e.clientY; dragging = li; li.classList.add("drag");
+  const rows = [...ol.children], n = rows.length, f = rows.indexOf(li), still = reduceMotion() || !li.animate;
+  const top = rows.map(r => r.offsetTop), h = rows.map(r => r.offsetHeight), mid = rows.map((r, i) => top[i] + h[i] / 2);
+  const hl = h[f], step = hl + (n > 1 ? top[1] - top[0] - h[0] : 0), minY = top[0], maxY = top[n - 1] + h[n - 1] - hl;
+  const nums = rows.map(r => r.querySelector(".p")), moved = rows.map(() => 0);
+  const startY = e.clientY; let lastY = startY, raf = 0, y = top[f], t = f, phase = 1, settle = null, lift = null;
+  dragging = li; li.classList.add("drag"); ol.classList.add("sorting");
   try { g.setPointerCapture(pid); } catch (_) {}
-  // Read the rows once, at the start: their heights and the gap. Every position during the drag is worked out from
-  // these, so moving the finger never makes the phone measure the page again.
-  const order = [...ol.children], h = new Map(order.map(r => [r, r.offsetHeight])), top0 = order[0].offsetTop, startTop = li.offsetTop;
-  const gap = order.length > 1 ? order[1].offsetTop - top0 - h.get(order[0]) : 0;
-  const total = order.reduce((s, r) => s + h.get(r), 0) + gap * (order.length - 1);
-  const topOf = el => { let y = top0; for (const r of order) { if (r === el) return y; y += h.get(r) + gap; } return y; };
-  const swap = to => {
-    const from = order.indexOf(li), other = order[to], shift = (h.get(li) + gap) * (to < from ? -1 : 1);
-    ol.insertBefore(li, to > from ? other.nextSibling : other);
-    order.splice(from, 1); order.splice(to, 0, li);
-    if (!reduceMotion()) other.animate([{ transform: `translateY(${shift}px)` }, { transform: "none" }], { duration: 240, easing: "cubic-bezier(.3,.7,.2,1)" });
-  };
-  let lastY = startY, raf = 0, off = 0;
+  if (!still) lift = li.animate([{ scale: "1" }, { scale: "1.03" }], { duration: 180, easing: DRAG_EASE, fill: "forwards" });
+  // Past either end of the list the row still follows, but with growing resistance, like the end of an iPhone list.
+  const band = d => 46 * (1 - 1 / (d / 90 + 1));
+  // Where the held row will sit if let go now: the top of slot `to`.
+  const slotTop = to => to <= f ? top[to] : top[to] + h[to] - hl;
   const place = () => {
     raf = 0;
-    // The held row follows the finger but never leaves the list.
-    const y = Math.min(top0 + total - h.get(li), Math.max(top0, startTop + lastY - startY)), cy = y + h.get(li) / 2;
-    // Its slot is whichever one its middle is over.
-    for (let n = 0; n < order.length; n++) {
-      const idx = order.indexOf(li), prev = order[idx - 1], next = order[idx + 1];
-      if (prev && cy < topOf(prev) + h.get(prev) / 2) { swap(idx - 1); continue; }
-      if (next && cy > topOf(next) + h.get(next) / 2) { swap(idx + 1); continue; }
-      break;
+    const raw = top[f] + lastY - startY;
+    y = raw < minY ? minY - band(minY - raw) : raw > maxY ? maxY + band(raw - maxY) : raw;
+    // A row gives way once the held row's leading edge passes its middle (and comes back a little later than it
+    // left, so a finger resting on the line cannot make it flicker). The edge, not the centre, is what makes the
+    // first and last slots reachable: the held row never has to travel past the end of the list to claim them.
+    let to = f;
+    for (let i = 0; i < n; i++) {
+      if (i === f) continue;
+      const was = moved[i] !== 0, slack = was ? 5 : -5;
+      const on = i < f ? y < mid[i] + slack : y + hl > mid[i] - slack;
+      const want = on ? (i < f ? step : -step) : 0;
+      if (on) to += i < f ? -1 : 1;
+      if (want !== moved[i]) { moved[i] = want; rows[i].style.transform = want ? `translate3d(0,${want}px,0)` : ""; }
     }
-    off = y - topOf(li);
-    li.style.transform = `translateY(${off}px)`;
+    if (to !== t) {
+      t = to;
+      // The numbers follow the slots straight away, so the list always reads 1, 2, 3 from the top.
+      for (let i = 0; i < n; i++) { const pos = i === f ? t : i + (moved[i] > 0 ? 1 : moved[i] < 0 ? -1 : 0); const txt = String(pos + 1); if (nums[i].textContent !== txt) nums[i].textContent = txt; }
+    }
+    li.style.transform = `translate3d(0,${y - top[f]}px,0)`;
   };
   // At most one move per frame, however often the finger reports.
   const mine = ev => ev.pointerId === undefined || ev.pointerId === pid;
-  const move = ev => { if (!mine(ev)) return; lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
-  const hidden = () => { if (document.hidden) end(); };
+  const move = ev => { if (phase !== 1 || !mine(ev)) return; lastY = ev.clientY; if (!raf) raf = requestAnimationFrame(place); };
+  const hidden = () => { if (document.hidden) commit(); };
   // Letting go can arrive in many ways on a phone (finger up, the system taking the touch over, a call, the app
   // going to the background, the question changing). Every one of them ends here, and ends the same way.
   const EVS = [["pointerup", true], ["pointercancel", true], ["touchend", false], ["touchcancel", false], ["blur", false], ["pagehide", false]];
-  const up = ev => { if (ev.type.startsWith("pointer") && !mine(ev)) return; end(); };
-  function end() {
-    if (!DRAG || DRAG.end !== end) return; DRAG = null; dragging = null;
-    if (raf) cancelAnimationFrame(raf);
-    if (li.isConnected) place();
+  const up = ev => { if (ev.type.startsWith("pointer") && !mine(ev)) return; drop(); };
+  const unlisten = () => {
     window.removeEventListener("pointermove", move, true);
-    EVS.forEach(([t, cap]) => window.removeEventListener(t, up, cap));
+    EVS.forEach(([ty, cap]) => window.removeEventListener(ty, up, cap));
     document.removeEventListener("visibilitychange", hidden);
     try { g.releasePointerCapture(pid); } catch (_) {}
-    li.classList.remove("drag"); li.style.transform = "";
+  };
+  // 1 of 2: the finger is gone. Spring the held row into its slot.
+  function drop() {
+    if (phase !== 1) return; phase = 2;
+    if (raf) cancelAnimationFrame(raf);
+    if (li.isConnected) place();
+    unlisten();
+    if (still || !li.isConnected || document.hidden) return commit();
+    const from = y - top[f], to = slotTop(t) - top[f], far = Math.abs(from - to);
+    li.style.transform = `translate3d(0,${to}px,0)`;
+    if (lift) lift.cancel();
+    settle = li.animate([{ transform: `translate3d(0,${from}px,0)`, scale: "1.03" }, { transform: `translate3d(0,${to}px,0)`, scale: "1" }],
+      { duration: Math.round(Math.min(420, 260 + far * 1.2)), easing: EASE.drop });
+    settle.onfinish = commit;
+  }
+  // 2 of 2: make it real. The row moves in the list to the slot it is already showing in.
+  function commit() {
+    if (phase === 3) return; const wasHeld = phase === 1; phase = 3;
+    if (DRAG && DRAG.end === commit) DRAG = null;
+    dragging = null;
+    if (raf) cancelAnimationFrame(raf);
+    if (wasHeld) { if (li.isConnected) place(); unlisten(); }
+    if (settle) { settle.onfinish = null; settle.cancel(); } if (lift) lift.cancel();
+    ol.classList.remove("sorting"); li.classList.remove("drag");
+    rows.forEach(r => { r.style.transform = ""; });
     if (!li.isConnected) return;
-    // Drop into the slot: one short glide from where it was floating.
-    if (off && !reduceMotion()) li.animate([{ transform: `translateY(${off}px)` }, { transform: "none" }], { duration: 180, easing: "cubic-bezier(.2,.8,.2,1)" });
+    if (t !== f) ol.insertBefore(li, t > f ? rows[t].nextSibling : rows[t]);
     syncOrder(ol, true); flash(li);
   }
-  DRAG = { end };
+  DRAG = { end: commit };
   // Listen on the window, not the handle: if the phone drops the handle's hold on the finger, the events still arrive.
   window.addEventListener("pointermove", move, true);
-  EVS.forEach(([t, cap]) => window.addEventListener(t, up, cap));
+  EVS.forEach(([ty, cap]) => window.addEventListener(ty, up, cap));
   document.addEventListener("visibilitychange", hidden);
 });
 
