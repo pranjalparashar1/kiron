@@ -56,6 +56,9 @@ function validateQuiz(d) {
     sourceUrl: isStr(d.sourceUrl) && /^https?:\/\//.test(d.sourceUrl.trim()) ? d.sourceUrl.trim() : "",
     purpose: isStr(d.purpose) ? d.purpose.trim() : "",
     about: isStr(d.about) ? d.about.trim() : "",
+    // Optional: questions per round (default ROUND), and "test": true to list it with the playtest quizzes.
+    round: Number.isInteger(d.round) && d.round > 0 && d.round <= 50 ? d.round : 0,
+    test: d.test === true,
     sections: []
   };
   if (!out.title) errs.push("The quiz needs a “title”.");
@@ -249,13 +252,13 @@ function counts(quiz, P, si) {
 const MAXNUM = 3;
 function cushion(quiz, list) {
   // At most MAXNUM number questions per round, never first, spread out between easier ones.
-  const isNum = id => getQ(quiz, id).q.type === "number";
+  const isNum = id => getQ(quiz, id).q.type === "number", R = quiz.round || ROUND;
   const T = [], N = [], skipped = [];
   for (const id of list) {
-    if (T.length + N.length >= ROUND) break;
+    if (T.length + N.length >= R) break;
     if (isNum(id)) { if (N.length < MAXNUM) N.push(id); else skipped.push(id); } else T.push(id);
   }
-  while (T.length + N.length < ROUND && skipped.length && T.length === 0) N.push(skipped.shift()); // only numbers left
+  while (T.length + N.length < R && skipped.length && T.length === 0) N.push(skipped.shift()); // only numbers left
   const out = []; let ti = 0;
   N.forEach((n, k) => { const want = Math.max(k + 1, Math.round((k + 1) * T.length / (N.length + 1))); while (ti < want && ti < T.length) out.push(T[ti++]); out.push(n); });
   while (ti < T.length) out.push(T[ti++]);
@@ -358,11 +361,14 @@ const buzz = p => { if (navigator.vibrate) try { navigator.vibrate(p); } catch (
 /* ---------------- library: just the list ---------------- */
 function renderLibrary() {
   current = null; document.title = "Kiron";
-  const list = allQuizzes();
+  const list = allQuizzes(), card = x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`;
+  // Kiron 1.6: the playtest quizzes sit on top; every other quiz is folded away in one dropdown (the same fold as "Jump to a part").
+  const top = list.filter(x => x.quiz.test), rest = list.filter(x => !x.quiz.test);
+  const more = rest.length ? `<div class="jump more"><div class="jump-head"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">All quizzes<span class="car" aria-hidden="true">▾</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="grid">${rest.map(card).join("")}</div></div></div></div><i class="cap" aria-hidden="true"></i></div>` : "";
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    <div class="grid">${list.length ? list.map(x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`).join("") : `<p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p>`}</div>
+    ${list.length ? `${top.length ? `<div class="grid">${top.map(card).join("")}</div>` : ""}${more}` : `<div class="grid"><p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p></div>`}
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
@@ -1407,10 +1413,10 @@ document.addEventListener("click", e => {
   if (e.target.classList.contains("hx")) buzz(10);
   if (d.go !== undefined) { flowFrom(t); go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
+  if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); t.setAttribute("aria-expanded", o); unfurl(j, o, o && j); return; }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
   if (d.toggle !== undefined) return playAct("toggle", t);
-  if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); t.setAttribute("aria-expanded", o); unfurl(j, o, o && j); return; }
   // One part open at a time: the one you tap opens (or shuts) while any other open one shuts, all in the same move.
   if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"), ch = [[p, o]]; app().querySelectorAll(".part.open").forEach(x => { if (x !== p) { ch.push([x, false]); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); } }); t.setAttribute("aria-expanded", o); fold(ch, o && p); return; }
   if (d.act === "partstart") return startRound({ only: +d.pi });

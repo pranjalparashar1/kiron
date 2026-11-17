@@ -1,0 +1,277 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "test-streaks",
+ "title": "Test: streaks",
+ "source": "Playtest quiz for Kiron",
+ "purpose": "Build a streak fast.",
+ "test": true,
+ "round": 20,
+ "sections": [
+  {
+   "title": "Streaks",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Pick the answer.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Still easy.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Final text question.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Keep the streak alive.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Tap it.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Streak check: keep going.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Medium-length prompt to check spacing between the question and the options.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Tap the right one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Which is right this time?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Last few: which is right?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "One more text question.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Another easy one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Pick one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "A short one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Which option is right?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Nearly there.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Quick: which is right?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Which of these is **bold** and *italic* in the prompt?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "This prompt is deliberately long so you can see how a question wraps across three or four lines on a phone screen.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Which option?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    }
+   ]
+  }
+ ]
+}
