@@ -349,10 +349,11 @@ const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" a
 /* ---- Kiron 1.4.4: haptics. A web page on an iPhone cannot ask for a vibration, but the phone itself gives a tick when a
    finger flips a real iOS switch. So each button carries an invisible switch stretched over it: the finger lands on the
    switch, the phone ticks, and the tap carries on to the button as always. Where there is no tick (older phones, laptops)
-   nothing else changes. Kept off the quiz list (a long scrolling list) and off anything that cannot be pressed.
+   nothing else changes. Kept off the long scrolling lists (the quiz list and the parts under "Jump to a part"): a finger
+   that lands on a switch and drags may move the switch instead of the page. Also kept off anything that cannot be pressed.
    Android phones have a real vibration call, so they get a short buzz, a double one for a right answer and one when a streak lands. ---- */
 const HX = `<input class="hx" type="checkbox" switch tabindex="-1" aria-hidden="true">`;
-const hxAll = html => html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g, (m, at, inner) => /qcard|aria-disabled="true"|\sdisabled\b/.test(at) ? m : `<button${at}>${inner}${HX}</button>`);
+const hxAll = html => html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g, (m, at, inner) => /qcard|part-row|data-pi=|aria-disabled="true"|\sdisabled\b/.test(at) ? m : `<button${at}>${inner}${HX}</button>`);
 const buzz = p => { if (navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} };
 /* ---------------- library: just the list ---------------- */
 function renderLibrary() {
@@ -382,13 +383,13 @@ function renderHome() {
     const pc = counts(quiz, P, i), st = stateOf(pc), answered = pc.right + pc.revisit > 0;
     const acts = st[0] === "none" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Start</button>`
       : `${st[0] === "some" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Continue</button>` : ""}${answered ? `<button class="btn" data-act="partreview" data-pi="${i}" type="button">Review</button>` : ""}<button class="btn ghost" data-act="partredo" data-pi="${i}" type="button">Redo</button>`;
-    return `<div class="part" style="--i:${Math.min(i, 7)}"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button><div class="unfurl" inert><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div>`;
+    return `<div class="part"><div class="part-head"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div></div><i class="cap" aria-hidden="true"></i></div>`;
   }).join("");
   app().innerHTML = hxAll(topBar(backBtn(), `<span class="grow"></span>`) + `
   <main class="wrap home">
     <h1 class="qtitle">${esc(quiz.title)}</h1>
     <div class="cta">${primary}${c.revisit && (inRound || c.left || c.skip) ? `<button class="btn" data-act="revisit" type="button">Revisit what you missed</button>` : ""}</div>
-    ${quiz.sections.length > 1 ? `<div class="jump"><div class="jump-head"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="parts">${parts}</div></div></div></div><i class="jump-cap" aria-hidden="true"></i></div>` : ""}
+    ${quiz.sections.length > 1 ? `<div class="jump"><div class="jump-head"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">Jump to a part<span class="car" aria-hidden="true">▾</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="parts">${parts}</div></div></div></div><i class="cap" aria-hidden="true"></i></div>` : ""}
     <div class="foot">${started || inRound ? `<button class="btn ghost danger" data-act="reset" type="button">Reset quiz</button>` : ""}${mine ? `<button class="btn ghost danger" data-del="${esc(quiz.id)}" type="button">Delete this quiz</button>` : ""}</div>
   </main>`);
 }
@@ -1178,60 +1179,98 @@ function renderExtra(name) {
 }
 
 /* ---------------- events ---------------- */
-// Dropdowns open in one layout step (no height animation) and their contents fade and slide in (opacity and
-// transform, see .unfurl-in). Closing lets the contents fade out first, then folds the space away.
-function unfurl(box, open) {
-  const u = box.querySelector(":scope > .unfurl"); if (!u) return;
-  if (u.firstElementChild.classList.contains("fold")) return foldBox(box, u, open);
-  clearTimeout(u._t);
-  box.classList.toggle("open", open); u.inert = !open;
-  if (open || reduceMotion()) u.style.height = open ? "auto" : "0px";
-  else {
-    // The space folds away only after the fade has fully finished (it used to fold mid-fade, which is what stuttered).
-    // If folding would leave the page scrolled past its new end, the page glides back first, so nothing jumps.
-    const end = Math.max(0, document.documentElement.scrollHeight - u.offsetHeight - innerHeight), glide = window.scrollY > end + 1;
-    if (glide) smoothScrollTo(end);
-    u._t = setTimeout(() => { if (!box.classList.contains("open")) u.style.height = "0px"; }, glide ? 520 : 340);
-  }
-}
-/* "Jump to a part" (Kiron 1.5.1.2): a real fold, with nothing but transforms.
-   The box is three pieces: the head, the list, and a cap (the rounded bottom edge). To fold, the cap slides up; the
-   list's window slides up with it while the list inside slides down by the same amount, so the list stands still and
-   is covered from the bottom, right at the cap. Anything below the box rides up with the cap. All of these are one
-   move each, started together with the same length and curve, so the phone keeps them in step by itself.
-   Only when the box looks completely shut is the space really taken away (and when opening, it is given first), so
-   the page never changes under a moving picture. A tap half-way turns the fold round from where it is. */
+/* Kiron 1.5.2: one fold for every dropdown (for now: "Jump to a part" and each part inside it).
+   A box is three pieces: a head, a list (.unfurl > .fold > .fold-in), and a cap (the rounded bottom edge). To shut, the
+   cap slides up; the list's window (.fold) slides up with it while the list inside (.fold-in) slides down by the same
+   amount, so the list stands still and is covered from the bottom, right at the cap. Everything after the box rides up
+   with the cap, and so does every box it sits inside (their windows and caps too), so a part folding inside the open
+   jump box shrinks that box as well. Opening is the same, backwards.
+   Every moving piece gets exactly one move, all started together with the same length and curve, so the phone keeps
+   them in step by itself; when several boxes move at once (one part opens as another shuts) each piece's move is the
+   sum of theirs. Only transforms move. The space is given before opening and taken away only once a box looks
+   completely shut, so the page never changes under a moving picture. A tap half-way turns it round from where it is. */
 const FOLD_MS = 520, FOLD_EASE = "cubic-bezier(.32,.72,0,1)";
-function foldBox(box, u, open) {
-  const win = u.firstElementChild, inner = win.firstElementChild, cap = box.querySelector(":scope > .jump-cap");
-  const below = []; for (let n = box.nextElementSibling; n; n = n.nextElementSibling) below.push(n);
-  // Where the fold is right now, if it is still moving (0 = fully open).
-  let at = null; if (u._fold && cap) { const m = new DOMMatrixReadOnly(getComputedStyle(cap).transform); at = -m.m42; }
-  (u._fold || []).forEach(a => { a.onfinish = null; a.cancel(); }); u._fold = null;
-  box.classList.toggle("open", open); u.inert = !open;
-  if (reduceMotion() || !win.animate || !cap) { u.style.height = open ? "auto" : "0px"; return; }
-  const wasShut = u.offsetHeight === 0;
-  u.style.height = "auto";
-  const H = u.offsetHeight, from = at !== null ? Math.min(H, Math.max(0, at)) : wasShut ? H : 0, to = open ? 0 : H;
-  if (from === to || !H) { if (!open) u.style.height = "0px"; return; }
-  // How far each thing below the box travels between open and shut (the page's foot may not move at all), and where the page ends when shut.
-  // (Measured by shutting it for an instant, unseen, and putting the page back exactly where it was.)
-  const y0 = window.scrollY, openTop = below.map(el => el.getBoundingClientRect().top + y0);
-  u.style.height = "0px";
-  const ride = below.map((el, i) => (openTop[i] - el.getBoundingClientRect().top - window.scrollY) / H), end = Math.max(0, document.documentElement.scrollHeight - innerHeight);
-  u.style.height = "auto";
-  if (window.scrollY !== y0) window.scrollTo(0, y0);
-  // Closing: if the page would be left scrolled past its new end, it glides back while the box folds.
-  if (!open && window.scrollY > end + 1) smoothScrollTo(end);
-  const o = { duration: Math.round(FOLD_MS * (.45 + .55 * Math.abs(to - from) / H)), easing: FOLD_EASE, fill: "both" };
-  const mv = (el, k) => el.animate([{ transform: `translate3d(0,${(k * from).toFixed(2)}px,0)` }, { transform: `translate3d(0,${(k * to).toFixed(2)}px,0)` }], o);
-  const run = [mv(win, -1), mv(inner, 1), mv(cap, -1), ...below.map((el, i) => ride[i] ? mv(el, -ride[i]) : null).filter(Boolean)];
-  u._fold = run;
-  run[0].onfinish = () => { if (u._fold !== run) return; u._fold = null; if (!open) u.style.height = "0px"; run.forEach(a => a.cancel()); };
+let FOLD = null;   // the fold in progress: { run: [animations], boxes: Map(box -> { H, to }) }
+const foldBits = box => { const u = box.querySelector(":scope > .unfurl"), win = u && u.firstElementChild, inner = win && win.firstElementChild; return { u, win, inner, cap: box.querySelector(":scope > .cap") }; };
+// What rides when this box folds: whatever follows it, at every level up to the screen, and the window, list and cap of
+// every box it sits inside. Returns [element, sign] pairs for the windows and lists (they move by the box's own height).
+function foldRiders(box) {
+  const { u } = foldBits(box), ride = [], clip = [], root = app();
+  for (let n = u; n && n !== root; n = n.parentElement) {
+    for (let s = n.nextElementSibling; s; s = s.nextElementSibling) ride.push(s);
+    const p = n.parentElement;
+    if (p && p.classList.contains("fold-in") && p.parentElement.classList.contains("fold")) clip.push([p.parentElement, -1], [p, 1]);
+  }
+  return { ride, clip };
 }
-// Opening a list draws the eye to it: the page glides (the phone's own smooth scroll) just far enough to show it.
-// If it is already in view, nothing moves.
-function bringIn(el) { if (el.scrollIntoView) el.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "nearest" }); }
+function unfurl(box, open, show) { fold([[box, open]], show); }
+function fold(changes, show) {
+  const y0 = window.scrollY;
+  // Where every box that is moving now is (how many px it looks shut), read before anything is stopped.
+  const boxes = new Map();
+  if (FOLD) FOLD.boxes.forEach((b, box) => { if (!box.isConnected) return; const m = new DOMMatrixReadOnly(getComputedStyle(foldBits(box).win).transform); boxes.set(box, { at: -m.m42, to: b.to }); });
+  if (FOLD) FOLD.run.forEach(a => { a.onfinish = null; a.cancel(); });
+  FOLD = null;
+  changes.forEach(([box, open]) => {
+    const { u } = foldBits(box); if (!u) return;
+    box.classList.toggle("open", open); u.inert = !open;
+    const b = boxes.get(box) || { at: u.offsetHeight === 0 ? "shut" : 0 };
+    b.open = open; boxes.set(box, b);
+  });
+  const still = reduceMotion() || !document.body.animate;
+  // Give every moving box its full space (the fold draws them shut with transforms), and measure.
+  boxes.forEach((b, box) => { const { u } = foldBits(box); u.style.height = "auto"; });
+  boxes.forEach((b, box) => {
+    const H = b.H = foldBits(box).u.offsetHeight;
+    if (b.open === undefined) b.open = b.to === 0;
+    b.to = b.open ? 0 : H;
+    b.at = b.at === "shut" ? H : Math.min(H, Math.max(0, b.at));
+    if (still || !H || b.at === b.to) { if (!b.open) foldBits(box).u.style.height = "0px"; boxes.delete(box); }
+  });
+  // How far each rider travels when each box shuts (measured by shutting that box for an instant, unseen). Things at
+  // the page's foot may not move at all, or only part of the way, so this is measured, not assumed.
+  const top = el => el.getBoundingClientRect().top;
+  const moves = new Map(), add = (el, from, to) => { const m = moves.get(el) || [0, 0]; m[0] += from; m[1] += to; moves.set(el, m); };
+  boxes.forEach((b, box) => {
+    const { u, win, inner, cap } = foldBits(box), { ride, clip } = foldRiders(box);
+    const t0 = ride.map(top); u.style.height = "0px"; const t1 = ride.map(top); u.style.height = "auto";
+    ride.forEach((el, i) => { const k = (t0[i] - t1[i]) / b.H; if (k) add(el, -k * b.at, -k * b.to); });
+    add(win, -b.at, -b.to); add(inner, b.at, b.to);
+    clip.forEach(([el, s]) => add(el, s * b.at, s * b.to));
+  });
+  // The page once it has settled: where it ends, and where the box to show sits.
+  boxes.forEach((b, box) => { if (!b.open) foldBits(box).u.style.height = "0px"; });
+  const end = Math.max(0, document.documentElement.scrollHeight - innerHeight), sr = show && show.isConnected ? show.getBoundingClientRect() : null;
+  const r = sr && { top: sr.top + window.scrollY, bottom: sr.bottom + window.scrollY };   // page coordinates
+  boxes.forEach((b, box) => { foldBits(box).u.style.height = "auto"; });
+  if (window.scrollY !== y0) window.scrollTo(0, y0);
+  if (boxes.size) {
+    const far = Math.max(...[...boxes.values()].map(b => Math.abs(b.to - b.at) / b.H));
+    const o = { duration: Math.round(FOLD_MS * (.45 + .55 * far)), easing: FOLD_EASE, fill: "both" };
+    const tr = v => `translate3d(0,${v.toFixed(2)}px,0)`;
+    const run = []; moves.forEach(([a, b], el) => { if (a || b) run.push(el.animate([{ transform: tr(a) }, { transform: tr(b) }], o)); });
+    const f = FOLD = { run, boxes };
+    if (run.length) run[0].onfinish = () => { if (FOLD !== f) return; FOLD = null; boxes.forEach((b, box) => { if (!b.open) foldBits(box).u.style.height = "0px"; }); run.forEach(a => a.cancel()); };
+    else FOLD = null;
+  }
+  // One native smooth scroll, in the same moment: to show what opened, or back if the page would end above where it is.
+  let y = Math.min(y0, end);
+  if (r) {
+    const hdr = $(".top"), hi = (hdr ? hdr.getBoundingClientRect().bottom : 0) + 12, lo = innerHeight - bottomGap();
+    if (r.bottom - y0 > lo) y = r.bottom - lo;
+    if (r.top - y < hi) y = r.top - hi;
+    y = Math.min(end, Math.max(0, y));
+  }
+  smoothScrollTo(y);
+}
+/* How much of the bottom of the screen to keep clear when bringing something into view. In a Safari tab the toolbar
+   floats over the bottom of the page, so a list scrolled to the very bottom edge would end up under it. On the home
+   screen there is only the home bar. */
+const STANDALONE = (() => { try { return navigator.standalone === true || matchMedia("(display-mode: standalone)").matches; } catch (e) { return false; } })();
+function bottomGap() {
+  const safe = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
+  return 24 + (STANDALONE ? safe : Math.max(safe, 34) + 60);
+}
 let armed = { el: null, t: 0 };
 function twoTap(el, label) { if (armed.el === el && Date.now() - armed.t < 4000) { armed = { el: null, t: 0 }; return true; } armed = { el, t: Date.now() }; el.dataset.label = el.textContent; el.textContent = label; setTimeout(() => { if (el.isConnected && armed.el === el) { el.textContent = el.dataset.label; armed = { el: null, t: 0 }; } }, 4000); return false; }
 document.addEventListener("click", e => {
@@ -1243,8 +1282,9 @@ document.addEventListener("click", e => {
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
   if (d.toggle !== undefined) return playAct("toggle", t);
-  if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); unfurl(j, o); t.setAttribute("aria-expanded", o); if (o) bringIn(j); return; }
-  if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"); app().querySelectorAll(".part.open").forEach(x => { if (x !== p) { unfurl(x, false); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); } }); unfurl(p, o); t.setAttribute("aria-expanded", o); if (o) bringIn(p); return; }
+  if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); t.setAttribute("aria-expanded", o); unfurl(j, o, o && j); return; }
+  // One part open at a time: the one you tap opens (or shuts) while any other open one shuts, all in the same move.
+  if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"), ch = [[p, o]]; app().querySelectorAll(".part.open").forEach(x => { if (x !== p) { ch.push([x, false]); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); } }); t.setAttribute("aria-expanded", o); fold(ch, o && p); return; }
   if (d.act === "partstart") return startRound({ only: +d.pi });
   if (d.act === "partreview") { const { quiz, P } = current, r = buildReview(quiz, P, +d.pi); if (!r) return toast("Nothing answered here yet."); P.round = r; P.cur = null; saveProg(); return go("play-" + quiz.id, true); }
   if (d.act === "partredo") { if (!twoTap(t, "Tap again to redo")) return; const { quiz, P } = current; eachQ(quiz, (q, id, si) => { if (si === +d.pi) { delete P.st[id]; delete P.a[id]; delete P.h[id]; } }); P.round = null; P.cur = null; saveProg(); return startRound({ only: +d.pi }); }
