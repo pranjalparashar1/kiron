@@ -555,10 +555,61 @@ pre.prompt-text { margin: 0; max-height: 260px; overflow: auto; background: var(
 .heat { position: relative; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; }
 .heat:not(.on) { pointer-events: none; }
 .heat .hx { inset: -12px -8px; width: auto; height: auto; touch-action: none; -webkit-touch-callout: none; }
-.firetip { position: fixed; z-index: 26; pointer-events: none; opacity: 0; transform-origin: calc(100% - 19px) 0; padding: 8px 13px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--line); color: var(--ink); font: 600 14px/1.3 var(--font); white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
-.firetip::before { content: ""; position: absolute; top: -6px; right: 14px; width: 10px; height: 10px; background: var(--surface2); border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg); }
+.firetip { position: fixed; z-index: 26; pointer-events: none; opacity: 0; transform-origin: var(--ax, 50%) 0; padding: 8px 13px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--line); color: var(--ink); font: 600 14px/1.3 var(--font); white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.firetip::before { content: ""; position: absolute; top: -6px; left: calc(var(--ax, 50%) - 5px); width: 10px; height: 10px; background: var(--surface2); border-left: 1px solid var(--line); border-top: 1px solid var(--line); transform: rotate(45deg); }
 .fx-ball { position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle, #fff 0, #ffd36b 28%, #ff6a2b 55%, rgba(255,106,43,0) 72%); opacity: 0; }
 .fx.run .fx-ball { will-change: transform, opacity; }
 .opt.burning { pointer-events: none; }
 .char { position: absolute; inset: -2px; border-radius: inherit; background: linear-gradient(to top, rgba(255,106,43,.95), rgba(240,178,58,.7) 45%, rgba(217,119,87,.3)); opacity: 0; pointer-events: none; }
 .char b { position: absolute; left: 0; bottom: 40%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: #ffcf3f; box-shadow: 0 0 6px #ff6a2b; opacity: 0; }
+
+/* ---------- Kiron 1.5.6: the sling (drag the fire down to it; let go and it burns a wrong option) ---------- */
+/* A smaller pause, a bigger streak. The pause keeps a full-size touch area around it. */
+.icon-btn.pause { min-width: 34px; height: 34px; border-radius: 9px; }
+.icon-btn.pause svg { width: 15px; height: 15px; }
+.icon-btn.pause .hx { inset: -6px; width: auto; height: auto; }
+.heat.on { max-width: 88px; }
+.heat .fl { width: 26px; height: 32px; }
+.heat .kf { width: 23px; height: 30px; }
+.heat .kstar { width: 30px; height: 30px; }
+.heat .n { font-size: 20px; }
+.heat .fl { transition: opacity .2s ease; }
+.heat.lifted .fl { opacity: .2; }
+/* The fire's switch stands on its end; while the fire is held it is made tall, so the finger can never slip across
+   its middle by accident (only when the page slides it on purpose). It is invisible and only ever moved. */
+.heat .hx.hxv { writing-mode: vertical-lr; }
+.heat .hx.hxv.track { bottom: auto; height: 400px; }
+.firetip.up { transform-origin: var(--ax, 50%) 100%; }
+.firetip.up::before { top: auto; bottom: -6px; transform: rotate(225deg); }
+/* Hint goes small; the sling sits beside it (and takes the spare width when there is no Check). */
+.actionbar .btn.hintb { flex: none; padding-inline: 13px; font-size: 15px; }
+.actionbar .btn.sling { flex: none; min-width: 64px; padding-inline: 14px; overflow: visible; -webkit-touch-callout: none; }
+.actionbar .btn.sling.grow { flex: 1; }
+.sling::before { content: ""; position: absolute; left: 50%; top: 50%; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%; background: radial-gradient(closest-side, var(--glow, rgba(217,119,87,.5)), transparent 72%); opacity: 0; transform: scale(.6); pointer-events: none; transition: opacity .25s ease, transform .4s cubic-bezier(.3,1.5,.5,1); }
+.slg { position: relative; display: block; width: 22px; height: 30px; overflow: visible; transition: transform .38s cubic-bezier(.3,1.6,.5,1); }
+.slg.star { width: 28px; height: 28px; }
+.slg path { fill: none; stroke: var(--muted); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 0 3.2; }
+.slg.star path { stroke-dasharray: 0 2.7; }
+.sling[data-heat]:not([data-heat="0"]) .slg path { stroke: var(--heat); }
+.sling[data-heat="5"] .slg path { stroke: #ff6a2b; }
+.sling.ready::before { opacity: .55; transform: scale(.9); }
+.sling.loaded::before { opacity: 1; transform: scale(1.25); }
+.sling.loaded .slg { transform: scale(1.3); }
+@media (prefers-reduced-motion: no-preference) {
+  .sling.ready:not(.loaded) .slg { animation: slcall .9s ease-in-out infinite alternate; }
+}
+@keyframes slcall { from { transform: scale(1); } to { transform: scale(1.14) translateY(2px); } }
+/* The dragged fire, its comet tail and the comet on the flight: one fixed layer, built once, hidden until used.
+   Only transform and opacity ever change in it. The fire is drawn at three times its bar size and only ever shown
+   at or below that, so it stays sharp as it grows. */
+.sfx { position: fixed; inset: 0; z-index: 27; pointer-events: none; contain: strict; visibility: hidden; }
+.sfx.run { visibility: visible; }
+.sfx .sg, .sfx .sx, .sfx .sy, .sfx .sk { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.sfx .sg b { position: absolute; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%; }
+.sfx .fo b { position: absolute; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%; opacity: 0; }
+.sfx .halo { position: absolute; left: -84px; top: -84px; width: 168px; height: 168px; border-radius: 50%; background: radial-gradient(closest-side, var(--glow, rgba(240,178,58,.55)), transparent 70%); opacity: .9; }
+.sfx .ic { position: absolute; left: -39px; top: -48px; width: 78px; height: 96px; display: flex; align-items: flex-end; justify-content: center; }
+.sfx .ic .kf { width: 69px; height: 90px; margin: 0 auto; }
+.sfx .ic .kstar { width: 90px; height: 90px; margin: 0 auto 3px; }
+.sfx .kf .o, .sfx .kstar, .sfx .kstar > svg, .sfx .kstar .moon svg { filter: none; }
+.sfx.run .sg, .sfx.run .sx, .sfx.run .sy, .sfx.run .sk, .sfx.run .fo b { will-change: transform, opacity; }
