@@ -6,428 +6,444 @@
  "source": "Playtest quiz for Kiron",
  "purpose": "Build a streak fast.",
  "test": true,
- "round": 32,
+ "round": 8,
  "sections": [
   {
-   "title": "Streaks",
+   "title": "Round 1",
    "questions": [
     {
      "type": "single",
      "prompt": "Pick the answer.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Still easy.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Final text question.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Keep the streak alive.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Tap it.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Streak check: keep going.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Medium-length prompt to check spacing between the question and the options.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Tap the right one.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
-    },
+    }
+   ]
+  },
+  {
+   "title": "Round 2",
+   "questions": [
     {
      "type": "single",
      "prompt": "Which is right this time?",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Last few: which is right?",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "One more text question.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Another easy one.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Pick one.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "A short one.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Which option is right?",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Nearly there.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
-    },
+    }
+   ]
+  },
+  {
+   "title": "Round 3",
+   "questions": [
     {
      "type": "single",
      "prompt": "Quick: which is right?",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Which of these is **bold** and *italic* in the prompt?",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "This prompt is deliberately long so you can see how a question wraps across three or four lines on a phone screen.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Which option?",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Again.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Tap Correct.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "On a roll.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "One more.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
-    },
+    }
+   ]
+  },
+  {
+   "title": "Round 4",
+   "questions": [
     {
      "type": "single",
      "prompt": "Keep tapping.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Easy one.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Don't stop.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Keep it up.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Still going.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Nearly done.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Next.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     },
     {
      "type": "single",
      "prompt": "Last stretch.",
-     "hint": "Pick Correct.",
+     "hint": "Pick D, the last one.",
      "options": [
-      "Correct",
       "Incorrect",
       "Incorrect",
-      "Incorrect"
+      "Incorrect",
+      "Correct"
      ],
-     "correct": 0,
+     "correct": 3,
      "answer": "It said Correct."
     }
    ]
   }
- ]
+ ],
+ "fixed": true
 }

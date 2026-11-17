@@ -59,6 +59,7 @@ function validateQuiz(d) {
     // Optional: questions per round (default ROUND), and "test": true to list it with the playtest quizzes.
     round: Number.isInteger(d.round) && d.round > 0 && d.round <= 50 ? d.round : 0,
     test: d.test === true,
+    fixed: d.fixed === true,   // keep options in the order written (no shuffle)
     sections: []
   };
   if (!out.title) errs.push("The quiz needs a “title”.");
@@ -469,7 +470,7 @@ function renderPlay(keepScroll) {
   let input = "", primary = "", waiting = false;
   const a = P.a[id], gone = burntOf(r, id);   // options the fire burned away stay gone (one still burning stays a moment)
   if (f.kind === "pick") {
-    const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
+    const ord = current.quiz.fixed || /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
     input = `<div class="opts" role="group" aria-label="Options">` + ord.filter(oi => oi === BURNING || !gone.includes(oi)).map(oi => {
       let cls = "opt" + (oi === BURNING ? " burning" : ""), ic = "";
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
