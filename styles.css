@@ -577,3 +577,8 @@ pre.prompt-text { margin: 0; max-height: 260px; overflow: auto; background: var(
 .firetip.up::before { top: auto; bottom: -6px; transform: rotate(225deg); }
 /* Hint goes small. */
 .actionbar .btn.hintb { flex: none; padding-inline: 13px; font-size: 15px; }
+
+/* Kiron 1.6: every other quiz folded under one dropdown on the library (same box as "Jump to a part"). */
+.more .fold-in > .grid { padding: 0 10px; gap: 6px; grid-template-columns: 1fr; }
+.more .qcard { background: var(--surface2); border: 0; border-radius: 12px; min-height: 60px; padding: 14px 14px; }
+.more .qcard h3 { font-size: 16.5px; }
