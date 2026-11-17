@@ -6,7 +6,7 @@
  "source": "Playtest quiz for Kiron",
  "purpose": "Build a streak fast.",
  "test": true,
- "round": 20,
+ "round": 32,
  "sections": [
   {
    "title": "Streaks",
@@ -261,6 +261,162 @@
     {
      "type": "single",
      "prompt": "Which option?",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Again.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Tap Correct.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "On a roll.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "One more.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Keep tapping.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Easy one.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Don't stop.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Halfway to galaxy.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Still going.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Almost galaxy.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Next.",
+     "hint": "Pick Correct.",
+     "options": [
+      "Correct",
+      "Incorrect",
+      "Incorrect",
+      "Incorrect"
+     ],
+     "correct": 0,
+     "answer": "It said Correct."
+    },
+    {
+     "type": "single",
+     "prompt": "Last stretch.",
      "hint": "Pick Correct.",
      "options": [
       "Correct",
