@@ -364,7 +364,7 @@
     },
     {
      "type": "single",
-     "prompt": "Halfway to galaxy.",
+     "prompt": "Keep it up.",
      "hint": "Pick Correct.",
      "options": [
       "Correct",
@@ -390,7 +390,7 @@
     },
     {
      "type": "single",
-     "prompt": "Almost galaxy.",
+     "prompt": "Nearly done.",
      "hint": "Pick Correct.",
      "options": [
       "Correct",
