@@ -992,6 +992,9 @@ function fireDone(id) {
   BURNING = null; clearFeed();
   const P = current && current.P; if (!P || !P.cur || P.cur.id !== id || app().dataset.qid !== id) return;
   const before = new Map([...app().querySelectorAll(".opt")].map(el => [el.dataset.pick || el.dataset.toggle, el.getBoundingClientRect().top]));
+  // Take the burned button out first. The screen is patched in place by position, so if it stayed, the next option
+  // would be poured into this faded-out button and vanish with it (a second option gone, sometimes the right one).
+  const burnt = app().querySelector(".opt.burning"); if (burnt) burnt.remove();
   renderPlay(true);
   if (reduceMotion()) return;
   app().querySelectorAll(".opt").forEach(el => { const t0 = before.get(el.dataset.pick || el.dataset.toggle), dy = t0 - el.getBoundingClientRect().top;
