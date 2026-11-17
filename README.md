@@ -1,6 +1,6 @@
 # Kiron
 
-Recall quizzes for what you read, named after Chiron, the teacher. One question per screen, short rounds of seven, tap to answer. Built for phones.
+Kiron is named after Chiron, the teacher. One question per screen, short rounds of seven, tap to answer. Built for phones.
 
 Everything runs in the browser. Progress stays on your device.
 

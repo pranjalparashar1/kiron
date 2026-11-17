@@ -1,7 +1,6 @@
 {
   "name": "Kiron",
   "short_name": "Kiron",
-  "description": "Recall quizzes for what you read.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
