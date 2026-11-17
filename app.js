@@ -349,11 +349,11 @@ const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" a
 /* ---- Kiron 1.4.4: haptics. A web page on an iPhone cannot ask for a vibration, but the phone itself gives a tick when a
    finger flips a real iOS switch. So each button carries an invisible switch stretched over it: the finger lands on the
    switch, the phone ticks, and the tap carries on to the button as always. Where there is no tick (older phones, laptops)
-   nothing else changes. Kept off the long scrolling lists (the quiz list and the parts under "Jump to a part"): a finger
-   that lands on a switch and drags may move the switch instead of the page. Also kept off anything that cannot be pressed.
+   nothing else changes. Kept off the long scrolling lists (the quiz cards and the part rows under "Jump to a part"): a finger
+   that lands on a switch and drags may move the switch instead of the page. A part's own buttons (Start, Review, Redo) keep it. Also kept off anything that cannot be pressed.
    Android phones have a real vibration call, so they get a short buzz, a double one for a right answer and one when a streak lands. ---- */
 const HX = `<input class="hx" type="checkbox" switch tabindex="-1" aria-hidden="true">`;
-const hxAll = html => html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g, (m, at, inner) => /qcard|part-row|data-pi=|aria-disabled="true"|\sdisabled\b/.test(at) ? m : `<button${at}>${inner}${HX}</button>`);
+const hxAll = html => html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g, (m, at, inner) => /qcard|part-row|aria-disabled="true"|\sdisabled\b/.test(at) ? m : `<button${at}>${inner}${HX}</button>`);
 const buzz = p => { if (navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} };
 /* ---------------- library: just the list ---------------- */
 function renderLibrary() {
@@ -1229,7 +1229,9 @@ function fold(changes, show) {
   });
   // How far each rider travels when each box shuts (measured by shutting that box for an instant, unseen). Things at
   // the page's foot may not move at all, or only part of the way, so this is measured, not assumed.
-  const top = el => el.getBoundingClientRect().top;
+  // Page coordinates, not screen ones: shutting a box can make the page shorter than where it is scrolled to, and then
+  // the phone pulls the page up, which would make everything look as if it had not moved.
+  const top = el => el.getBoundingClientRect().top + window.scrollY;
   const moves = new Map(), add = (el, from, to) => { const m = moves.get(el) || [0, 0]; m[0] += from; m[1] += to; moves.set(el, m); };
   boxes.forEach((b, box) => {
     const { u, win, inner, cap } = foldBits(box), { ride, clip } = foldRiders(box);
