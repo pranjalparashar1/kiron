@@ -353,7 +353,9 @@ const backBtn = (to, label) => `<button class="icon-btn" data-go="${to || ""}" a
    that lands on a switch and drags may move the switch instead of the page. A part's own buttons (Start, Review, Redo) keep it. Also kept off anything that cannot be pressed.
    Android phones have a real vibration call, so they get a short buzz, a double one for a right answer and one when a streak lands. ---- */
 const HX = `<input class="hx" type="checkbox" switch tabindex="-1" aria-hidden="true">`;
-const hxAll = html => html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g, (m, at, inner) => /qcard|part-row|aria-disabled="true"|\sdisabled\b/.test(at) ? m : `<button${at}>${inner}${HX}</button>`);
+const hxAll = html => html.replace(/<button\b([^>]*)>([\s\S]*?)<\/button>/g, (m, at, inner) => /qcard|part-row|data-nohx|aria-disabled="true"|\sdisabled\b/.test(at) ? m : `<button${at}>${inner}${HX}</button>`);
+// The fire's own switch stands on its end, so a finger dragging the fire down slides its knob (see the sling, 1.5.6).
+const HXV = `<input class="hx hxv" type="checkbox" switch tabindex="-1" aria-hidden="true">`;
 const buzz = p => { if (navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} };
 /* ---------------- library: just the list ---------------- */
 function renderLibrary() {
@@ -428,7 +430,7 @@ function armTimer() {
     if (!current || !current.P.round || !TIMER) return;
     const r = current.P.round, id = TIMER.id;
     if (r.ended || r.ids[r.i] !== id || (current.P.cur && current.P.cur.done)) return;
-    if (dragging) { TIMER.t0 = Date.now() - TIMER.dur + 1500; return armTimer(); }   // never change question under a held row
+    if (dragging || SLING) { TIMER.t0 = Date.now() - TIMER.dur + 1500; return armTimer(); }   // never change question under a held row
     nav(1);
   }, Math.max(0, TIMER.dur - timerElapsed()));
 }
@@ -505,15 +507,17 @@ function renderPlay(keepScroll) {
     fb = `<section class="fb ${status}${keepScroll === "fb" && !reduceMotion() ? " wait" : ""}" aria-live="polite">${detail}<div class="model">${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}</section>`;
   }
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
-  const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost${primary ? "" : " grow"}" data-act="hint" type="button">💡 Hint</button>` : "";
+  const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost hintb" data-act="hint" type="button">💡 Hint</button>` : "";
+  // The sling (1.5.6): where the fire is dragged to burn a wrong option. Only where there is something to burn.
+  const slingBtn = !cur.done && !r.review && (f.kind === "pick" || f.kind === "multi") ? `<button class="btn ghost sling${primary ? "" : " grow"}" data-act="sling" data-heat="${heatLevel(r.streak || 0)}" type="button" aria-label="Sling">${slingIcon(heatLevel(r.streak || 0))}</button>` : "";
   const bar = cur.done
     ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
-    : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow${waiting ? " soft" : ""}" data-act="check" type="button">Check</button>` : ""}`;
+    : `${back}${hintBtn}${slingBtn}${primary === "check" ? `<button class="btn primary grow${waiting ? " soft" : ""}" data-act="check" type="button">Check</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = q.type === "number";
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<button type="button" class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" data-act="fire" aria-label="${feeding ? stk - 1 : stk} in a row"${heatNow ? "" : ' tabindex="-1" aria-hidden="true"'}><span class="fl" aria-hidden="true">${heatIcon(heatNow)}</span><b class="n" aria-hidden="true">${feeding ? stk - 1 : stk}</b></button>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>
+  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<button type="button" class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" data-act="fire" data-nohx aria-label="${feeding ? stk - 1 : stk} in a row"${heatNow ? "" : ' tabindex="-1" aria-hidden="true"'}><span class="fl" aria-hidden="true">${heatIcon(heatNow)}</span><b class="n" aria-hidden="true">${feeding ? stk - 1 : stk}</b>${HXV}</button>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -895,20 +899,30 @@ function finalize(status) {
   else if (status !== "right") r.streak = 0;
   saveProg();
 }
-/* ---- Kiron 1.5.3: the fire answers a touch.
-   A tap: a small bubble under it says what it does, and goes by itself. Before the question is answered, with a wrong
-   option still left to burn, it says "Hold the fire for a surprise" (after the first time: what the surprise is);
-   otherwise it just says the streak.
-   A hold (only then): the fire swells like a balloon, faster and faster, trembling at the end. Let go early and it sinks
-   back. Hold on and it pops: a flash and sparks where it was, a fireball arcs down onto one wrong option, which burns
-   away (embers rise, it fades), and the options below close the gap. It costs one from the streak. If only right
-   answers are left, the streak goes back to 0. Below 3 the fire goes out, so there is nothing left to hold.
-   Multi-select burns one option that is not right; ordering questions have nothing to burn. Burned options stay gone
-   for the rest of the round. Transform and opacity only, Web Animations, pieces built once (the fx layer). ---- */
+/* ---- Kiron 1.5.6: the sling.
+   The fire at the end of the bar can be picked up and pulled down to the sling (the dotted outline beside Hint).
+   Pick it up: the phone ticks, the fire lifts off the bar and follows the finger, riding a little above the thumb so
+   it stays in sight. Behind it, a comet tail traces the exact path back to the bar, in the bar's colours, and the
+   fire swells as the tail gets longer. Bring the finger down onto the sling: a second tick, the fire snaps into it
+   and the sling lights up (loaded). Let go there and it is slung upwards, speeding up, onto one wrong option, which
+   burns away. Let go anywhere else and the fire springs back to the bar, at no cost. A tap on the fire or the sling
+   just says what they do. The cost is the same as 1.5.3: one off the streak, or all of it when only right answers are
+   left. Multi-select burns one option that is not right; ordering questions have no sling.
+
+   The ticks: a web page cannot ask an iPhone to vibrate, but iOS ticks when a finger drags the knob of a real switch
+   across its middle (the same tick as Settings). So the fire carries an invisible switch standing on its end. Once
+   the finger has held it for 200ms the phone starts tracking the knob; from then on, each time the switch is slid so
+   the finger sits on the other side of its middle, the next touch move flips it and the phone ticks. One flip when
+   the fire is picked up, one when it loads into the sling (and one if it is pulled back out).
+
+   Motion: the fire and the tail follow the finger with one transform each, written once per frame (the only
+   frame-by-frame code, as for any drag). Everything else is Web Animations on transform and opacity: the spring
+   back, the slingshot (one curve for across, one accelerating curve for up), the comet that follows it. The layer
+   is built once and only shown while it is used. ---- */
 const K_BURNT = "kiron:burnt", CHAR = `<i class="char" aria-hidden="true">${"<b></b>".repeat(7)}</i>`;
-let BURNING = null, FIRE = null;
+let BURNING = null, SLING = null;
 const burntOf = (r, id) => (r && !r.review && r.burn && r.burn[id]) || [];
-// What a hold would burn now: the wrong options still showing. Nothing once answered, in review, or with no fire.
+// What the sling would burn now: the wrong options still showing. Nothing once answered, in review, or with no fire.
 function burnPlan() {
   const P = current && current.P, r = P && P.round; if (!r || r.review || r.ended || !P.cur || P.cur.done || BURNING !== null || heatLevel(r.streak || 0) < 1) return null;
   const { q, id } = getQ(current.quiz, r.ids[r.i]), f = formOf(q), opts = f.kind === "pick" ? f.options : f.kind === "multi" ? q.options : null; if (!opts) return null;
@@ -916,66 +930,202 @@ function burnPlan() {
   const left = opts.map((_, i) => i).filter(i => !isRight(i) && !gone.includes(i));
   return left.length ? { P, r, id, kind: f.kind, gone, left } : null;
 }
-function fireStop(popped) {
-  if (!FIRE) return; const { a, off } = FIRE; FIRE = null; off();
-  if (a && !popped) { a.updatePlaybackRate(-3); a.finished.then(() => a.cancel()).catch(() => {}); }   // sinks back, quicker than it grew
+// A redraw or a new screen while the fire is held: it goes straight back to the bar.
+function fireStop() { if (SLING) slingEnd(SLING, "drop"); }
+// The sling: a dotted outline of whatever the streak looks like now (a flame, from 25 a star).
+function slingIcon(l) {
+  return l >= 7 ? `<svg class="slg star" viewBox="-14 -14 28 28" aria-hidden="true"><path d="${STAR_D}"/></svg>`
+    : `<svg class="slg" viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1.5c1.2 6.2 7.5 9.6 7.5 18a7.5 7.5 0 0 1-15 0c0-4.1 2-6.9 3.7-8.4.3 2.5 1.4 3.8 2.8 4.3C10.4 10.6 10.8 5.7 12 1.5z"/></svg>`;
 }
-let TIP = null;
-function fireTip(text) {
-  const fl = $(".heat.on .fl"); if (!fl) return;
-  if (!TIP || !TIP.isConnected) { TIP = document.createElement("div"); TIP.className = "firetip"; TIP.setAttribute("role", "status"); document.body.append(TIP); }
-  const b = fl.getBoundingClientRect();
-  TIP.textContent = text; TIP.style.cssText = `top:${(b.bottom + 14).toFixed(1)}px;right:${Math.max(12, innerWidth - b.right - 18).toFixed(1)}px`;
-  TIP.getAnimations().forEach(x => x.cancel());
-  if (!TIP.animate) return;
-  TIP.animate([{ opacity: 0, transform: reduceMotion() ? "none" : "translateY(-8px) scale(.6)" }, { opacity: 1, transform: "none" }], { duration: 520, easing: EASE.appear, fill: "forwards" });
-  TIP.animate([{ opacity: 1 }, { opacity: 0, transform: "scale(.96)" }], { duration: 320, delay: 2000, easing: "ease-in", fill: "forwards" });
+// The tail's colours, from the bar end to the fire, per streak stage (the bar's own colours).
+const TRAIL = { 1: ["#d97757", "#f0b23a"], 2: ["#f0b23a", "#ffcf3f"], 3: ["#ffcf3f", "#ffe9a3"], 4: ["#8fbaff", "#ffffff"], 5: ["#7a3cff", "#ff6a2b"], 6: ["#4fb6c9", "#c86bd1"], 7: ["#8fa8ff", "#dfe7ff"], 8: ["#c9b8ff", "#fff1c9"] };
+const mixHex = (a, b, t) => "#" + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, "0")).join("");
+const SEG = 18, FOL = 6, HEAD = 3;   // tail pieces, comet dots on the flight, and how much larger the fire is drawn than on the bar
+let SL_EL = null;
+function slLayer() {
+  if (SL_EL && SL_EL.isConnected) return SL_EL;
+  const root = document.createElement("div"); root.className = "sfx"; root.setAttribute("aria-hidden", "true");
+  let h = "";
+  for (let i = 0; i < SEG; i++) h += `<div class="sg"><b></b></div>`;
+  for (let i = 0; i < FOL; i++) h += `<div class="sx fo"><div class="sy"><b></b></div></div>`;
+  h += `<div class="sx hd"><div class="sy"><div class="sk"><b class="halo"></b><span class="ic"></span></div></div></div>`;
+  root.innerHTML = h; document.body.append(root); SL_EL = root; return root;
 }
-document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".heat")) e.preventDefault(); });
+const ctr = r => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".heat, .sling")) e.preventDefault(); });
 document.addEventListener("pointerdown", e => {
   const slot = e.target.closest && e.target.closest(".heat.on:not(.pre)"); if (!slot || !current || e.button > 0) return;
-  fireStop();
-  const fl = slot.querySelector(".fl"), plan = burnPlan(), t0 = Date.now(), pid = e.pointerId; let a = null, timer = 0;
-  if (plan && !reduceMotion() && fl.animate) {
-    // One swell on one accelerating curve; the tremble is folded into its last fifth, so it never stops on the way.
-    const t = (s, r, y) => ({ transform: `translateY(${y}px) scale(${s}) rotate(${r}deg)` });
-    a = fl.animate([t(1, 0, 0), Object.assign(t(2.6, 0, 12), { offset: .8 }), Object.assign(t(2.8, -7, 13), { offset: .85 }), Object.assign(t(2.95, 7, 14), { offset: .9 }), Object.assign(t(3.1, -8, 14), { offset: .95 }), t(3.25, 6, 15)],
-      { duration: 1000, easing: "cubic-bezier(.4,0,.75,.6)", fill: "forwards", composite: "add" });
-    a.finished.then(() => { if (FIRE && FIRE.a === a && a.playbackRate > 0) { fireStop(true); firePop(a); } }).catch(() => {});
-  } else if (plan) timer = setTimeout(() => { if (FIRE && FIRE.timer === timer) { fireStop(true); firePop(null); } }, 900);
-  const up = ev => { if (ev.pointerId !== pid || !FIRE) return; const tap = Date.now() - t0 < 300; fireStop(); if (tap && ev.type === "pointerup") fireTip(burnPlan() ? (LS.get(K_BURNT) ? "Hold to burn a wrong option" : "Hold the fire for a surprise") : `${current.P.round.streak || 0} in a row`); };
-  const off = () => { clearTimeout(timer); removeEventListener("pointerup", up, true); removeEventListener("pointercancel", up, true); };
-  addEventListener("pointerup", up, true); addEventListener("pointercancel", up, true);
-  FIRE = { a, timer, off };
+  if (SLING) slingEnd(SLING, "drop");
+  const plan = burnPlan(), pid = e.pointerId, t0 = Date.now(), x0 = e.clientX, y0 = e.clientY;
+  const sl = plan && $(".sling"), fl = slot.querySelector(".fl");
+  // A tap (a quick touch that did not move) says what the fire does.
+  const done = ev => { if (ev.pointerId !== pid) return; removeEventListener("pointerup", done, true); removeEventListener("pointercancel", done, true);
+    if (ev.type === "pointerup" && t0 - TIP_SHUT > 60 && Date.now() - t0 < 350 && Math.hypot(ev.clientX - x0, ev.clientY - y0) < 8) fireTip(burnPlan() ? "Drag me down to the sling" : `${current.P.round.streak || 0} in a row`, slot); };
+  addEventListener("pointerup", done, true); addEventListener("pointercancel", done, true);
+  if (!plan || !sl || !fl) return;
+  // Pick up: the fire on the bar dims (its place stays), and the big one takes over exactly where it was.
+  const lvl = heatLevel(plan.r.streak), L = slLayer(), hd = L.querySelector(".hd"), sk = hd.querySelector(".sk");
+  L.getAnimations({ subtree: true }).forEach(a => a.cancel());
+  L.dataset.heat = lvl; hd.querySelector(".ic").innerHTML = heatIcon(lvl);
+  const [c0, c1] = TRAIL[lvl] || TRAIL[1];
+  L.querySelectorAll(".sg b").forEach((b, i) => { const t = (i + 1) / SEG, c = mixHex(c0, c1, t); b.style.background = `radial-gradient(closest-side, ${c} 0, ${c} 35%, ${c}00 100%)`; b.style.opacity = (.18 + .72 * Math.pow(t, 1.4)).toFixed(3); });
+  L.querySelectorAll(".sg").forEach(g => { g.style.transform = "scale(0)"; });
+  hd.firstElementChild.style.transform = "none";
+  const dock = ctr(fl.getBoundingClientRect()), slg = sl.querySelector(".slg") || sl, sr = sl.getBoundingClientRect(), target = ctr(slg.getBoundingClientRect());
+  const sw = slot.querySelector(".hxv");
+  const S = { pid, x: x0, y: y0, dock, target, sr, reach: Math.max(80, target.y - dock.y), pts: [dock], len: 0, k: 1 / HEAD, lift: 0, b: 0, loaded: false, moved: false, t0, slot, sl, L, hd, sk, sw, want: false, raf: 0, last: 0, hx: dock.x, hy: dock.y };
+  SLING = S;
+  if (sw) { sw.checked = false; sw.classList.add("track"); sw.style.transform = "none"; const r = sw.getBoundingClientRect(); S.swTop = r.top; S.swL = r.height; swPlace(S); }
+  slot.classList.add("lifted"); sl.classList.add("ready"); L.classList.add("run");
+  S.hold = setTimeout(() => { if (SLING === S) { swFlip(S); buzz(12); } }, 240);   // the pick-up tick (after the phone's own 200ms hold)
+  S.move = ev => { if (ev.pointerId !== pid) return; S.x = ev.clientX; S.y = ev.clientY; if (Math.hypot(S.x - x0, S.y - y0) > 8) S.moved = true; if (S.sw) swPlace(S); };
+  S.up = ev => { if (ev.pointerId !== pid) return; slingEnd(S, ev.type === "pointerup" && S.loaded ? "launch" : !S.moved && Date.now() - t0 < 350 ? "tap" : "back"); };
+  addEventListener("pointermove", S.move, true); addEventListener("pointerup", S.up, true); addEventListener("pointercancel", S.up, true);
+  S.raf = requestAnimationFrame(t => slingFrame(S, t));
 });
-function firePop(swell) {
-  const p = burnPlan(), slot = $(".heat.on"), fl = slot && slot.querySelector(".fl"); if (!p || !fl) { if (swell) swell.cancel(); return; }
-  const oi = p.left[Math.floor(Math.random() * p.left.length)], b = fl.getBoundingClientRect(), x0 = b.left + b.width / 2, y0 = b.top + b.height / 2, lvl0 = heatLevel(p.r.streak);
+// The switch under the finger: keep the finger a fixed way up it, on the side S.want says. Flipping the side makes
+// the phone move the knob across on the next touch move, and tick.
+function swPlace(S) { const at = S.want ? .85 : .15; S.sw.style.transform = `translate3d(0,${(S.y - S.swTop - at * S.swL).toFixed(1)}px,0)`; }
+function swFlip(S) { if (!S.sw) return; S.want = !S.want; swPlace(S); }
+// One frame of the drag: where the fire is, how big, and the tail behind it.
+function slingFrame(S, t) {
+  if (SLING !== S) return;
+  const dt = S.last ? Math.min(50, t - S.last) : 16; S.last = t;
+  // Loaded: the finger is on the sling (a generous zone around it, and anywhere on the bar's row below it).
+  const r = S.sr, inZone = S.x > r.left - 28 && S.x < r.right + 28 && S.y > r.top - 40;
+  if (inZone !== S.loaded) { S.loaded = inZone; S.sl.classList.toggle("loaded", inZone); swFlip(S); if (inZone) buzz(18); }
+  S.b += ((S.loaded ? 1 : 0) - S.b) * (1 - Math.exp(-dt / 45));   // eases into the sling and back out in ~100ms
+  S.lift += (1 - S.lift) * (1 - Math.exp(-dt / 70));
+  // Above the finger, so the thumb never covers it; further above as it grows.
+  const fx = S.moved ? S.x : S.dock.x, fy = S.moved ? S.y - (30 + 46 * (S.k * HEAD - 1) / (HEAD - 1)) : S.dock.y;
+  const tx = S.target.x + (S.x - S.target.x) * .12, ty = S.target.y + (S.y - S.target.y) * .12;   // in the sling, still tugged a little by the finger
+  const hx = fx + (tx - fx) * S.b, hy = fy + (ty - fy) * S.b; S.hx = hx; S.hy = hy;
+  const p = S.pts, last = p[p.length - 1], d = Math.hypot(hx - last.x, hy - last.y);
+  if (d > 3) { p.push({ x: hx, y: hy }); S.len += d; if (p.length > 300) { for (let i = 1; i < p.length - 1; i++) p.splice(i, 1); S.len = 0; for (let i = 1; i < p.length; i++) S.len += Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y); } }
+  // The fire grows with the tail: bar size when picked up, three times that by the time the tail reaches the sling.
+  const grow = Math.pow(Math.min(1, S.len / S.reach), .8), kFree = (1 + .22 * S.lift + (HEAD - 1.22) * grow) / HEAD;
+  S.k = kFree + (1 - kFree) * S.b;
+  S.hd.style.transform = `translate3d(${hx.toFixed(1)}px,${hy.toFixed(1)}px,0)`;
+  S.sk.style.transform = `scale(${S.k.toFixed(4)})`;
+  slingTail(S, hx, hy);
+  S.raf = requestAnimationFrame(tt => slingFrame(S, tt));
+}
+// The comet tail: soft pieces laid end to end along the path from the bar to the fire, stretched along it,
+// thick and bright at the fire, thin and faint at the bar.
+function slingTail(S, hx, hy) {
+  const p = S.pts.concat({ x: hx, y: hy }), segs = S.L.querySelectorAll(".sg"), cum = [0];
+  for (let i = 1; i < p.length; i++) cum.push(cum[i - 1] + Math.hypot(p[i].x - p[i - 1].x, p[i].y - p[i - 1].y));
+  const tot = cum[cum.length - 1], w = 78 * S.k;
+  if (tot < 6) { segs.forEach(g => { g.style.transform = "scale(0)"; }); return; }
+  let j = 1;
+  const at = u => { const s = u * tot; while (j < cum.length - 1 && cum[j] < s) j++; const a = cum[j - 1], f = cum[j] > a ? (s - a) / (cum[j] - a) : 0; return { x: p[j - 1].x + (p[j].x - p[j - 1].x) * f, y: p[j - 1].y + (p[j].y - p[j - 1].y) * f }; };
+  let q0 = at(0);
+  segs.forEach((g, i) => {
+    const q1 = at((i + 1) / SEG), dx = q1.x - q0.x, dy = q1.y - q0.y, len = Math.hypot(dx, dy), t = (i + 1) / SEG;
+    const thick = w * (.1 + .5 * Math.pow(t, 1.3)), long = len * 1.9 + thick * .6;
+    g.style.transform = `translate3d(${((q0.x + q1.x) / 2).toFixed(1)}px,${((q0.y + q1.y) / 2).toFixed(1)}px,0) rotate(${Math.atan2(dy, dx).toFixed(3)}rad) scale(${(long / 20).toFixed(3)},${(thick / 20).toFixed(3)})`;
+    q0 = q1;
+  });
+}
+// The end of a hold: "launch" (let go on the sling), "back" (let go anywhere else), "tap", or "drop" (the screen changed).
+function slingEnd(S, how) {
+  if (SLING !== S) return; SLING = null;
+  cancelAnimationFrame(S.raf); clearTimeout(S.hold);
+  removeEventListener("pointermove", S.move, true); removeEventListener("pointerup", S.up, true); removeEventListener("pointercancel", S.up, true);
+  if (S.sw) { S.sw.classList.remove("track"); S.sw.style.transform = ""; }
+  S.sl.classList.remove("ready", "loaded");
+  if (how === "launch" && slingLaunch(S)) return;
+  const L = S.L, home = () => { if (SLING) return; L.classList.remove("run"); S.slot.classList.remove("lifted"); };
+  if (how === "tap" || how === "drop" || reduceMotion() || !L.animate) { L.getAnimations({ subtree: true }).forEach(a => a.cancel()); return home(); }
+  // Back to the bar: one spring home, the fire shrinking to its bar size, the tail folding away behind it.
+  const from = `translate3d(${S.hx.toFixed(1)}px,${S.hy.toFixed(1)}px,0)`, to = `translate3d(${S.dock.x.toFixed(1)}px,${S.dock.y.toFixed(1)}px,0)`;
+  S.hd.animate([{ transform: from }, { transform: to }], { duration: 460, easing: EASE.drop, fill: "forwards" });
+  S.sk.animate([{ transform: `scale(${S.k.toFixed(4)})` }, { transform: `scale(${1 / HEAD})` }], { duration: 460, easing: EASE.drop, fill: "forwards" });
+  L.querySelectorAll(".sg").forEach((g, i) => g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200 + i * 6, easing: "ease-out", fill: "forwards" }));
+  const a = S.hd.firstElementChild.animate([{ opacity: 1 }, { opacity: 1, offset: .8 }, { opacity: 0 }], { duration: 460, easing: "linear", fill: "forwards" });
+  S.slot.classList.remove("lifted");
+  a.finished.then(() => { if (!SLING) { L.getAnimations({ subtree: true }).forEach(x => x.cancel()); home(); } }).catch(() => {});
+}
+// LAUNCH: the sling lets go. A flash and sparks where it sat, the tail snaps away, and the fire flies up onto one
+// wrong option, speeding up all the way, with a comet behind it. Then the option burns as before.
+function slingLaunch(S) {
+  const p = burnPlan(); if (!p) return false;
+  const oi = p.left[Math.floor(Math.random() * p.left.length)], lvl0 = heatLevel(p.r.streak);
   // The cost, saved at once: one off the streak, or all of it once only right answers are left.
   (p.r.burn = p.r.burn || {})[p.id] = p.gone.concat(oi);
   p.r.streak = p.left.length === 1 ? 0 : p.r.streak - 1;
   if (p.kind === "multi" && Array.isArray(p.P.a[p.id])) p.P.a[p.id] = p.P.a[p.id].filter(i => i !== oi);
   saveProg(); LS.set(K_BURNT, 1); buzz([18, 40, 26]);
   BURNING = oi; renderPlay(true);   // the count drops (or the fire goes out); the option is marked, still in place
-  const opt = app().querySelector(`.opt.burning`), still = reduceMotion() || !fl.animate;
-  if (still || !opt) { if (swell) swell.cancel(); return fireDone(p.id); }
-  // POP: the balloon is gone in a frame; the fire grows back from nothing if there is still a streak.
-  if (slot.classList.contains("on")) fl.animate([{ transform: "scale(0)" }, { transform: "scale(1)" }], { duration: 560, delay: 120, easing: EASE.appear, fill: "backwards", composite: "add" });
-  else fl.animate([{ opacity: 0 }, { opacity: 0 }], { duration: 300 });
-  swell.cancel();
+  const L = S.L, opt = app().querySelector(".opt.burning"), still = reduceMotion() || !L.animate;
+  const end = () => { L.getAnimations({ subtree: true }).forEach(a => a.cancel()); if (!SLING) L.classList.remove("run"); };
+  if (still || !opt) { end(); fireDone(p.id); return true; }
+  // The fire grows back on the bar from nothing, if there is still a streak.
+  const fl = $(".heat.on .fl"); if (fl) fl.animate([{ transform: "scale(0)" }, { transform: "scale(1)" }], { duration: 560, delay: 380, easing: EASE.appear, fill: "backwards", composite: "add" });
+  // POP at the sling (the 1.5.3 pop, now where you can see it).
   clearFeed(); const fx = fxLayer(); fx.dataset.heat = lvl0; fx.classList.add("run");
-  const burst = fx.querySelector(".fx-burst"); burst.style.transform = `translate3d(${x0}px,${y0}px,0)`;
-  fxAnim(burst.querySelector(".fx-flash"), [{ opacity: 1, transform: "scale(.5)" }, { opacity: 0, transform: "scale(1.7)" }], { duration: 300, easing: EASE.out });
-  fxAnim(burst.querySelector(".fx-ring"), [{ opacity: 1, transform: "scale(.3)" }, { opacity: 0, transform: "scale(1.5)" }], { duration: 420, easing: EASE.out });
-  burst.querySelectorAll("i").forEach((sp, i) => { const ang = Math.PI * 2 * i / 16 + (i % 2 ? .2 : -.2), r = 34 + (i % 3) * 12;
-    fxAnim(sp, [{ opacity: 1, transform: "translate3d(0,0,0) scale(1.4)" }, { opacity: 0, transform: `translate3d(${(Math.cos(ang) * r).toFixed(1)}px,${(Math.sin(ang) * r).toFixed(1)}px,0) scale(.3)` }], { duration: 480 + (i % 3) * 60, easing: EASE.out }); });
-  // FLY: a fireball arcs out and drops onto the option (sideways fast early, down faster late: one curve each).
-  const o = opt.getBoundingClientRect(), x1 = o.left + o.width * (.3 + Math.random() * .4), y1 = o.top + o.height / 2, FLY = 420;
-  const bx = fx.querySelector(".fx-bx"), ball = bx.querySelector(".fx-ball");
-  fxAnim(bx, [{ transform: `translate3d(${x0}px,0,0)` }, { transform: `translate3d(${x1}px,0,0)` }], { duration: FLY, easing: "cubic-bezier(.2,.7,.4,1)" });
-  fxAnim(bx.firstElementChild, [{ transform: `translate3d(0,${y0}px,0)` }, { transform: `translate3d(0,${y1}px,0)` }], { duration: FLY, easing: "cubic-bezier(.55,0,.85,.4)" });
-  fxAnim(ball, [{ opacity: 1, transform: "scale(.7)" }, { opacity: 1, transform: "scale(1.5)", offset: .9 }, { opacity: 0, transform: "scale(2.4)" }], { duration: FLY + 60, easing: "linear" }).finished.then(() => burnOpt(opt, x1 - o.left, p.id)).catch(() => {});
+  const burst = fx.querySelector(".fx-burst"); burst.style.transform = `translate3d(${S.hx.toFixed(1)}px,${S.hy.toFixed(1)}px,0)`;
+  fxAnim(burst.querySelector(".fx-flash"), [{ opacity: 1, transform: "scale(.6)" }, { opacity: 0, transform: "scale(2)" }], { duration: 320, easing: EASE.out });
+  fxAnim(burst.querySelector(".fx-ring"), [{ opacity: 1, transform: "scale(.4)" }, { opacity: 0, transform: "scale(1.8)" }], { duration: 440, easing: EASE.out });
+  burst.querySelectorAll("i").forEach((sp, i) => { const ang = Math.PI * 2 * i / 16 + (i % 2 ? .2 : -.2), r = 40 + (i % 3) * 14;
+    fxAnim(sp, [{ opacity: 1, transform: "translate3d(0,0,0) scale(1.5)" }, { opacity: 0, transform: `translate3d(${(Math.cos(ang) * r).toFixed(1)}px,${(Math.sin(ang) * r).toFixed(1)}px,0) scale(.3)` }], { duration: 480 + (i % 3) * 60, easing: EASE.out }); });
+  // The tail snaps back like a released band.
+  L.querySelectorAll(".sg").forEach(g => g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: "ease-in", fill: "forwards" }));
+  // FLY: across on an early curve, up on an accelerating one, so it bends and keeps speeding up into the option.
+  const o = opt.getBoundingClientRect(), x1 = o.left + o.width * (.3 + Math.random() * .4), y1 = o.top + o.height / 2, x0 = S.hx, y0 = S.hy, FLY = 480;
+  const X = "cubic-bezier(.25,.6,.45,1)", Y = "cubic-bezier(.55,0,.9,.4)";
+  const flyEl = (el, delay) => {
+    el.style.transform = `translate3d(${x0.toFixed(1)}px,0,0)`; el.firstElementChild.style.transform = `translate3d(0,${y0.toFixed(1)}px,0)`;
+    el.animate([{ transform: `translate3d(${x0.toFixed(1)}px,0,0)` }, { transform: `translate3d(${x1.toFixed(1)}px,0,0)` }], { duration: FLY, delay, easing: X, fill: "both" });
+    return el.firstElementChild.animate([{ transform: `translate3d(0,${y0.toFixed(1)}px,0)` }, { transform: `translate3d(0,${y1.toFixed(1)}px,0)` }], { duration: FLY, delay, easing: Y, fill: "both" });
+  };
+  S.hd.firstElementChild.style.opacity = "1";
+  const head = flyEl(S.hd, 0);
+  S.sk.animate([{ transform: `scale(${S.k.toFixed(4)})` }, { transform: `scale(${(.55 / HEAD * 1.6).toFixed(4)})` }], { duration: FLY, easing: "cubic-bezier(.5,0,.9,.5)", fill: "forwards" });
+  const [c0, c1] = TRAIL[lvl0] || TRAIL[1];
+  L.querySelectorAll(".fo").forEach((f, i) => {
+    const lag = 16 + i * 16, b = f.querySelector("b"), c = mixHex(c1, c0, i / FOL);
+    b.style.background = `radial-gradient(closest-side, #fff 0, ${c} 30%, ${c}00 100%)`;
+    flyEl(f, lag);
+    b.animate([{ opacity: 0, transform: `scale(${(2.2 - i * .25).toFixed(2)})` }, { opacity: .9 - i * .12, transform: `scale(${(1.9 - i * .22).toFixed(2)})`, offset: .15 }, { opacity: 0, transform: "scale(.4)" }], { duration: FLY, delay: lag, easing: "linear", fill: "both" });
+  });
+  head.finished.then(() => {
+    // Impact: the fire bursts on the option and the option catches.
+    S.sk.animate([{ opacity: 1, transform: `scale(${(.55 / HEAD * 1.6).toFixed(4)})` }, { opacity: 0, transform: `scale(${(1.2 / HEAD * 1.6).toFixed(4)})` }], { duration: 200, easing: EASE.out, fill: "forwards" })
+      .finished.then(() => { if (!SLING) end(); }).catch(() => {});
+    burnOpt(opt, x1 - o.left, p.id);
+  }).catch(() => {});
+  return true;
 }
+/* The little bubbles (the fire's and the sling's). While one is showing, the next tap anywhere only puts it away:
+   it does not answer, move to another question or press a button. A tip is in the way of what you were reading, so
+   the tap that clears it should do nothing else. The fire itself can still be picked up straight away. */
+let TIP = null, TIP_UNTIL = 0, TIP_SWALLOW = false, TIP_SHUT = 0, TIP_ATE = 0;
+function fireTip(text, anchor) {
+  if (!anchor || !anchor.isConnected) return;
+  if (!TIP || !TIP.isConnected) { TIP = document.createElement("div"); TIP.className = "firetip"; TIP.setAttribute("role", "status"); document.body.append(TIP); }
+  const icon = anchor.querySelector(".fl, .slg") || anchor, b = icon.getBoundingClientRect(), up = b.top > innerHeight / 2;
+  TIP.textContent = text; TIP.classList.toggle("up", up); TIP.style.cssText = "left:0;top:0";
+  const w = TIP.offsetWidth, cx = b.left + b.width / 2, left = Math.max(12, Math.min(innerWidth - w - 12, cx - w / 2));
+  TIP.style.cssText = `left:${left.toFixed(1)}px;${up ? `bottom:${(innerHeight - b.top + 12).toFixed(1)}px` : `top:${(b.bottom + 14).toFixed(1)}px`};--ax:${(cx - left).toFixed(1)}px`;
+  TIP.getAnimations().forEach(x => x.cancel());
+  TIP_UNTIL = Date.now() + 3200;
+  if (!TIP.animate) return;
+  TIP.animate([{ opacity: 0, transform: reduceMotion() ? "none" : `translateY(${up ? 8 : -8}px) scale(.6)` }, { opacity: 1, transform: "none" }], { duration: 520, easing: EASE.appear, fill: "forwards" });
+  TIP.animate([{ opacity: 1 }, { opacity: 0, transform: "scale(.96)" }], { duration: 320, delay: 2880, easing: "ease-in", fill: "forwards" });
+}
+function hideTip() {
+  TIP_UNTIL = 0; if (!TIP || !TIP.animate) return;
+  TIP.getAnimations().forEach(x => x.cancel());
+  TIP.animate([{ opacity: 1 }, { opacity: 0, transform: "scale(.96)" }], { duration: 160, easing: "ease-in", fill: "forwards" });
+}
+document.addEventListener("pointerdown", e => {
+  if (Date.now() > TIP_UNTIL) return;
+  hideTip(); TIP_SHUT = Date.now();
+  if (!(e.target.closest && e.target.closest(".heat.on"))) TIP_SWALLOW = true;
+}, true);
+document.addEventListener("pointercancel", () => { TIP_SWALLOW = false; }, true);
+document.addEventListener("pointerup", () => { if (TIP_SWALLOW) { TIP_SWALLOW = false; TIP_ATE = Date.now(); ghostUntil = Date.now() + 400; } }, true);
 // BURN: the fire spreads from where the ball hit, embers rise, the option fades up and away. Then the gap closes.
 function burnOpt(opt, hx, id) {
   if (!opt.isConnected) return fireDone(id);
@@ -1020,6 +1170,7 @@ function playAct(act, el) {
   if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) reveal(h, $(".opts, .order") || $("#qprompt")); return; }
   if (act === "pause") { if (cur.done) return; PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
   if (act === "back") return nav(-1);
+  if (act === "sling") { const lv = heatLevel(r.streak || 0); return fireTip(!lv ? "Get 3 correct in a row" : burnPlan() ? "Drag the fire here" : "Only right answers left", el); }
   if (act === "check") {
     if (cur.done) return;
     if (f.kind === "multi") finalize(gradeMulti(q, P.a[id]));
@@ -1208,6 +1359,7 @@ let tapDown = null, ghostUntil = 0;
 document.addEventListener("pointerdown", e => { tapDown = { x: e.clientX, y: e.clientY, t: Date.now() }; }, true);
 document.addEventListener("pointerup", e => {
   const d = tapDown; tapDown = null;
+  if (Date.now() - TIP_ATE < 60) return;   // this tap only put a bubble away
   if (!d || !current || !/^#play-/.test(location.hash) || !current.P.round || current.P.round.ended) return;
   const t = e.target && e.target.closest ? e.target : null; if (!t) return;
   if (t.closest("a, summary, .actionbar, .top, .toast, [data-act], [data-go]")) return;
