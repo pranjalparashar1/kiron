@@ -441,7 +441,7 @@ let FX = null;      // one-shot effect for the next render: { kind: "right" | "w
 let DIR = 0;        // which way we just moved: 1 = forward, -1 = back (for the slide-in)
 const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 function renderPlay(keepScroll) {
-  endDrag();
+  endDrag(); fireStop();
   const { quiz, P } = current;
   const r = P.round;
   if (!r) return go("quiz-" + quiz.id, true);
@@ -461,27 +461,28 @@ function renderPlay(keepScroll) {
   const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
   let input = "", primary = "", waiting = false;
-  const a = P.a[id];
+  const a = P.a[id], gone = burntOf(r, id);   // options the fire burned away stay gone (one still burning stays a moment)
   if (f.kind === "pick") {
     const ord = /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
-    input = `<div class="opts" role="group" aria-label="Options">` + ord.map(oi => {
-      let cls = "opt", ic = "";
+    input = `<div class="opts" role="group" aria-label="Options">` + ord.filter(oi => oi === BURNING || !gone.includes(oi)).map(oi => {
+      let cls = "opt" + (oi === BURNING ? " burning" : ""), ic = "";
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " sink";
       else if (fx && fx.oi !== undefined && fx.kind !== "right" && oi === f.correct) cls += " lift";   // a wrong pick: the right answer rises gently
-      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span></button>`;
+      return `<button type="button" class="${cls}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span>${oi === BURNING ? CHAR : ""}</button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
     const sel = a || [];
     input = `<p class="lead">Pick all that apply.</p><div class="opts" role="group" aria-label="Options">` + q.options.map((o, i) => {
-      let cls = "opt" + (sel.includes(i) ? " sel" : ""), ic = sel.includes(i) ? "✓" : "";
+      if (i !== BURNING && gone.includes(i)) return "";
+      let cls = "opt" + (sel.includes(i) ? " sel" : "") + (i === BURNING ? " burning" : ""), ic = sel.includes(i) ? "✓" : "";
       // Once checked it reads like a single-answer question: a right pick is solid green with a tick, a wrong pick is red with
       // a cross, and a right option you did not pick is a quieter green with a tick. Everything else fades back, with no mark.
       let mark = `<span class="k box">${ic}</span>`;
       if (cur.done) { const right = q.correct.includes(i), ch = sel.includes(i); cls = "opt" + (ch && right ? " ok" : ch ? " wrong dim" : right ? " missed" : " dim"); mark = right ? `<span class="k">✓</span>` : ch ? `<span class="k">✕</span>` : ""; }
-      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${mark}<span>${fmt(o)}</span></button>`;
+      return `<button type="button" class="${cls}" data-toggle="${i}" aria-pressed="${sel.includes(i)}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${mark}<span>${fmt(o)}</span>${i === BURNING ? CHAR : ""}</button>`;
     }).join("") + `</div>`;
     primary = "check";
   } else if (f.kind === "order") {
@@ -512,7 +513,7 @@ function renderPlay(keepScroll) {
   const isNum = q.type === "number";
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<span class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" aria-hidden="true"><span class="fl">${heatIcon(heatNow)}</span><b class="n">${feeding ? stk - 1 : stk}</b></span>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>
+  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<button type="button" class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" data-act="fire" aria-label="${feeding ? stk - 1 : stk} in a row"${heatNow ? "" : ' tabindex="-1" aria-hidden="true"'}><span class="fl" aria-hidden="true">${heatIcon(heatNow)}</span><b class="n" aria-hidden="true">${feeding ? stk - 1 : stk}</b></button>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -787,6 +788,7 @@ function fxLayer() {
   if (FX_EL && FX_EL.isConnected) return FX_EL;
   const root = document.createElement("div"); root.className = "fx"; root.setAttribute("aria-hidden", "true");
   let h = `<div class="fx-x fx-main"><div class="fx-y"><div class="fx-k"><div class="fx-s"><b class="fx-halo"></b><span class="fxpill"></span></div></div></div></div>`;
+  h += `<div class="fx-x fx-bx"><div class="fx-y"><b class="fx-ball"></b></div></div>`;
   for (let i = 0; i < 3; i++) h += `<div class="fx-x fx-tr"><div class="fx-y"><b class="fx-dot"></b></div></div>`;
   h += `<div class="fx-sweep"><b class="fx-band"></b></div><div class="fx-burst"><b class="fx-flash"></b><b class="fx-ring"></b><b class="fx-ring fx-ring2"></b>${"<i></i>".repeat(16)}</div>`;
   root.innerHTML = h; document.body.append(root); FX_EL = root; return root;
@@ -892,6 +894,108 @@ function finalize(status) {
   }
   else if (status !== "right") r.streak = 0;
   saveProg();
+}
+/* ---- Kiron 1.5.3: the fire answers a touch.
+   A tap: a small bubble under it says what it does, and goes by itself. Before the question is answered, with a wrong
+   option still left to burn, it says "Hold the fire for a surprise" (after the first time: what the surprise is);
+   otherwise it just says the streak.
+   A hold (only then): the fire swells like a balloon, faster and faster, trembling at the end. Let go early and it sinks
+   back. Hold on and it pops: a flash and sparks where it was, a fireball arcs down onto one wrong option, which burns
+   away (embers rise, it fades), and the options below close the gap. It costs one from the streak. If only right
+   answers are left, the streak goes back to 0. Below 3 the fire goes out, so there is nothing left to hold.
+   Multi-select burns one option that is not right; ordering questions have nothing to burn. Burned options stay gone
+   for the rest of the round. Transform and opacity only, Web Animations, pieces built once (the fx layer). ---- */
+const K_BURNT = "kiron:burnt", CHAR = `<i class="char" aria-hidden="true">${"<b></b>".repeat(7)}</i>`;
+let BURNING = null, FIRE = null;
+const burntOf = (r, id) => (r && !r.review && r.burn && r.burn[id]) || [];
+// What a hold would burn now: the wrong options still showing. Nothing once answered, in review, or with no fire.
+function burnPlan() {
+  const P = current && current.P, r = P && P.round; if (!r || r.review || r.ended || !P.cur || P.cur.done || BURNING !== null || heatLevel(r.streak || 0) < 1) return null;
+  const { q, id } = getQ(current.quiz, r.ids[r.i]), f = formOf(q), opts = f.kind === "pick" ? f.options : f.kind === "multi" ? q.options : null; if (!opts) return null;
+  const gone = burntOf(r, id), isRight = i => f.kind === "pick" ? i === f.correct : q.correct.includes(i);
+  const left = opts.map((_, i) => i).filter(i => !isRight(i) && !gone.includes(i));
+  return left.length ? { P, r, id, kind: f.kind, gone, left } : null;
+}
+function fireStop(popped) {
+  if (!FIRE) return; const { a, off } = FIRE; FIRE = null; off();
+  if (a && !popped) { a.updatePlaybackRate(-3); a.finished.then(() => a.cancel()).catch(() => {}); }   // sinks back, quicker than it grew
+}
+let TIP = null;
+function fireTip(text) {
+  const fl = $(".heat.on .fl"); if (!fl) return;
+  if (!TIP || !TIP.isConnected) { TIP = document.createElement("div"); TIP.className = "firetip"; TIP.setAttribute("role", "status"); document.body.append(TIP); }
+  const b = fl.getBoundingClientRect();
+  TIP.textContent = text; TIP.style.cssText = `top:${(b.bottom + 14).toFixed(1)}px;right:${Math.max(12, innerWidth - b.right - 18).toFixed(1)}px`;
+  TIP.getAnimations().forEach(x => x.cancel());
+  if (!TIP.animate) return;
+  TIP.animate([{ opacity: 0, transform: reduceMotion() ? "none" : "translateY(-8px) scale(.6)" }, { opacity: 1, transform: "none" }], { duration: 520, easing: EASE.appear, fill: "forwards" });
+  TIP.animate([{ opacity: 1 }, { opacity: 0, transform: "scale(.96)" }], { duration: 320, delay: 2000, easing: "ease-in", fill: "forwards" });
+}
+document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".heat")) e.preventDefault(); });
+document.addEventListener("pointerdown", e => {
+  const slot = e.target.closest && e.target.closest(".heat.on:not(.pre)"); if (!slot || !current || e.button > 0) return;
+  fireStop();
+  const fl = slot.querySelector(".fl"), plan = burnPlan(), t0 = Date.now(), pid = e.pointerId; let a = null, timer = 0;
+  if (plan && !reduceMotion() && fl.animate) {
+    // One swell on one accelerating curve; the tremble is folded into its last fifth, so it never stops on the way.
+    const t = (s, r, y) => ({ transform: `translateY(${y}px) scale(${s}) rotate(${r}deg)` });
+    a = fl.animate([t(1, 0, 0), Object.assign(t(2.6, 0, 12), { offset: .8 }), Object.assign(t(2.8, -7, 13), { offset: .85 }), Object.assign(t(2.95, 7, 14), { offset: .9 }), Object.assign(t(3.1, -8, 14), { offset: .95 }), t(3.25, 6, 15)],
+      { duration: 1000, easing: "cubic-bezier(.4,0,.75,.6)", fill: "forwards", composite: "add" });
+    a.finished.then(() => { if (FIRE && FIRE.a === a && a.playbackRate > 0) { fireStop(true); firePop(a); } }).catch(() => {});
+  } else if (plan) timer = setTimeout(() => { if (FIRE && FIRE.timer === timer) { fireStop(true); firePop(null); } }, 900);
+  const up = ev => { if (ev.pointerId !== pid || !FIRE) return; const tap = Date.now() - t0 < 300; fireStop(); if (tap && ev.type === "pointerup") fireTip(burnPlan() ? (LS.get(K_BURNT) ? "Hold to burn a wrong option" : "Hold the fire for a surprise") : `${current.P.round.streak || 0} in a row`); };
+  const off = () => { clearTimeout(timer); removeEventListener("pointerup", up, true); removeEventListener("pointercancel", up, true); };
+  addEventListener("pointerup", up, true); addEventListener("pointercancel", up, true);
+  FIRE = { a, timer, off };
+});
+function firePop(swell) {
+  const p = burnPlan(), slot = $(".heat.on"), fl = slot && slot.querySelector(".fl"); if (!p || !fl) { if (swell) swell.cancel(); return; }
+  const oi = p.left[Math.floor(Math.random() * p.left.length)], b = fl.getBoundingClientRect(), x0 = b.left + b.width / 2, y0 = b.top + b.height / 2, lvl0 = heatLevel(p.r.streak);
+  // The cost, saved at once: one off the streak, or all of it once only right answers are left.
+  (p.r.burn = p.r.burn || {})[p.id] = p.gone.concat(oi);
+  p.r.streak = p.left.length === 1 ? 0 : p.r.streak - 1;
+  if (p.kind === "multi" && Array.isArray(p.P.a[p.id])) p.P.a[p.id] = p.P.a[p.id].filter(i => i !== oi);
+  saveProg(); LS.set(K_BURNT, 1); buzz([18, 40, 26]);
+  BURNING = oi; renderPlay(true);   // the count drops (or the fire goes out); the option is marked, still in place
+  const opt = app().querySelector(`.opt.burning`), still = reduceMotion() || !fl.animate;
+  if (still || !opt) { if (swell) swell.cancel(); return fireDone(p.id); }
+  // POP: the balloon is gone in a frame; the fire grows back from nothing if there is still a streak.
+  if (slot.classList.contains("on")) fl.animate([{ transform: "scale(0)" }, { transform: "scale(1)" }], { duration: 560, delay: 120, easing: EASE.appear, fill: "backwards", composite: "add" });
+  else fl.animate([{ opacity: 0 }, { opacity: 0 }], { duration: 300 });
+  swell.cancel();
+  clearFeed(); const fx = fxLayer(); fx.dataset.heat = lvl0; fx.classList.add("run");
+  const burst = fx.querySelector(".fx-burst"); burst.style.transform = `translate3d(${x0}px,${y0}px,0)`;
+  fxAnim(burst.querySelector(".fx-flash"), [{ opacity: 1, transform: "scale(.5)" }, { opacity: 0, transform: "scale(1.7)" }], { duration: 300, easing: EASE.out });
+  fxAnim(burst.querySelector(".fx-ring"), [{ opacity: 1, transform: "scale(.3)" }, { opacity: 0, transform: "scale(1.5)" }], { duration: 420, easing: EASE.out });
+  burst.querySelectorAll("i").forEach((sp, i) => { const ang = Math.PI * 2 * i / 16 + (i % 2 ? .2 : -.2), r = 34 + (i % 3) * 12;
+    fxAnim(sp, [{ opacity: 1, transform: "translate3d(0,0,0) scale(1.4)" }, { opacity: 0, transform: `translate3d(${(Math.cos(ang) * r).toFixed(1)}px,${(Math.sin(ang) * r).toFixed(1)}px,0) scale(.3)` }], { duration: 480 + (i % 3) * 60, easing: EASE.out }); });
+  // FLY: a fireball arcs out and drops onto the option (sideways fast early, down faster late: one curve each).
+  const o = opt.getBoundingClientRect(), x1 = o.left + o.width * (.3 + Math.random() * .4), y1 = o.top + o.height / 2, FLY = 420;
+  const bx = fx.querySelector(".fx-bx"), ball = bx.querySelector(".fx-ball");
+  fxAnim(bx, [{ transform: `translate3d(${x0}px,0,0)` }, { transform: `translate3d(${x1}px,0,0)` }], { duration: FLY, easing: "cubic-bezier(.2,.7,.4,1)" });
+  fxAnim(bx.firstElementChild, [{ transform: `translate3d(0,${y0}px,0)` }, { transform: `translate3d(0,${y1}px,0)` }], { duration: FLY, easing: "cubic-bezier(.55,0,.85,.4)" });
+  fxAnim(ball, [{ opacity: 1, transform: "scale(.7)" }, { opacity: 1, transform: "scale(1.5)", offset: .9 }, { opacity: 0, transform: "scale(2.4)" }], { duration: FLY + 60, easing: "linear" }).finished.then(() => burnOpt(opt, x1 - o.left, p.id)).catch(() => {});
+}
+// BURN: the fire spreads from where the ball hit, embers rise, the option fades up and away. Then the gap closes.
+function burnOpt(opt, hx, id) {
+  if (!opt.isConnected) return fireDone(id);
+  const ch = opt.querySelector(".char"), w = opt.offsetWidth, D = 640;
+  ch.style.transformOrigin = `${hx.toFixed(0)}px 50%`;
+  ch.animate([{ opacity: 0, transform: "scaleX(.1)" }, { opacity: 1, transform: "scaleX(1)", offset: .4 }, { opacity: 1, transform: "scaleX(1)" }], { duration: D, easing: "cubic-bezier(.2,.7,.3,1)", fill: "forwards" });
+  ch.querySelectorAll("b").forEach((e, i) => { const x = (i + .5) / 7 * w;
+    e.animate([{ opacity: 0, transform: `translate3d(${x.toFixed(0)}px,0,0)` }, { opacity: 1, transform: `translate3d(${x.toFixed(0)}px,-8px,0)`, offset: .3 }, { opacity: 0, transform: `translate3d(${(x + (i % 2 ? 8 : -8)).toFixed(0)}px,-${34 + (i % 3) * 10}px,0) scale(.4)` }], { duration: D, delay: Math.abs(x - hx) / w * 160, easing: "ease-out", fill: "both" }); });
+  opt.animate([{ opacity: 1, transform: "none" }, { opacity: 1, transform: "scale(1.015)", offset: .35 }, { opacity: 0, transform: "translateY(-6px) scale(.94)" }], { duration: D + 120, easing: "cubic-bezier(.4,0,.6,1)", fill: "forwards" })
+    .finished.then(() => fireDone(id)).catch(() => {});
+}
+// The burned option leaves the page; the ones below glide up into its place (one transform each).
+function fireDone(id) {
+  BURNING = null; clearFeed();
+  const P = current && current.P; if (!P || !P.cur || P.cur.id !== id || app().dataset.qid !== id) return;
+  const before = new Map([...app().querySelectorAll(".opt")].map(el => [el.dataset.pick || el.dataset.toggle, el.getBoundingClientRect().top]));
+  renderPlay(true);
+  if (reduceMotion()) return;
+  app().querySelectorAll(".opt").forEach(el => { const t0 = before.get(el.dataset.pick || el.dataset.toggle), dy = t0 - el.getBoundingClientRect().top;
+    if (t0 !== undefined && Math.abs(dy) > 1) el.animate([{ transform: `translateY(${dy.toFixed(1)}px)` }, { transform: "none" }], { duration: 420, easing: EASE.drop }); });
 }
 // Story-style moves: forward (answered: next; unanswered: leave it for later) and back.
 function nav(dir) {
