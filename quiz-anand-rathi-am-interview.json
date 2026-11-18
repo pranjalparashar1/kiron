@@ -1,0 +1,937 @@
+{
+ "format": "study-buddy-quiz",
+ "version": 1,
+ "id": "anand-rathi-am-interview",
+ "title": "Anand Rathi AM interview",
+ "source": "Anand Rathi Wealth Account Manager revision guide, company profile and wealth management interview prep notes",
+ "purpose": "Preparing for an Account Manager (wealth management) interview at Anand Rathi Wealth.",
+ "about": "Company facts, tax, return and risk formulas, fund selection, operations, products and client scenarios. Tax rates as of FY2025-26; confirm live rates.",
+ "round": 8,
+ "sections": [
+  {
+   "title": "Anand Rathi Wealth and the role",
+   "ref": "Parts 1–2",
+   "why": "\"What do you know about us?\" and \"why this role?\" come first in almost every interview.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Since when has Anand Rathi run its private wealth business?",
+     "hint": "The Group is older than the wealth business.",
+     "options": [
+      "2002",
+      "1994",
+      "2007",
+      "2021"
+     ],
+     "correct": 0,
+     "answer": "Group founded **1994**; private wealth since **2002**; Rawal CEO since 2007; listed 2021.",
+     "ref": "Part 2"
+    },
+    {
+     "type": "single",
+     "prompt": "Who serves as Anand Rathi Wealth's Joint CEO?",
+     "hint": "Joined in 2012, Joint CEO from April 2025.",
+     "options": [
+      "Feroze Azeez",
+      "Rakesh Rawal",
+      "Pradeep Gupta",
+      "Jugal Mantri"
+     ],
+     "correct": 0,
+     "answer": "**Feroze Azeez**, Joint CEO from 10 Apr 2025. **Rakesh Rawal** is Executive Director and CEO since 2007.",
+     "ref": "Part 2"
+    },
+    {
+     "type": "single",
+     "prompt": "Roughly how big is Anand Rathi Wealth (30 Sep 2026)?",
+     "hint": "Over a lakh crore.",
+     "options": [
+      "AUM above ₹1,08,000 cr; 14,300+ families",
+      "AUM about ₹37,900 cr; 4,000 families",
+      "AUM about ₹10,800 cr; 1,400 families",
+      "AUM above ₹5 lakh cr; 1 lakh families"
+     ],
+     "correct": 0,
+     "answer": "**₹1,08,377 cr+ AUM, 14,309+ client families.** ₹37,900 cr is the market cap, not AUM.",
+     "ref": "Part 2"
+    },
+    {
+     "type": "single",
+     "prompt": "When did Anand Rathi Wealth list, and at what IPO price?",
+     "hint": "The issue price is the lower of the two numbers.",
+     "options": [
+      "14 Dec 2021 at ₹550 (listed ₹600)",
+      "14 Dec 2021 at ₹600 (listed ₹550)",
+      "2 Apr 2019 at ₹550 (listed ₹600)",
+      "14 Dec 2021 at ₹2,288 (listed ₹2,297)"
+     ],
+     "correct": 0,
+     "answer": "IPO **₹550**, NSE listing **₹600**, a ~9.09% gain. Bonus shares mean today's price isn't comparable.",
+     "ref": "Part 2"
+    },
+    {
+     "type": "single",
+     "prompt": "Which listing-gain calculation is right?",
+     "hint": "Gain is measured against the issue price.",
+     "options": [
+      "(600 − 550)/550 ≈ 9.09%",
+      "(600 − 550)/600 ≈ 8.33%",
+      "600/550 ≈ 109%",
+      "(600 − 550)/100 = 50%"
+     ],
+     "correct": 0,
+     "answer": "Gain over the **issue price**: 50/550 ≈ 9.09%.",
+     "ref": "Part 2",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "The JD stresses one idea twice. Which should you echo?",
+     "hint": "What sets the firm apart from a distributor?",
+     "options": [
+      "Advisory against a plan, not product selling",
+      "Maximising product sales per client",
+      "Trading ideas for active clients",
+      "Lowest-cost passive investing only"
+     ],
+     "correct": 0,
+     "answer": "Use **advisory, not product selling** in your why-us answer.",
+     "ref": "Part 1"
+    },
+    {
+     "type": "single",
+     "prompt": "What is the Account Manager role at its core?",
+     "hint": "Who does the AM work alongside?",
+     "options": [
+      "Supporting an RM: plans, reports, documents, queries",
+      "Running a fund as portfolio manager",
+      "Selling products to new walk-in clients alone",
+      "Back-office compliance audits only"
+     ],
+     "correct": 0,
+     "answer": "An **RM-support** role: planning and reporting, spotting opportunities, BD, documentation and client queries.",
+     "ref": "Part 1"
+    },
+    {
+     "type": "single",
+     "prompt": "Asked about structured products, your gap, you should…",
+     "hint": "Honesty beats bluffing.",
+     "options": [
+      "Say you've studied payoff, issuer and liquidity, not executed",
+      "Claim you've sold many to HNIs",
+      "Say they're outside an AM's job",
+      "Change the subject to mutual funds"
+     ],
+     "correct": 0,
+     "answer": "Don't bluff: \"I've studied the payoff, issuer and liquidity logic but not executed these.\"",
+     "ref": "Part 1"
+    }
+   ]
+  },
+  {
+   "title": "Taxation",
+   "ref": "Part 8",
+   "why": "Tax-aware advice is in your pitch, so expect a worked tax question.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Equity fund units held over 12 months are taxed at…",
+     "hint": "Long-term, with a yearly exemption.",
+     "options": [
+      "12.5% on gains above ₹1.25 lakh a year",
+      "20% on all gains",
+      "10% on gains above ₹1 lakh a year",
+      "Your slab rate"
+     ],
+     "correct": 0,
+     "answer": "Equity LTCG: **12.5% above ₹1.25 lakh**. Short-term (under 12 months): **20%**. Plus 4% cess.",
+     "ref": "Part 8"
+    },
+    {
+     "type": "single",
+     "prompt": "Debt fund (over 65% debt) gains held 3 years are taxed at…",
+     "hint": "Indexation went away.",
+     "options": [
+      "Your slab rate, whatever the holding period",
+      "12.5% without indexation",
+      "20% with indexation",
+      "12.5% above ₹1.25 lakh"
+     ],
+     "correct": 0,
+     "answer": "'Specified' debt funds: **slab rate**, no LTCG benefit, any holding period.",
+     "ref": "Part 8"
+    },
+    {
+     "type": "single",
+     "prompt": "When units are redeemed, which lots go first?",
+     "hint": "Think queue.",
+     "options": [
+      "The oldest (FIFO)",
+      "The newest (LIFO)",
+      "The client chooses",
+      "The cheapest lots"
+     ],
+     "correct": 0,
+     "answer": "**FIFO**: first in, first out. That's why you check tax lot by lot before a rebalance.",
+     "ref": "Part 8"
+    },
+    {
+     "type": "single",
+     "prompt": "Equity fund: ₹20 L grows to ₹26 L in 18 months. Tax before cess?",
+     "hint": "Take off the exemption first.",
+     "options": [
+      "(6,00,000 − 1,25,000) × 12.5% = ₹59,375",
+      "6,00,000 × 12.5% = ₹75,000",
+      "6,00,000 × 20% = ₹1,20,000",
+      "(6,00,000 − 1,25,000) × 20% = ₹95,000"
+     ],
+     "correct": 0,
+     "answer": "Held over 12 months → LTCG. Taxable ₹4,75,000 × 12.5% = **₹59,375**; with 4% cess ₹61,750.",
+     "ref": "Part 8, ex. 1",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "30% slab client, 1-year+ parking. Why arbitrage over liquid?",
+     "hint": "Arbitrage holds hedged equity.",
+     "options": [
+      "Equity taxation: LTCG 12.5% above ₹1.25 L vs slab",
+      "Arbitrage is risk-free, liquid isn't",
+      "Arbitrage has no exit load ever",
+      "Liquid funds can't be held over a year"
+     ],
+     "correct": 0,
+     "answer": "Pre-tax returns are similar, but arbitrage gets **equity taxation**. Under a year it's 20% STCG; and it can dip slightly.",
+     "ref": "Part 8, ex. 2"
+    },
+    {
+     "type": "single",
+     "prompt": "How can a long-term capital loss be set off?",
+     "hint": "It's the narrower of the two rules.",
+     "options": [
+      "Only against long-term gains",
+      "Against short- or long-term gains",
+      "Against salary income",
+      "It can't be set off"
+     ],
+     "correct": 0,
+     "answer": "LTCL → **LTCG only**. STCL → either. Carry forward **8 years**.",
+     "ref": "Part 8"
+    },
+    {
+     "type": "single",
+     "prompt": "What does grandfathering do for equity bought before 1 Feb 2018?",
+     "hint": "There's a reference date.",
+     "options": [
+      "Cost = higher of actual cost and 31 Jan 2018 value",
+      "Gains before 2018 are fully tax-free forever",
+      "Indexation applies to pre-2018 units",
+      "Pre-2018 units are taxed at slab"
+     ],
+     "correct": 0,
+     "answer": "Cost is lifted to the **higher of actual cost and 31 Jan 2018 value** (capped at sale value).",
+     "ref": "Part 8"
+    },
+    {
+     "type": "single",
+     "prompt": "IDCW (dividend) payouts from a fund are taxed…",
+     "hint": "It's income, not a capital gain.",
+     "options": [
+      "At slab; TDS 10% above ₹10,000 a year",
+      "At 12.5% above ₹1.25 lakh",
+      "Tax-free in the investor's hands",
+      "At 20% flat"
+     ],
+     "correct": 0,
+     "answer": "IDCW is **slab-taxed**, TDS 10% above ₹10,000. NAV falls by the payout, so it isn't extra return.",
+     "ref": "Parts 3, 8"
+    },
+    {
+     "type": "single",
+     "prompt": "A switch between two schemes of the same AMC is…",
+     "hint": "What happens to the old units?",
+     "options": [
+      "A redemption plus purchase, so taxable",
+      "Tax-free as it stays in one AMC",
+      "Taxed only on the new scheme",
+      "Taxed only if over ₹1.25 lakh"
+     ],
+     "correct": 0,
+     "answer": "A switch is a **sale + buy**: check tax, exit load and NAV cut-off.",
+     "ref": "Part 11, Q26"
+    }
+   ]
+  },
+  {
+   "title": "Return and risk formulas",
+   "ref": "Part 9",
+   "why": "Reporting (IRR/XIRR, variance vs plan) is core to the job; expect at least one formula.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Which is the CAGR formula?",
+     "hint": "Compound, then annualise.",
+     "options": [
+      "(EV/BV)^(1/n) − 1",
+      "(EV − BV)/BV",
+      "(EV − BV)/(BV × n)",
+      "(EV/BV)^n − 1"
+     ],
+     "correct": 0,
+     "answer": "CAGR = (EV/BV)^(1/n) − 1. ₹10 L → ₹15 L in 3 yrs ≈ 14.47%.",
+     "ref": "Part 9",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "A 20% absolute return over 2 years, annualised, is…",
+     "hint": "Compound, don't divide.",
+     "options": [
+      "1.20^(1/2) − 1 ≈ 9.54%",
+      "20/2 = 10%",
+      "1.20^2 − 1 = 44%",
+      "20%"
+     ],
+     "correct": 0,
+     "answer": "Annualise by compounding: 1.20^(1/2) − 1 ≈ **9.54%**.",
+     "ref": "Part 9",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Monthly SIPs plus a withdrawal. Which return measure fits?",
+     "hint": "Irregular dated cash flows.",
+     "options": [
+      "XIRR",
+      "CAGR",
+      "Absolute return",
+      "Holding period return"
+     ],
+     "correct": 0,
+     "answer": "**XIRR**: the rate where NPV of all dated flows = 0. CAGR fits one lump sum and two dates.",
+     "ref": "Part 9"
+    },
+    {
+     "type": "single",
+     "prompt": "Why can a report's return differ from the client's IRR?",
+     "hint": "One strips out the client's timing.",
+     "options": [
+      "TWR ignores flow timing; IRR is money-weighted",
+      "IRR excludes dividends",
+      "TWR includes taxes, IRR doesn't",
+      "They can never differ on one portfolio"
+     ],
+     "correct": 0,
+     "answer": "**TWR** judges the manager; **IRR/XIRR** reflects the client's actual flows. Money added before a fall hurts IRR.",
+     "ref": "Part 9, Q48"
+    },
+    {
+     "type": "single",
+     "prompt": "Which is the Sharpe ratio?",
+     "hint": "Excess return per unit of total risk.",
+     "options": [
+      "(Rp − Rf)/σp",
+      "(Rp − Rf)/β",
+      "(Rp − Rb)/TE",
+      "(Rp − Rf)/downside deviation"
+     ],
+     "correct": 0,
+     "answer": "Sharpe = (Rp − Rf)/σp. (12 − 6)/10 = **0.60**. Divide by β for Treynor, downside dev. for Sortino.",
+     "ref": "Part 9",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "How does Sortino differ from Sharpe?",
+     "hint": "Which volatility hurts clients?",
+     "options": [
+      "Divides by downside deviation only",
+      "Divides by beta",
+      "Uses the benchmark instead of Rf",
+      "Ignores the risk-free rate"
+     ],
+     "correct": 0,
+     "answer": "**Sortino** penalises only downside volatility: (Rp − Rf)/downside dev.",
+     "ref": "Part 9"
+    },
+    {
+     "type": "single",
+     "prompt": "Which is Jensen's alpha?",
+     "hint": "Compare with CAPM's expected return.",
+     "options": [
+      "\\(R_p - [R_f + \\beta(R_m - R_f)]\\)",
+      "\\(R_p - R_b\\)",
+      "\\((R_p - R_f)/\\beta\\)",
+      "\\(\\beta(R_m - R_f)\\)"
+     ],
+     "correct": 0,
+     "answer": "Rp = 15, Rf = 6, β = 1.2, Rm = 12: 15 − (6 + 7.2) = **1.8 pts**.",
+     "ref": "Part 9",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Which is the information ratio?",
+     "hint": "Active return per unit of active risk.",
+     "options": [
+      "(Rp − Rb)/tracking error",
+      "(Rp − Rf)/σp",
+      "(Rp − Rf)/β",
+      "Cov(Rp, Rm)/Var(Rm)"
+     ],
+     "correct": 0,
+     "answer": "IR = (Rp − Rb)/TE. (14 − 11)/3 = **1.0**.",
+     "ref": "Part 9",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Beta 1.2, market up 10%. The fund is likely to move…",
+     "hint": "Beta is sensitivity, not a promise.",
+     "options": [
+      "About +12%",
+      "Exactly +12%",
+      "About +1.2%",
+      "About +8.3%"
+     ],
+     "correct": 0,
+     "answer": "Beta = Cov(Rp, Rm)/Var(Rm). 1.2 × 10% ≈ **+12%**, not guaranteed.",
+     "ref": "Part 9",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "A portfolio falls from ₹10 L to ₹8 L. Max drawdown is…",
+     "hint": "Peak to trough, over the peak.",
+     "options": [
+      "(8 − 10)/10 = −20%",
+      "(10 − 8)/8 = 25%",
+      "(8 − 10)/8 = −25%",
+      "−2 L"
+     ],
+     "correct": 0,
+     "answer": "Max drawdown = (Trough − Peak)/Peak = **−20%**. Good for explaining possible pain to a client.",
+     "ref": "Part 9",
+     "tags": [
+      "calc"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "Fund selection and capture ratios",
+   "ref": "Parts 3, 6",
+   "why": "You cite capture ratios and fund categories as your Dezerv strengths, so they'll probe.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Benchmark averages +4% in up months, fund +3.6%. Upside capture?",
+     "hint": "Fund ÷ benchmark × 100.",
+     "options": [
+      "3.6/4 × 100 = 90%",
+      "4/3.6 × 100 ≈ 111%",
+      "4 − 3.6 = 0.4%",
+      "3.6 × 4 = 14.4%"
+     ],
+     "correct": 0,
+     "answer": "Upside capture = fund's avg up-month return ÷ benchmark's × 100 = **90%**.",
+     "ref": "Part 6",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Upside 90, downside 70. What's the capture ratio and reading?",
+     "hint": "Upside ÷ downside.",
+     "options": [
+      "90/70 ≈ 1.29: loses less than it gains",
+      "70/90 ≈ 0.78: lags the market",
+      "90 − 70 = 20: aggressive",
+      "90 × 70: amplifies both ways"
+     ],
+     "correct": 0,
+     "answer": "Above 1 means it gives up less on falls than it gains on rises.",
+     "ref": "Part 6",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Which capture profile is the worst?",
+     "hint": "Misses rallies, joins the falls.",
+     "options": [
+      "Upside below 100, downside above 100",
+      "Upside above 100, downside below 100",
+      "Both below 100",
+      "Both above 100"
+     ],
+     "correct": 0,
+     "answer": "Lags in rallies **and** falls more in corrections. Both below 100 is defensive; both above is aggressive.",
+     "ref": "Part 6"
+    },
+    {
+     "type": "multi",
+     "prompt": "Caveats when using capture ratios? Pick all that apply.",
+     "hint": "Period, peers, and other metrics.",
+     "options": [
+      "Use rolling 3–5 yr windows",
+      "Compare only within a category",
+      "Read with Sharpe, Sortino, drawdown",
+      "Higher upside always means a better fund"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "A few months can drive the ratio. Same benchmark, same category, rolling windows, plus other risk measures.",
+     "ref": "Part 6"
+    },
+    {
+     "type": "single",
+     "prompt": "Large cap vs multi cap: what's the SEBI rule?",
+     "hint": "One forces a spread.",
+     "options": [
+      "Large ≥80% top 100; multi ≥25% each in large, mid, small",
+      "Large ≥65% top 100; multi ≥65% in any cap",
+      "Large ≥80% top 250; multi ≥35% large and mid",
+      "Large 100% top 50; multi ≥10% in 3 assets"
+     ],
+     "correct": 0,
+     "answer": "Mid cap ≥65% in 101–250; small ≥65% in 251+; flexi ≥65% equity, any cap (manager's choice).",
+     "ref": "Part 3"
+    },
+    {
+     "type": "single",
+     "prompt": "Which category must hold ≥10% in each of 3+ asset classes?",
+     "hint": "One-fund diversification.",
+     "options": [
+      "Multi-asset allocation",
+      "Multi cap",
+      "Balanced advantage",
+      "Equity savings"
+     ],
+     "correct": 0,
+     "answer": "Multi-asset: e.g. equity, debt, gold. **Multi cap** is about market caps, not asset classes.",
+     "ref": "Part 3"
+    },
+    {
+     "type": "single",
+     "prompt": "Direct vs regular plan of the same fund differ in…",
+     "hint": "Same portfolio.",
+     "options": [
+      "Expense ratio: regular pays distributor commission",
+      "The stocks held",
+      "Risk-o-meter level",
+      "Tax treatment"
+     ],
+     "correct": 0,
+     "answer": "Same holdings; **regular** carries commission in a higher expense ratio. Advice must be worth the gap.",
+     "ref": "Part 3, Q29"
+    },
+    {
+     "type": "single",
+     "prompt": "Two funds show the same return. You recommend…",
+     "hint": "Return alone isn't enough.",
+     "options": [
+      "The one with better risk-adjusted fit for the client",
+      "The one with the bigger AUM",
+      "The newer fund",
+      "Either: same return, same fund"
+     ],
+     "correct": 0,
+     "answer": "Compare volatility, Sharpe/Sortino, drawdown, capture, concentration, cost and consistency, then fit to the client.",
+     "ref": "Part 11, Q46"
+    }
+   ]
+  },
+  {
+   "title": "Operations: KYC, CAS, folios, AA",
+   "ref": "Part 7",
+   "why": "Documentation and client queries are a big share of the AM's week.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Depository CAS vs RTA CAS: what does each cover?",
+     "hint": "Demat vs folios.",
+     "options": [
+      "NSDL/CDSL: demat holdings; CAMS/KFin: MF folios",
+      "NSDL/CDSL: MF folios; CAMS/KFin: demat shares",
+      "Both cover everything identically",
+      "RTA CAS covers bank accounts too"
+     ],
+     "correct": 0,
+     "answer": "A client holding both forms needs **both** statements to see everything.",
+     "ref": "Part 7"
+    },
+    {
+     "type": "single",
+     "prompt": "What is a folio?",
+     "hint": "Kept by the AMC/RTA.",
+     "options": [
+      "An investor's account number with an AMC; many schemes can sit in it",
+      "A demat account with a DP",
+      "A single SIP instalment",
+      "A KRA registration ID"
+     ],
+     "correct": 0,
+     "answer": "Holding patterns: single, joint, either-or-survivor. Non-demat units live in the folio.",
+     "ref": "Part 7"
+    },
+    {
+     "type": "single",
+     "prompt": "Which two are RTAs?",
+     "hint": "They keep unit-holder records.",
+     "options": [
+      "CAMS and KFintech",
+      "NSDL and CDSL",
+      "CRISIL and ICRA",
+      "NSE and BSE"
+     ],
+     "correct": 0,
+     "answer": "NSDL/CDSL are depositories; CRISIL/ICRA are rating agencies; NSE/BSE are exchanges.",
+     "ref": "Part 7"
+    },
+    {
+     "type": "single",
+     "prompt": "Who regulates the Account Aggregator framework?",
+     "hint": "It's an NBFC licence.",
+     "options": [
+      "RBI",
+      "SEBI",
+      "AMFI",
+      "IRDAI"
+     ],
+     "correct": 0,
+     "answer": "AAs are **RBI-regulated NBFC-AAs**. SEBI covers MFs, brokers, RIAs, PMS, AIFs, REITs/InvITs.",
+     "ref": "Part 7"
+    },
+    {
+     "type": "multi",
+     "prompt": "True of Account Aggregators? Pick all that apply.",
+     "hint": "Consent is the core idea.",
+     "options": [
+      "Data-blind: can't read the data",
+      "Consent is time-bound and revocable",
+      "Fetches holdings without PDFs or passwords",
+      "The AA stores and analyses your data"
+     ],
+     "correct": [
+      0,
+      1,
+      2
+     ],
+     "answer": "FIPs (banks, RTAs, depositories) share with FIUs (advisers) through the AA, encrypted.",
+     "ref": "Part 7"
+    },
+    {
+     "type": "single",
+     "prompt": "A client's KYC shows 'on hold' at the KRA. What happens?",
+     "hint": "Check before any transaction.",
+     "options": [
+      "Transactions are blocked until it's fixed",
+      "Only SIPs are blocked",
+      "Nothing; it's just a flag",
+      "The folio is closed"
+     ],
+     "correct": 0,
+     "answer": "KYC status controls whether you can transact. Missing FATCA, nomination, mobile or email can freeze a folio too.",
+     "ref": "Part 7"
+    },
+    {
+     "type": "single",
+     "prompt": "Distributor vs RIA: how is each paid?",
+     "hint": "Commission vs fee.",
+     "options": [
+      "Distributor: product commission; RIA: client fee",
+      "Distributor: client fee; RIA: commission",
+      "Both paid only by the client",
+      "Both paid only by AMCs"
+     ],
+     "correct": 0,
+     "answer": "Distributors hold an **ARN** (AMFI); RIAs are SEBI-registered, fee-based fiduciaries. Don't guess Anand Rathi's category.",
+     "ref": "Part 7"
+    },
+    {
+     "type": "single",
+     "prompt": "Bank mandate change: what do you collect?",
+     "hint": "Proof of the new account.",
+     "options": [
+      "RTA form + cancelled cheque or statement + KYC",
+      "Only a phone call from the client",
+      "A new PAN card",
+      "A fresh demat account"
+     ],
+     "correct": 0,
+     "answer": "The RTA processes it; some AMCs apply a short cooling period on redemptions to a new account.",
+     "ref": "Part 11, Q26"
+    }
+   ]
+  },
+  {
+   "title": "Bonds, REITs, structured products",
+   "ref": "Parts 4, 5, 10",
+   "why": "The JD lists bonds, structured products and alternatives as opportunities you'll spot.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Modified duration 4, yields rise 1%. Price moves about…",
+     "hint": "Price change ≈ −D × Δy.",
+     "options": [
+      "−4 × 1% = −4%",
+      "+4%",
+      "−1%/4 = −0.25%",
+      "−4 × 1% × 100 = −400%"
+     ],
+     "correct": 0,
+     "answer": "Rates up, prices down; longer bonds fall more.",
+     "ref": "Part 5",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Which is current yield?",
+     "hint": "Uses today's price, not face value.",
+     "options": [
+      "Annual coupon/current price",
+      "Annual coupon/face value",
+      "YTM − coupon",
+      "(Face − price)/price"
+     ],
+     "correct": 0,
+     "answer": "Coupon/face is the coupon rate. **YTM** also uses redemption value and time.",
+     "ref": "Part 5",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "Dirty price equals…",
+     "hint": "What the buyer actually pays.",
+     "options": [
+      "Clean price + accrued interest",
+      "Clean price − accrued interest",
+      "Face value + coupon",
+      "Clean price × YTM"
+     ],
+     "correct": 0,
+     "answer": "Buyers pay the **dirty** price; quotes are usually clean.",
+     "ref": "Part 5"
+    },
+    {
+     "type": "single",
+     "prompt": "REITs and InvITs must distribute at least…",
+     "hint": "Nearly all of it.",
+     "options": [
+      "90% of net distributable cash flows",
+      "50% of profits",
+      "80% of rental income",
+      "100% of gross revenue"
+     ],
+     "correct": 0,
+     "answer": "Also: net debt capped at **49%** (above 25% needs AAA and unitholder approval); REITs ≥80% in completed assets.",
+     "ref": "Part 4"
+    },
+    {
+     "type": "single",
+     "prompt": "G-sec yields rise. REIT unit prices tend to…",
+     "hint": "Yield spreads compress.",
+     "options": [
+      "Fall",
+      "Rise",
+      "Stay fixed: yield is guaranteed",
+      "Track gold"
+     ],
+     "correct": 0,
+     "answer": "REITs behave partly like bonds. Yield isn't guaranteed: it depends on rentals and leverage.",
+     "ref": "Part 4"
+    },
+    {
+     "type": "single",
+     "prompt": "A 'principal-protected' note is usually built from…",
+     "hint": "Floor plus upside.",
+     "options": [
+      "A zero-coupon bond plus an index option",
+      "An equity fund plus an FD",
+      "A gilt fund plus a REIT",
+      "A liquid fund plus a futures short"
+     ],
+     "correct": 0,
+     "answer": "Protection holds **only at maturity and only if the issuer pays**. Upside is partial and may be capped.",
+     "ref": "Part 10"
+    },
+    {
+     "type": "single",
+     "prompt": "What's the core risk in a principal-protected MLD?",
+     "hint": "Who promised to pay?",
+     "options": [
+      "Issuer credit risk",
+      "Tracking error",
+      "Exit load",
+      "Benchmark mismatch"
+     ],
+     "correct": 0,
+     "answer": "Even if the index rises, an issuer default loses principal. Also illiquidity, lock-in, slab tax.",
+     "ref": "Part 10"
+    },
+    {
+     "type": "single",
+     "prompt": "PMS vs AIF minimum ticket?",
+     "hint": "One is half the other.",
+     "options": [
+      "PMS ₹50 lakh; AIF ₹1 crore",
+      "PMS ₹1 crore; AIF ₹50 lakh",
+      "Both ₹25 lakh",
+      "PMS ₹5 lakh; AIF ₹10 lakh"
+     ],
+     "correct": 0,
+     "answer": "PMS holds securities in your demat, taxed per trade. AIF Cat I/II mostly pass-through; Cat III taxed at fund level.",
+     "ref": "Part 10"
+    }
+   ]
+  },
+  {
+   "title": "Client scenarios",
+   "ref": "Part 11",
+   "why": "Clients are 45–60 and very wealthy; they'll test judgement and calm.",
+   "questions": [
+    {
+     "type": "single",
+     "prompt": "Client wants 15% a year with zero risk. You…",
+     "hint": "Honesty, then needs.",
+     "options": [
+      "Say no such product exists; ask goals; show trade-offs",
+      "Find the highest-yield bond available",
+      "Promise 15% via a structured product",
+      "Recommend small caps for the return"
+     ],
+     "correct": 0,
+     "answer": "Be honest that return needs risk, then split safe money for known needs and growth money for long goals.",
+     "ref": "Q42"
+    },
+    {
+     "type": "single",
+     "prompt": "Equity is 68% against a 60% target. The variance is…",
+     "hint": "Actual − target.",
+     "options": [
+      "+8 pts: a prompt to review, not an automatic sale",
+      "−8 pts: buy more equity",
+      "+13%: sell 13% now",
+      "Nil: within any band"
+     ],
+     "correct": 0,
+     "answer": "Rebalance using fresh money and SIPs first, then redemptions; check tax, exit loads and costs.",
+     "ref": "Part 10",
+     "tags": [
+      "calc"
+     ]
+    },
+    {
+     "type": "single",
+     "prompt": "House view shifts equity to debt. Across 50 clients you…",
+     "hint": "No blanket moves.",
+     "options": [
+      "Rank clients by deviation; give the RM an action list with tax",
+      "Switch every client the same day",
+      "Wait for clients to call",
+      "Move only the largest client"
+     ],
+     "correct": 0,
+     "answer": "Compare each against plan and tactical band, check tax, exit costs and goal timing, then track execution.",
+     "ref": "Q24"
+    },
+    {
+     "type": "single",
+     "prompt": "Portfolio down 12%, client angry. First step?",
+     "hint": "Emotion before analysis.",
+     "options": [
+      "Listen and acknowledge, then check against benchmark",
+      "Sell to stop further losses",
+      "Promise it'll recover soon",
+      "Blame the market and move on"
+     ],
+     "correct": 0,
+     "answer": "Then: market-wide or specific? Still on plan? Horizon and liquidity? The RM leads with your analysis.",
+     "ref": "Q43"
+    },
+    {
+     "type": "single",
+     "prompt": "55-year-old fears a correction. Your best reassurance?",
+     "hint": "Where do the next few years' needs sit?",
+     "options": [
+      "Next 3–5 years of needs are in debt and liquid",
+      "Equity always recovers within a year",
+      "Move everything to FDs now",
+      "Time the market with a stop-loss"
+     ],
+     "correct": 0,
+     "answer": "Equity is for goals 7+ years away, so a fall doesn't force a sale. Phase new money; don't time the market.",
+     "ref": "Q25"
+    },
+    {
+     "type": "single",
+     "prompt": "Product team pushes an SP you think is unsuitable. You…",
+     "hint": "Suitability over targets.",
+     "options": [
+      "Document why, raise with RM/compliance, offer an alternative",
+      "Sell it to hit targets",
+      "Sell it with a quiet disclaimer",
+      "Ignore it and say nothing"
+     ],
+     "correct": 0,
+     "answer": "Mis-selling harms the client and the firm.",
+     "ref": "Q23"
+    },
+    {
+     "type": "single",
+     "prompt": "You spot a documentation error after a transaction. You…",
+     "hint": "Speed and transparency.",
+     "options": [
+      "Escalate now, try to fix before cut-off, tell the client",
+      "Fix it quietly next month",
+      "Wait to see if the client notices",
+      "Reverse the trade without telling anyone"
+     ],
+     "correct": 0,
+     "answer": "Then log it and add a process check so it doesn't repeat.",
+     "ref": "Q28"
+    },
+    {
+     "type": "single",
+     "prompt": "Risk profiling: tolerance and capacity differ. Plan to…",
+     "hint": "The safer of the two.",
+     "options": [
+      "The lower of the two",
+      "The higher of the two",
+      "Their average",
+      "Tolerance only"
+     ],
+     "correct": 0,
+     "answer": "Tolerance = willingness; capacity = ability. Add horizon, liquidity needs and experience.",
+     "ref": "Part 10"
+    }
+   ]
+  }
+ ]
+}
