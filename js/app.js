@@ -2,14 +2,15 @@
    This file is the app itself: the router, the screens (library, quiz home, player, round end), the timer, the fire,
    and every event listener, registered here in one order. The parts it is built from live next to it in js/. */
 import { $, esc, toast, toastHeld, app, topBar, backBtn, HX, hxAll, buzz, reduceMotion, GHOST } from "./ui.js";
-import { LS, K_IMPORTED, getImported, progKey, blankProg, getProg, eachQ, getQ, freshen } from "./store.js";
+import { LS, K_IMPORTED, getImported, progKey, blankProg, getProg, eachQ, getQ, freshen, secKey } from "./store.js";
 import { validateQuiz } from "./validate.js";
 import { shuffledOrder, orderStart, formOf, gradeMulti, gradeOrder, counts, isNumQ, buildRound, buildReview, TIME, durFor } from "./round.js";
 import { fmt } from "./maths.js";
 import { flowFrom, flowIn, cancelScroll, reveal, onScroll, settle, onTapXY, bloom, burst, heatLevel, cooled, heatIcon, barWidth, slideFrom,
   placeSky, placeGlint, onResize, EASE, fxLayer, clearFeed, fxAnim, streakFeed, onSpringBack, edgeGlow, unfurl, fold } from "./fx.js";
 import { hooks as orderHooks, TAP_ORDER, dragging, endDrag, placedOf, onOrderClick, onOrderKey, onOrderMenu, onOrderDown } from "./order.js";
-import { gradeOf, review, AGAIN, TODAY_ID, anyDue, todayQuiz, buildTodayRound, sourceOf } from "./fsrs7.js";
+import { gradeOf, review, loadMem, AGAIN, TODAY_ID, anyDue, todayQuiz, buildTodayRound, sourceOf } from "./fsrs7.js";
+import { buildDiagnostic, learn, isSpaced, onPick, daFires } from "./socratic.js";
 
 // Text formatting (maths, **bold**, *italic*, line breaks) lives in maths.js: fmt().
 /* ---------------- safety net ----------------
@@ -118,6 +119,7 @@ function route() {
   if (!/^#play-/.test(location.hash)) { if (updateIfWaiting("")) return; if (FRESH) { SAMPLES = FRESH; FRESH = null; } }
   if (!/^#play-/.test(location.hash)) {
     clearFeed();
+    if (current && current.P.round) settleDA(current.quiz, current.P);
     // Leaving the quiz ends the streak.
     if (current && current.P.round && (current.P.round.streak || current.P.round.run)) { current.P.round.streak = 0; current.P.round.run = 0; saveProg(); }
   }
@@ -168,11 +170,15 @@ function renderHome() {
   else if (c.revisit) primary = `<button class="btn primary xl" data-act="revisit" type="button">Revisit what you missed</button>`;
   else primary = `<div class="donebox"><b>End of quiz.</b></div>`;
   const stateOf = pc => !pc.total || pc.left === pc.total ? ["none", "Not started"] : pc.left === 0 && pc.skip === 0 ? ["done", "Done"] : ["some", "In progress"];
+  // Kiron 1.9.0: on a quiz with Socratic parts, each part shows its skill level as a 5-segment bar (no numbers).
+  const LV = ["Not started", "Seen", "Getting there with help", "Knows it", "Holds it over time", "Mastered"];
+  const skill = (s, i) => { const lv = ((P.sk || {})[secKey(s, i)] || {}).lv || 0;
+    return `<span class="skbar${lv >= 4 ? " held" : ""}" role="img" aria-label="${LV[lv]}">${[1, 2, 3, 4, 5].map(n => `<i${n <= lv ? ' class="on"' : ""}></i>`).join("")}</span>${lv >= 5 ? `<span class="skstar" aria-hidden="true">${heatIcon(7)}</span>` : ""}`; };
   const parts = quiz.sections.map((s, i) => {
     const pc = counts(quiz, P, i), st = stateOf(pc), answered = pc.right + pc.revisit > 0;
     const acts = st[0] === "none" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Start</button>`
       : `${st[0] === "some" ? `<button class="btn primary" data-act="partstart" data-pi="${i}" type="button">Continue</button>` : ""}${answered ? `<button class="btn" data-act="partreview" data-pi="${i}" type="button">Review</button>` : ""}<button class="btn ghost" data-act="partredo" data-pi="${i}" type="button">Redo</button>`;
-    return `<div class="part"><div class="part-head"><button class="part-row" type="button" data-act="partopen" aria-expanded="false"><span class="pdot s-${st[0]}" aria-hidden="true"></span><b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div></div><i class="cap" aria-hidden="true"></i></div>`;
+    return `<div class="part"><div class="part-head"><button class="part-row" type="button" data-act="partopen" aria-expanded="false">${quiz.socratic ? skill(s, i) : `<span class="pdot s-${st[0]}" aria-hidden="true"></span>`}<b>${esc(s.title)}</b><span class="pstate s-${st[0]}">${st[1]}</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="unfurl-in"><div class="pact">${acts}</div></div></div></div></div><i class="cap" aria-hidden="true"></i></div>`;
   }).join("");
   app().innerHTML = hxAll(topBar(backBtn(), `<span class="grow"></span>`) + `
   <main class="wrap home">
@@ -187,7 +193,9 @@ function startRound(opt) {
   // Carrying on in order straight from the end of a round keeps the streak going; anything else starts fresh.
   const carry = P.round && P.round.ended && !P.round.review ? P.round.streak || 0 : 0;
   const carryRun = P.round && P.round.ended && !P.round.review ? runOf(P.round) : 0;
-  const r = buildRound(quiz, P, opt);
+  // Kiron 1.9.0: a quiz that marks diagnostic questions starts with a short placement round.
+  const diag = !opt && quiz.socratic ? buildDiagnostic(quiz, P) : null; if (diag) P.diagDone = true;
+  const r = diag || buildRound(quiz, P, opt);
   if (!r) { toast("Nothing left there. Nice."); return; }
   if (!opt || opt.kind !== "revisit") { r.streak = carry; r.run = carryRun; }
   r.best = r.run || 0;
@@ -234,7 +242,7 @@ function renderPlay(keepScroll) {
   const cur = P.cur, f = formOf(q);
   const fx = FX && FX.id === id ? FX : null; FX = null;
   // Pause keeps the timer where it is: the bar freezes and Play carries on from the same spot.
-  const timedDur = !cur.done && !r.review ? durFor(q, f) : 0;
+  const timedDur = !cur.done && !r.review && !cur.tries ? durFor(q, f) : 0;   // a probe stops the clock: this is the thinking part
   if (timedDur) { if (!TIMER || TIMER.id !== id) { clearTimer(); const now = Date.now(); PAUSED = false; TIMER = { id, dur: timedDur, t0: now, pausedAt: 0, to: null }; } } else clearTimer();
   const dots = r.ids.map((x, i) => `<i class="${i < r.i ? (r.res[x] === "skip" ? "skip" : "past") : i === r.i ? "now" + (cur.done ? " full" : timedDur ? " timing" : "") : ""}"${i === r.i && timedDur ? ` style="--dur:${timedDur}ms;--delay:-${Math.min(timerElapsed(), timedDur)}ms"` : ""}></i>`).join("");
   const status = cur.done ? cur.status : null;
@@ -244,12 +252,14 @@ function renderPlay(keepScroll) {
     const ord = current.quiz.fixed || q.fixedOpts || /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
     input = `<div class="opts" role="group" aria-label="Options">` + ord.filter(oi => oi === BURNING || !gone.includes(oi)).map(oi => {
       let cls = "opt" + (oi === BURNING ? " burning" : ""), ic = "";
+      const out = !cur.done && (cur.out || []).includes(oi), held = !cur.done && cur.probe && cur.probe.picked == null;
+      if (out) { cls += " wrong dim"; ic = "✕"; }
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
       // a little smaller, so a mis-tap is easy to spot and the explanation still fits without a long scroll.
       if (cur.done) { if (oi === f.correct) { cls += " ok"; ic = "✓"; } else if (a === oi) { cls += " wrong"; ic = "✕"; } else cls += " dim"; }
       if (fx && fx.oi === oi) cls += fx.kind === "right" ? " pop" : " sink";
       else if (fx && fx.oi !== undefined && fx.kind !== "right" && oi === f.correct) cls += " lift";   // a wrong pick: the right answer rises gently
-      return `<button type="button" class="${cls}" data-key="${oi}" data-pick="${oi}"${cur.done ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span>${oi === BURNING ? CHAR : ""}</button>`;
+      return `<button type="button" class="${cls}" data-key="${oi}" data-pick="${oi}"${cur.done || out || held ? ' aria-disabled="true" tabindex="-1"' : ""}>${ic ? `<span class="k">${ic}</span>` : ""}<span>${fmt(f.options[oi])}</span>${oi === BURNING ? CHAR : ""}</button>`;
     }).join("") + `</div>`;
   } else if (f.kind === "multi") {
     const sel = a || [];
@@ -275,22 +285,28 @@ function renderPlay(keepScroll) {
     primary = "check";
   }
   const hint = q.hint && P.h[id] ? `<div class="hint"><b>Hint</b>${fmt(q.hint)}</div>` : "";
+  // Kiron 1.9.0: a contradiction probe after a wrong pick, a devil's advocate check after a right one (js/socratic.js).
+  const two = (t, picked, attr, extra, cls) => `<section class="probe${cls}" aria-live="polite"><p class="probe-q">${fmt(t.prompt)}</p><div class="probe-opts" role="group" aria-label="Options">${t.options.map((o, i) =>
+    `<button type="button" class="popt${picked == null ? "" : i === t.correct ? " ok" : i === picked ? " wrong" : " dim"}" data-${attr}="${i}"${picked == null ? "" : ' aria-disabled="true" tabindex="-1"'}>${fmt(o)}</button>`).join("")}</div>${picked == null ? "" : `<p class="probe-why">${fmt(t.why || (attr === "probe" ? "Now try the question again." : ""))}</p>`}${extra}</section>`;
+  const probeCard = !cur.done && cur.probe ? two(q.probes[cur.probe.oi], cur.probe.picked, "probe", `<button type="button" class="tellme" data-act="tellme">Just tell me</button>`, "") : "";
+  const daOpen = cur.done && cur.da && cur.da.picked == null;
+  const daCard = cur.done && cur.da && q.da ? two(q.da, cur.da.picked, "da", "", " da" + (daOpen && keepScroll === "fb" && !reduceMotion() ? " wait" : "")) : "";
   // feedback: the explanation only (no verdict banner)
   let fb = "";
-  if (cur.done) {
+  if (cur.done && !daOpen) {
     const why = f.kind === "pick" ? f.why : q.answer, more = f.kind === "pick" ? f.more : "";
     const detail = f.kind === "order" && status !== "right" ? `<div class="yours">Right order: ${q.items.map((t, i) => `${i + 1}. ${fmt(t)}`).join(" · ")}</div>` : "";
     fb = `<section class="fb ${status}${keepScroll === "fb" && !reduceMotion() ? " wait" : ""}" aria-live="polite">${detail}<div class="model">${fmt(why)}</div>${more ? `<details class="more"><summary>Full answer</summary><p>${fmt(more)}</p></details>` : ""}</section>`;
   }
   const back = r.i > 0 ? `<button class="btn ghost back" data-act="back" aria-label="Previous question" type="button">‹</button>` : "";
-  const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review ? `<button class="btn ghost hintb" data-act="hint" type="button">💡 Hint</button>` : "";
+  const hintBtn = q.hint && !P.h[id] && !cur.done && !r.review && r.kind !== "diag" ? `<button class="btn ghost hintb" data-act="hint" type="button">💡 Hint</button>` : "";
   const bar = cur.done
     ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow${waiting ? " soft" : ""}" data-act="check" type="button">Check</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
   const isNum = isNumQ(q);
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
-  const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
+  const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && !fx.soft && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
   const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="${esc(homeOf(quiz))}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<button type="button" class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" data-act="fire" aria-label="${feeding ? stk - 1 : stk} in a row"${heatNow ? "" : ' tabindex="-1" aria-hidden="true"'}><span class="fl" aria-hidden="true">${heatIcon(heatNow)}</span><b class="n" aria-hidden="true">${feeding ? stk - 1 : stk}</b></button>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>
   <main class="wrap play">
     <div class="stage">
@@ -298,7 +314,7 @@ function renderPlay(keepScroll) {
         ${isNum ? `<span class="numtag">Numbers</span>` : ""}
         <h2 class="prompt${long}" id="qprompt" tabindex="-1">${fmt(f.prompt)}</h2>
         ${f.setup ? `<p class="lead setup">No calculating. Pick the setup that gives the answer.</p>` : ""}
-        ${input}${cur.done ? "" : hint}${fb}
+        ${input}${cur.done ? "" : hint}${probeCard}${daCard}${fb}
       </article>
     </div>
   </main>
@@ -321,15 +337,24 @@ function renderPlay(keepScroll) {
   if (!keepScroll) { cancelScroll(); window.scrollTo(0, 0); }
   else {
     if (!sameQ) window.scrollTo(0, y0);
-    const el = app().querySelector(".fb");
+    const el = app().querySelector(".fb") || app().querySelector(".probe.da");
+    if (keepScroll === "probe") slideIn(app().querySelector(".probe"));
     if (keepScroll === "fb" && el) {
       const wrong = status && status !== "right", picked = fx && fx.oi !== undefined;
       // let the pop (or the soft settle of a wrong pick) play while the other options fade and shrink, then fade the explanation in and glide down to it
       settle(el, !picked ? 300 : wrong && !reduceMotion() ? 460 : 340);
     }
   }
-  if (fx && fx.kind === "right") { buzz([12, 45, 18]); const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
+  if (fx && fx.kind === "right" && !fx.soft) { buzz([12, 45, 18]); const ok = app().querySelector(".opt.ok"); if (ok) { if (fx.oi !== undefined) bloom(ok); burst(ok); } }
   if (feeding) streakFeed(stk, 420);
+}
+// The probe card slides up into place under the options (transform and opacity only), once the wrong pick has sunk.
+function slideIn(el) {
+  if (!el) return;
+  const go = () => { if (el.isConnected) reveal(el, $(".opts")); };
+  if (reduceMotion() || !el.animate) return go();
+  el.animate([{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], { duration: 340, delay: 260, easing: "cubic-bezier(.22,.8,.24,1)", fill: "backwards" });
+  setTimeout(go, 300);
 }
 /* Patch the live screen to match freshly built HTML, keeping nodes that did not change (so their animations
    and transitions carry on). Nodes marked data-keep (the sky) are left alone. The timer bar is always swapped
@@ -378,8 +403,25 @@ addEventListener("resize", onResize);
 const runOf = r => r.run !== undefined ? r.run || 0 : r.streak || 0;
 // Spaced recall (js/fsrs7.js): every first answer in a round, and every time the timer runs out, is one look at the
 // question. A Today question is remembered under the quiz it came from.
-function remember(quiz, id, g) { try { const s = sourceOf(quiz, id); review(s.quizId, s.id, g); } catch (e) { wentOff(e); } }
-function finalize(status) {
+// Kiron 1.9.0: the same look moves the skill level of the question's part (js/socratic.js), on quizzes that use them.
+function remember(quiz, id, g, ev) {
+  try {
+    const s = sourceOf(quiz, id), was = loadMem(s.quizId)[s.id], spaced = isSpaced(was && was.last);
+    review(s.quizId, s.id, g);
+    const own = !quiz.today, src = own ? { quiz } : findQuiz(s.quizId); if (!src || !src.quiz.socratic) return;
+    const hit = getQ(src.quiz, s.id); if (!hit) return;
+    const P = own ? current.P : getProg(s.quizId), k = secKey(src.quiz.sections[hit.si], hit.si);
+    P.sk = P.sk || {}; P.sk[k] = learn(P.sk[k], Object.assign({ spaced }, ev));
+    if (!own) LS.set(progKey(s.quizId), P);
+  } catch (e) { wentOff(e); }
+}
+// A right pick with a devil's advocate open is graded once it is answered, or when you move on without it.
+function settleDA(quiz, P) {
+  const c = P && P.cur; if (!c || !c.da || c.da.graded) return;
+  c.da.graded = true; remember(quiz, c.id, gradeOf(Object.assign({}, c.gin, { da: null })), { right: true, helped: c.gin.hinted || c.gin.burned });
+}
+function finalize(status, how) {
+  how = how || {};
   const { quiz, P } = current, r = P.round, id = P.cur.id;
   const first = !P.cur.done;
   P.cur.done = true; P.cur.status = status;
@@ -389,7 +431,9 @@ function finalize(status) {
     // The best run at round end counts right answers truly in a row (Kiron 1.7.3); the streak above can cool and climb on.
     r.run = status === "right" ? runOf(r) + 1 : 0; r.best = Math.max(r.best || 0, r.run);
     FX = { id, kind: status === "right" ? "right" : "wrong" };
-    if (!r.review) remember(quiz, id, gradeOf({ status, hinted: !!P.h[id], burned: burntOf(r, id).length > 0, used: TIMER && TIMER.id === id && TIMER.dur ? timerElapsed() / TIMER.dur : 0.5 }));
+    const gin = { status, hinted: !!P.h[id], burned: burntOf(r, id).length > 0, used: TIMER && TIMER.id === id && TIMER.dur ? timerElapsed() / TIMER.dur : 0.5, corrected: !!how.corrected };
+    if (how.da) P.cur.da = { picked: null, gin };   // graded when the devil's advocate is answered (or left)
+    else if (!r.review) remember(quiz, id, gradeOf(gin), { right: status === "right" && !how.corrected, helped: !!how.corrected || ((gin.hinted || gin.burned) && status === "right"), diag: r.kind === "diag" });
   }
   else if (status !== "right") { r.streak = cooled(r.streak || 0); r.run = 0; }
   saveProg();
@@ -412,7 +456,7 @@ function burnPlan() {
   const P = current && current.P, r = P && P.round; if (!r || r.review || r.ended || !P.cur || P.cur.done || BURNING !== null || heatLevel(r.streak || 0) < 1) return null;
   const { q, id } = getQ(current.quiz, r.ids[r.i]), f = formOf(q), opts = f.kind === "pick" ? f.options : f.kind === "multi" ? q.options : null; if (!opts) return null;
   const gone = burntOf(r, id), isRight = i => f.kind === "pick" ? i === f.correct : q.correct.includes(i);
-  const left = opts.map((_, i) => i).filter(i => !isRight(i) && !gone.includes(i));
+  const ruled = P.cur.out || [], left = opts.map((_, i) => i).filter(i => !isRight(i) && !gone.includes(i) && !ruled.includes(i));
   return left.length ? { P, r, id, kind: f.kind, gone, left } : null;
 }
 function fireStop(popped) {
@@ -523,7 +567,10 @@ function nav(dir, timedOut) {
   const { quiz, P } = current, r = P.round; if (!r || r.ended || r.i >= r.ids.length) return;
   const id = r.ids[r.i];
   if (dir < 0) { if (r.i === 0) return; r.i--; P.cur = null; DIR = -1; saveProg(); return renderPlay(); }
-  if (!r.review && (!P.cur || !P.cur.done)) { if (timedOut && r.res[id] !== "skip") remember(quiz, id, AGAIN); if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; }
+  // Moving on from a question with a wrong pick already made (a probe open) counts it as missed, never as left for later.
+  if (dir > 0 && !r.review && P.cur && !P.cur.done && P.cur.tries) finalize("miss");
+  if (P.cur && P.cur.da) settleDA(quiz, P);
+  if (!r.review && (!P.cur || !P.cur.done)) { if (timedOut && r.res[id] !== "skip") remember(quiz, id, AGAIN, { diag: r.kind === "diag" }); if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; }
   if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go(homeOf(quiz), true); }
   r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) { r.ended = true; }
   saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true });
@@ -532,7 +579,37 @@ function playAct(act, el) {
   const { quiz, P } = current, r = P.round; if (!r) return;
   if (r.ended || r.i >= r.ids.length) return;
   const cur = P.cur, { q, id } = getQ(quiz, r.ids[r.i]), f = formOf(q);
-  if (act === "pick") { if (cur.done) return; const oi = +el.dataset.pick; P.a[id] = oi; const ok = oi === f.correct; finalize(ok ? "right" : "miss"); FX = { id, kind: ok ? "right" : "wrong", oi }; return renderPlay("fb"); }
+  if (act === "pick") {
+    if (cur.done || (cur.probe && cur.probe.picked == null)) return;
+    const oi = +el.dataset.pick; if ((cur.out || []).includes(oi)) return;
+    P.a[id] = oi;
+    const diag = r.kind === "diag", teach = !diag && f.kind === "pick" && q.type === "single", step = onPick(q, f, cur, oi, teach);
+    if (step === "probe") {
+      // Not the answer yet: a narrower question about that pick slides in below. The clock stops while you think.
+      cur.tries = (cur.tries || 0) + 1; (cur.out = cur.out || []).push(oi); cur.probe = { oi, picked: null };
+      clearTimer(); saveProg(); FX = { id, kind: "wrong", oi }; return renderPlay("probe");
+    }
+    if (step === "corrected") { finalize("partial", { corrected: true }); FX = { id, kind: "right", oi, soft: true }; return renderPlay("fb"); }
+    const ok = step === "right";
+    finalize(ok ? "right" : "miss", { da: ok && teach && !r.review && daFires(q) });
+    FX = { id, kind: ok ? "right" : "wrong", oi };
+    if (diag) return nav(1);   // placement: no teaching, straight on to the next question
+    return renderPlay("fb");
+  }
+  if (act === "probe") {
+    if (cur.done || !cur.probe || cur.probe.picked != null) return;
+    cur.probe.picked = +el.dataset.probe; saveProg(); renderPlay(true);
+    const w = app().querySelector(".probe-why"); if (w) reveal(w, $(".opts")); return;
+  }
+  if (act === "tellme") { if (cur.done) return; finalize("miss"); FX = { id, kind: "wrong" }; return renderPlay("fb"); }
+  if (act === "da") {
+    const d = cur.da; if (!cur.done || !d || d.picked != null) return;
+    d.picked = +el.dataset.da; d.graded = true;
+    const passed = d.picked === q.da.correct;
+    remember(quiz, id, gradeOf(Object.assign({}, d.gin, { da: passed })), { right: true, helped: d.gin.hinted || d.gin.burned, edge: passed && q.difficulty === 4 });
+    saveProg(); renderPlay(true);
+    const fbEl = app().querySelector(".fb"); if (fbEl) settle(fbEl, 0); return;
+  }
   if (act === "toggle") { if (cur.done) return; const i = +el.dataset.toggle, s = new Set(P.a[id] || []); s.has(i) ? s.delete(i) : s.add(i); P.a[id] = [...s].sort((x, y) => x - y); saveProg(); renderPlay(true); const b = app().querySelector(`[data-toggle="${i}"]`); if (b) b.focus(); return; }
   if (act === "hint") { P.h[id] = true; saveProg(); renderPlay(true); const h = app().querySelector(".hint"); if (h) h.classList.add("fresh"); if (h) reveal(h, $(".opts, .order") || $("#qprompt")); return; }
   if (act === "pause") { if (cur.done) return; PAUSED = !PAUSED; if (TIMER) { clearTimeout(TIMER.to); if (PAUSED) { if (!TIMER.pausedAt) TIMER.pausedAt = Date.now(); } else if (TIMER.pausedAt && !document.hidden) { TIMER.t0 += Date.now() - TIMER.pausedAt; TIMER.pausedAt = 0; } } return renderPlay(true); }
@@ -542,6 +619,7 @@ function playAct(act, el) {
     if (f.kind === "multi") finalize(gradeMulti(q, P.a[id]));
     else if (f.kind === "order") { endDrag(); if (placedOf(P, id, q.items.length) < q.items.length) return; if (!P.a[id]) P.a[id] = orderStart(id, q.items.length); finalize(gradeOrder(q, P.a[id])); }
     else return;
+    if (r.kind === "diag") return nav(1);
     return renderPlay("fb");
   }
   if (act === "next") { if (!cur.done) return; return nav(1); }
@@ -566,7 +644,7 @@ document.addEventListener("pointerup", e => {
   const t = e.target && e.target.closest ? e.target : null; if (!t) return;
   if (t.closest("a, summary, .actionbar, .top, .toast, [data-act], [data-go]")) return;
   // Answer options, the ordering list and the hint never navigate, answered or not.
-  if (t.closest(".opt, .order, .hint, .sky")) return;
+  if (t.closest(".opt, .order, .hint, .sky, .probe")) return;
   const dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Date.now() - d.t;
   if (Math.abs(dx) > 10 || Math.abs(dy) > 10 || dt > 450) return;
   if (String(getSelection && getSelection())) return;
@@ -639,6 +717,8 @@ document.addEventListener("click", e => {
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
   if (d.toggle !== undefined) return playAct("toggle", t);
+  if (d.probe !== undefined) return playAct("probe", t);
+  if (d.da !== undefined) return playAct("da", t);
   // One part open at a time: the one you tap opens (or shuts) while any other open one shuts, all in the same move.
   if (d.act === "partopen") { const p = t.closest(".part"), o = !p.classList.contains("open"), ch = [[p, o]]; app().querySelectorAll(".part.open").forEach(x => { if (x !== p) { ch.push([x, false]); x.querySelector(".part-row").setAttribute("aria-expanded", "false"); } }); t.setAttribute("aria-expanded", o); fold(ch, o && p); return; }
   if (d.act === "partstart") return startRound({ only: +d.pi });

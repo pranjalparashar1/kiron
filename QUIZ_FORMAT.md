@@ -56,6 +56,17 @@ Optional quiz-level fields, next to `title`:
 
 Older quizzes use `text`/`number` questions with an `mcq` field; the app still plays them, so leave them as they are.
 
+## Socratic parts (format v2, Kiron 1.9.0)
+
+All optional. A quiz that uses any of them gets a placement round, skill bars on its home, and probes. A broken one is dropped quietly; the rest of the quiz still loads.
+
+- `"difficulty": 1` to `4` per question: 1 foundational, 4 edge case or transfer. In a part you have already shown you know, difficulty 1 questions wait at the back.
+- `"diagnostic": true` per question: used in the placement round, the first round of a quiz with nothing answered yet (one per part, 3 to 5 questions, no hints or probes).
+- `"probes"` on a `single` question: for a wrong option, by its number, a narrower 2-option follow-up shown after that pick instead of the answer. You then get to try the question again (at most 2 probes per question). "Just tell me" shows the answer at once.
+  `"probes": { "1": { "prompt": "If B were true, what would happen to X?", "options": ["X rises", "X falls"], "correct": 1, "why": "That contradicts it. Try again." } }`
+- `"devilsAdvocate"` on a `single` question (best on difficulty 3 and 4): a 2-option "Are you sure?" check shown after about 4 in 10 right picks, same shape as a probe. Missing it makes the spaced-recall grade Hard.
+- `"id"` on a section: like a question's, it keeps the part's skill level when sections are moved.
+
 ## Maths
 
 Simple maths needs nothing special. Plain text is typeset on its own: `x^2`, `x^(n+1)`, `z_m`, `104/1.06^3`, `Δp/Δy`, `(a + b)/(c − d)`, and `√250` or `√(a/b)` (the bar covers the whole bracket). Brackets around a stacked fraction grow to its height on their own, as in `(1 + r/2)^4` or `[(1.03)^10 ÷ (1.02)^4]^(1/6)`. A fraction in a power, `1.03^(89/180)`, is drawn as a small stacked fraction raised above the base, so it can't be read as 1.03 times a fraction; in TeX write it the same way, `1.03^{89/180}`.

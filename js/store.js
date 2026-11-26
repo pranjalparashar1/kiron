@@ -16,11 +16,13 @@ const tapOnly = quiz => { try { return quiz.sections.every(s => s.questions.ever
 const getImported = () => LS.get(K_IMPORTED, []).filter(tapOnly);
 const saveImported = list => LS.set(K_IMPORTED, list);
 const progKey = id => "sb:p2:" + id + ":early";   // ":early" is left from when there were two modes; kept so saved progress carries over
-const blankProg = () => ({ st: {}, a: {}, h: {}, n: {}, round: null, cur: null, seen: 0 });
+const blankProg = () => ({ st: {}, a: {}, h: {}, n: {}, sk: {}, round: null, cur: null, seen: 0 });
 function getProg(id) { return Object.assign(blankProg(), LS.get(progKey(id), {})); }
 // Question ids. A question that brings its own "id" (quiz format v2) is known by it, so rewording or moving it keeps its
 // progress. A question without one is known by its place, s<part>q<question> (s0q12), as before.
 const qid = (si, qi) => "s" + si + "q" + qi;
+// A part (section) is known by its own "id" (format v2) or by its place, s<part>. Skill levels are kept by this.
+const secKey = (sec, si) => (sec && sec.id) || "s" + si;
 const POS = /^s(\d+)q(\d+)$/;
 const stable = id => !POS.test(id);
 const IDX = new WeakMap();
@@ -68,4 +70,4 @@ function freshen(quiz, P) {
   return P;
 }
 
-export { LS, K_IMPORTED, tapOnly, getImported, saveImported, progKey, blankProg, getProg, qid, eachQ, getQ, hasQ, prints, freshen };
+export { LS, K_IMPORTED, tapOnly, getImported, saveImported, progKey, blankProg, getProg, qid, secKey, eachQ, getQ, hasQ, prints, freshen };

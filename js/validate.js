@@ -5,6 +5,34 @@ const TYPE_ALIASES = { mcq: "single", choice: "single", radio: "single", checkbo
 
 const QID_OK = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$/;
 
+/* Format v2, the Socratic parts (Kiron 1.9.0). All optional, and a broken one is dropped quietly rather than costing
+   the whole quiz: "difficulty" 1-4, "diagnostic": true, "probes" (a 2-option follow-up for a wrong option, by its
+   number) and "devilsAdvocate" (a 2-option "are you sure?" after a right answer). Probes and devil's advocate go on
+   "single" questions only. */
+function twoOpt(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o) || typeof o.prompt !== "string" || !o.prompt.trim()) return null;
+  const opts = Array.isArray(o.options) ? o.options.map(x => String(x == null ? "" : x).trim()) : [];
+  if (opts.length < 2 || opts.length > 4 || opts.some(x => !x)) return null;
+  const c = typeof o.correct === "number" ? o.correct : typeof o.correct === "string" && /^\d+$/.test(o.correct.trim()) ? +o.correct : NaN;
+  if (!(Number.isInteger(c) && c >= 0 && c < opts.length)) return null;
+  return { prompt: o.prompt.trim(), options: opts, correct: c, why: typeof o.why === "string" ? o.why.trim() : "" };
+}
+function socratic(q, Q) {
+  if (Number.isInteger(q.difficulty) && q.difficulty >= 1 && q.difficulty <= 4) Q.difficulty = q.difficulty;
+  if (q.diagnostic === true) Q.diagnostic = true;
+  if (Q.type !== "single" || !(Q.correct >= 0)) return;
+  if (q.probes && typeof q.probes === "object" && !Array.isArray(q.probes)) {
+    const out = {};
+    for (const k of Object.keys(q.probes)) {
+      const i = /^\d+$/.test(k.trim()) ? +k.trim() : NaN, p = twoOpt(q.probes[k]);
+      if (p && i >= 0 && i < Q.options.length && i !== Q.correct) out[i] = p;
+    }
+    if (Object.keys(out).length) Q.probes = out;
+  }
+  const da = twoOpt(q.devilsAdvocate || q.da);
+  if (da) Q.da = da;
+}
+
 function validateQuiz(d) {
   const errs = [];
   if (!d || typeof d !== "object" || Array.isArray(d)) return { errors: ["The quiz must be one object that starts with { and has a title and sections."] };
@@ -28,11 +56,13 @@ function validateQuiz(d) {
   if (!Array.isArray(secs) && Array.isArray(d.questions)) secs = [{ title: "Questions", questions: d.questions }];
   if (!Array.isArray(secs) || !secs.length) { errs.push("The quiz needs “sections”: a list with at least one section, each with “questions”."); return { errors: errs }; }
   let total = 0;
-  const seen = new Set();
+  const seen = new Set(), seenSec = new Set();
   secs.forEach((sec, si) => {
     const sname = "Section " + (si + 1) + (sec && isStr(sec.title) ? " (“" + sec.title.trim().slice(0, 40) + "”)" : "");
     if (!sec || typeof sec !== "object") { errs.push(sname + " is not a section object."); return; }
     const S = { title: isStr(sec.title) ? sec.title.trim() : "Part " + (si + 1), ref: isStr(sec.ref) ? sec.ref.trim() : "", why: isStr(sec.why) ? sec.why.trim() : "", questions: [] };
+    const sid = typeof sec.id === "string" ? sec.id.trim() : "";
+    if (QID_OK.test(sid) && !/^s\d+$/.test(sid) && !seenSec.has(sid)) { seenSec.add(sid); S.id = sid; }
     if (!Array.isArray(sec.questions) || !sec.questions.length) { errs.push(sname + " has no “questions” list."); return; }
     sec.questions.forEach((q, qi) => {
       const where = sname + ", question " + (qi + 1);
@@ -94,11 +124,13 @@ function validateQuiz(d) {
           else Q.mcq = { prompt: isStr(m.prompt) ? m.prompt.trim() : "", options: mo, correct: i, why: isStr(m.why) ? m.why.trim() : "" };
         }
       } else if (type === "text" || type === "number") errs.push(where + ": Kiron is tap-to-answer only. Make it a “single” question with four “options” (or give it an “mcq” with options).");
+      socratic(q, Q);
       S.questions.push(Q); total++;
     });
     out.sections.push(S);
   });
   if (!errs.length && !total) errs.push("The quiz has no questions.");
+  if (out.sections.some(s => s.questions.some(q => q.difficulty || q.diagnostic || q.probes || q.da))) out.socratic = true;
   return errs.length ? { errors: errs } : { quiz: out };
 }
 

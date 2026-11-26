@@ -99,7 +99,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .icon-btn.done { font-weight: 800; padding: 0 16px; }
 /* Haptics (Kiron 1.4.4): an invisible iOS switch stretched over a button (see app.js). It must stay a real switch
    (no appearance: none), or the phone gives no tick. */
-.btn, .icon-btn, .opt, .jump-btn, .part-row { position: relative; }
+.btn, .icon-btn, .opt, .jump-btn, .part-row, .popt, .tellme { position: relative; }
 .hx { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* Kiron 1.4.1: the controls that did not answer a tap. The press is at once, with no transition, because these can sit
    under a scrolling finger. The spring back is played by app.js from the tap itself, so a scroll never springs. */
@@ -584,3 +584,30 @@ textarea { width: 100%; min-height: 96px; resize: vertical; background: var(--bg
 .more .fold-in > .grid { padding: 0 10px; gap: 6px; grid-template-columns: 1fr; }
 .more .qcard { background: var(--surface2); border: 0; border-radius: 12px; min-height: 60px; padding: 14px 14px; }
 .more .qcard h3 { font-size: 16.5px; }
+
+/* ---- Kiron 1.9.0: the Socratic loop ----
+   The contradiction probe (after a wrong pick) and the devil's advocate check (after a right one): one quiet card
+   under the options with two taps. It slides up from 14px and fades in (340ms), transform and opacity only. */
+.probe { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--surface2); border: 1px solid var(--line); border-radius: 14px; scroll-margin: 80px 0 calc(110px + env(safe-area-inset-bottom, 0px)); }
+.probe.wait { opacity: 0; }
+.probe-q { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.4; }
+.probe-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.popt { min-height: 50px; padding: 10px 12px; background: var(--surface); border: 2px solid var(--line); border-radius: 12px; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; line-height: 1.35; text-align: center; cursor: pointer; transition: opacity .3s ease, border-color .2s, background-color .2s, transform .12s; }
+.popt:active { transform: scale(.97); }
+.popt.ok { border-color: var(--ok); background: var(--ok-soft); }
+.popt.wrong { border-color: var(--no); background: var(--no-soft); }
+.popt.dim { opacity: .5; }
+.probe-why { margin: 0; font-size: 15px; line-height: 1.45; color: var(--muted); }
+.tellme { align-self: flex-start; padding: 6px 2px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.tellme:active { color: var(--ink); }
+@media (prefers-reduced-motion: no-preference) {
+  .probe-why { animation: hintin .25s ease-out; }
+}
+/* Skill level of a part, on the quiz home: five short segments like the story bar. 1-3 blue; from 4 the bar turns
+   green; at 5 a small star sits beside it. No numbers. */
+.skbar { flex: none; display: inline-flex; gap: 3px; }
+.skbar i { width: 9px; height: 6px; border-radius: 3px; background: var(--line); }
+.skbar i.on { background: var(--blue); }
+.skbar.held i.on { background: var(--ok); }
+.skstar { flex: none; display: inline-flex; margin-left: -4px; --heat: #c9b8ff; --glow: rgba(201,184,255,.55); }
+.skstar .kstar { width: 14px; height: 14px; }
