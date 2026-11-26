@@ -276,7 +276,8 @@ function tex(src, block) {
 
 /* ---- quiz text -> HTML: maths, **bold**, *italic*, line breaks ---- */
 function fmt(s) {
-  s = String(s == null ? "" : s);
+  // \u0001 and \u0002 are this file's own place-holders; a quiz can't bring its own.
+  s = String(s == null ? "" : s).replace(/[\u0001\u0002]/g, "");
   const held = [];
   if (s.indexOf("\\") >= 0) s = s.replace(/\\\(([\s\S]+?)\\\)|\\\[([\s\S]+?)\\\]/g, (_, a, b) => "\u0001" + (held.push(tex(a != null ? a : b, a == null)) - 1) + "\u0001");
   let h = mathify(mEsc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>").replace(/\n/g, "<br>");

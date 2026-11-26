@@ -251,9 +251,11 @@ function counts(quiz, P, si) {
   return c;
 }
 const MAXNUM = 3;
+// A numbers question: the older typed "number" kind, or any question tagged "calc" (how quizzes mark them now).
+const isNumQ = q => q.type === "number" || (q.tags || []).includes("calc");
 function cushion(quiz, list) {
   // At most MAXNUM number questions per round, never first, spread out between easier ones.
-  const isNum = id => getQ(quiz, id).q.type === "number", R = quiz.round || ROUND;
+  const isNum = id => isNumQ(getQ(quiz, id).q), R = quiz.round || ROUND;
   const T = [], N = [], skipped = [];
   for (const id of list) {
     if (T.length + N.length >= R) break;
@@ -517,7 +519,7 @@ function renderPlay(keepScroll) {
     ? `${back}<button class="btn primary grow" data-act="next" type="button">${r.i + 1 >= r.ids.length ? (r.review ? "Done" : "Finish") : "Next"}</button>`
     : `${back}${hintBtn}${primary === "check" ? `<button class="btn primary grow${waiting ? " soft" : ""}" data-act="check" type="button">Check</button>` : ""}`;
   const long = f.prompt.length > 150 ? " long" : "";
-  const isNum = q.type === "number";
+  const isNum = isNumQ(q);
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
   const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<button type="button" class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" data-act="fire" aria-label="${feeding ? stk - 1 : stk} in a row"${heatNow ? "" : ' tabindex="-1" aria-hidden="true"'}><span class="fl" aria-hidden="true">${heatIcon(heatNow)}</span><b class="n" aria-hidden="true">${feeding ? stk - 1 : stk}</b></button>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>

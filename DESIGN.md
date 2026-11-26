@@ -121,7 +121,7 @@ One box in three pieces: head, list (`.unfurl > .fold > .fold-in`) and cap (the 
 **Timer.** Always plays; pause holds only the current question, the next one plays again. Length = 12s + 0.35s per word of prompt and options, clamped 20-60s, ×1.5 for multi-select and ordering. When it fills, the question is **left for later** (not marked wrong). Pauses when the app is hidden. Pause button: 34px, blue fill when paused, play/pause icons; once answered it goes invisible but keeps its space so the bar does not move.
 
 ### Question
-Prompt (26px/800). Optional small "Numbers" tag (blue pill) on number questions. For setup questions an orange line: "No calculating. Pick the setup that gives the answer." Multi-select adds a muted "Pick all that apply."
+Prompt (26px/800). Optional small "Numbers" tag (blue pill) on number questions (typed `number` questions and any question tagged `calc`). For setup questions an orange line: "No calculating. Pick the setup that gives the answer." Multi-select adds a muted "Pick all that apply."
 
 ### Options (the core component)
 - Resting: surface, 2px `--line` border, radius 14, min-height 58, 12×14 padding. Order shuffled (kept fixed when options say "all/none/both of" or "above").
