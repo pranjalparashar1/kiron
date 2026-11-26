@@ -105,7 +105,14 @@ Rules:
 - Every pressable button carries the invisible haptic switch (see Interaction).
 
 ### Library
-Top bar with the brand only. "Pick your quiz", test quizzes as cards, every other quiz folded under one "All quizzes" dropdown, a faint credit line at the foot (12.5px, muted, 55% opacity). Quiz card: surface, 1px line, radius 12, min-height 76, title left and a blue `›` right; pressed = `scale(.98)` + blue border. Quizzes sorted A-Z. No counts, no descriptions.
+Top bar with the brand only. "Pick your quiz", then cards: quizzes you built yourself first, then the test quizzes. Every other quiz is folded under one "All quizzes" dropdown. Last comes a "Build your own" card (same card, an orange `+` instead of `›`, an orange border when pressed), then a faint credit line at the foot (12.5px, muted, 55% opacity). Quiz card: surface, 1px line, radius 12, min-height 76, title left and a blue `›` right; pressed = `scale(.98)` + blue border. Quizzes sorted A-Z. No counts, no descriptions.
+
+### Build your own (`#build`)
+Back button, heading "Build your own" (library heading style), and two numbered steps (orange 34px circles):
+1. **Give your AI the Kiron prompt**, a muted "Attach what you read.", and a full-width primary **Share prompt**. It opens the iPhone share sheet, where the AI apps are. It reads **Copy prompt** where sharing isn't possible.
+2. **Bring the quiz back**, a full-width primary **Paste quiz** (the iPhone's own Paste bubble asks first), and a quiet ghost **Open a file** (.md, .txt, .json).
+
+If the clipboard can't be read, a paste box and "Bring it in" appear under the steps. If the quiz can't be read, a calm grey box (surface2, never red) shows one sentence and **Copy a note for your AI**, which copies every problem for the AI to fix. A quiz that reads well is saved and opens straight on its quiz home with the toast "Quiz ready". Bringing the same quiz in again replaces it, and its progress carries over. The old `#import` and `#make` lead here.
 
 ### Quiz home
 Back button, the quiz title (centred, 9vh from the top), one XL primary button (Start / Continue / Do the ones you left / Revisit what you missed), an optional secondary "Revisit what you missed", a "Jump to a part" dropdown, and "Reset quiz" at the foot. When everything is done: a quiet green box "End of quiz."
@@ -222,7 +229,7 @@ Curves and lengths in use (reuse these rather than inventing new ones):
 ## 8. Copy
 
 - Short, plain, warm. Sentence case. One line wherever possible.
-- Words in use: "Pick your quiz", "Start", "Continue", "Keep going", "Revisit", "Revisit what you missed", "Do the ones you left", "Round done", "End of quiz.", "Jump to a part", "All quizzes", "Hint", "Check", "Next", "Finish", "Done", "Full answer", "N in a row", "longest yet".
+- Words in use: "Pick your quiz", "Start", "Continue", "Keep going", "Revisit", "Revisit what you missed", "Do the ones you left", "Round done", "End of quiz.", "Jump to a part", "All quizzes", "Hint", "Check", "Next", "Finish", "Done", "Full answer", "N in a row", "longest yet", "Build your own", "Share prompt", "Paste quiz", "Open a file", "Quiz ready".
 - Never: wrong, failed, incorrect, score, %, "N of M", "X questions left".
 - Quiz content: prompts under 25 words; 4 options of similar length, wrong ones from real confusions; one-line why under 30 words; every question has a hint. Full format in `QUIZ_FORMAT.md`.
 

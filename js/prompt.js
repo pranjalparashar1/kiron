@@ -1,11 +1,9 @@
-// The prompt a friend pastes into ChatGPT, Claude or Gemini together with their PDF, slides or Word file.
-// Edit the wording here; the app's "Make a quiz" screen shows whatever this says.
-window.SB_PROMPT = String.raw`You are helping me remember what I read. I have attached my study material (PDF, slides or Word file). Turn it into a tap-to-answer recall quiz that I will take on my phone in an app called Kiron.
+// The prompt anyone gives their AI chat (ChatGPT, Claude, Gemini) together with what they read.
+// Edit the wording here; the "Build your own" screen shares or copies whatever this says.
+const KIRON_BUILDER_PROMPT = String.raw`You are helping me remember what I read. I have attached my study material (a PDF, slides, notes, or a link). Turn it into a tap-to-answer recall quiz that I will take on my phone in an app called Kiron.
 
-STEP 1. Before writing anything, ask me two short questions and wait for my answers:
-  a) What am I reading this for? (an exam, a report, work, curiosity...) and what do I most need to be able to do or explain afterwards?
-  b) How long should the quiz be? (Default: about 12 questions for a short article, 4 to 8 per section for a long deck or chapter.)
-If the material is too long to read fully, tell me which pages you covered.
+STEP 1. If I haven't said what I'm reading this for, ask me first, in one short question, and wait: "What are you reading this for, and what do you most need to be able to do or explain afterwards?"
+Make about 12 questions for a short article, and 4 to 8 per section for a long deck or chapter, unless I ask for another size. If the material is too long to read fully, tell me which pages you covered.
 
 STEP 2. Write the quiz.
 - Every question must serve my purpose from step 1. Ask "would knowing this help with that?" and drop it if not.
@@ -19,7 +17,10 @@ STEP 2. Write the quiz.
 - Every question gets a "hint": a nudge that makes me think, without giving the answer away.
 - "answer" is one line, under 30 words, shown after I tap: why the right option is right, or what the tempting wrong one really is.
 
-STEP 3. Reply with ONE code block of valid JSON and nothing else inside it. Straight double quotes, no comments, no trailing commas. "correct" counts options from 0; the app shuffles options, so the right one can be listed anywhere. Use this structure:
+STEP 3. Give me the quiz as ONE downloadable file named after the quiz, ending in .md. If you can't make files, put it in one reply instead. Inside it, put the quiz between these two lines, as one json code block, with nothing else between them:
+<!-- KIRON-QUIZ-START -->
+<!-- KIRON-QUIZ-END -->
+The quiz must be valid JSON: straight double quotes, no comments, no trailing commas. "correct" counts options from 0; the app shuffles options, so the right one can be listed anywhere. Maths: plain text like x^2, z_m and a/b is typeset on its own; for anything bigger write TeX between \( and \), never $, and double every backslash inside the JSON ("\\(\\frac{a}{b}\\)"). Use this structure:
 
 {
   "format": "study-buddy-quiz",
@@ -41,4 +42,6 @@ STEP 3. Reply with ONE code block of valid JSON and nothing else inside it. Stra
   ]
 }
 
-For "order", list "items" in the CORRECT order; the app shuffles them. After the code block, tell me in one line how many questions you wrote and which pages you covered.`;
+For "order", list "items" in the CORRECT order; the app shuffles them. After the file, tell me in one line how many questions you wrote and which pages you covered, and that I can now open Kiron, tap "Build your own" and bring the quiz in.`;
+
+export { KIRON_BUILDER_PROMPT };

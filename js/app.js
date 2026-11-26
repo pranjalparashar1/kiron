@@ -2,7 +2,7 @@
    This file is the app itself: the router, the screens (library, quiz home, player, round end), the timer, the fire,
    and every event listener, registered here in one order. The parts it is built from live next to it in js/. */
 import { $, esc, toast, toastHeld, app, topBar, backBtn, HX, hxAll, buzz, reduceMotion, GHOST } from "./ui.js";
-import { LS, K_IMPORTED, getImported, saveImported, progKey, blankProg, getProg, eachQ, getQ, freshen } from "./store.js";
+import { LS, K_IMPORTED, getImported, progKey, blankProg, getProg, eachQ, getQ, freshen } from "./store.js";
 import { validateQuiz } from "./validate.js";
 import { shuffledOrder, orderStart, formOf, gradeMulti, gradeOrder, counts, isNumQ, buildRound, buildReview, TIME, durFor } from "./round.js";
 import { fmt } from "./maths.js";
@@ -100,12 +100,13 @@ function route() {
   }
   document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
-  if (h === "import" || h === "make") return renderExtra(h);
+  if (h === "import" || h === "make") return go("build", true);   // the old hidden screens are one screen now
+  if (h === "build") return renderBuild();
   const m = h.match(/^(quiz|play)-(.+)$/);
   if (m) {
     if (openQuiz(m[2])) return m[1] === "play" ? renderPlay() : renderHome();
     if (!samplesLoaded) return;
-    toast("That quiz isn't on this device. Import it first.");
+    toast("That quiz isn't on this phone.");
   }
   renderLibrary();
 }
@@ -117,12 +118,14 @@ function renderLibrary() {
   current = null; document.title = "Kiron";
   const list = allQuizzes(), card = x => `<button class="qcard" data-go="quiz-${esc(x.quiz.id)}" type="button"><h3>${esc(x.quiz.title)}</h3><span class="chev" aria-hidden="true">›</span></button>`;
   // Kiron 1.6: the playtest quizzes sit on top; every other quiz is folded away in one dropdown (the same fold as "Jump to a part").
-  const top = list.filter(x => x.quiz.test), rest = list.filter(x => !x.quiz.test);
+  // Kiron 1.7: quizzes you built yourself sit on top too, first; "Build your own" closes the list.
+  const top = list.filter(x => x.mine).concat(list.filter(x => x.quiz.test && !x.mine)), rest = list.filter(x => !x.quiz.test && !x.mine);
   const more = rest.length ? `<div class="jump more"><div class="jump-head"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">All quizzes<span class="car" aria-hidden="true">▾</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="grid">${rest.map(card).join("")}</div></div></div></div><i class="cap" aria-hidden="true"></i></div>` : "";
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
     ${list.length ? `${top.length ? `<div class="grid">${top.map(card).join("")}</div>` : ""}${more}` : `<div class="grid"><p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p></div>`}
+    ${samplesLoaded ? `<div class="grid"><button class="qcard build-card" data-go="build" type="button"><h3>Build your own</h3><span class="chev" aria-hidden="true">+</span></button></div>` : ""}
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
 }
@@ -578,14 +581,13 @@ function renderRoundEnd() {
   }
 }
 
-/* ---------------- import / make a quiz: hidden screens (#import, #make) ----------------
-   Their code (import.js) and the prompt text (prompt.js) are fetched only when one of them is opened. */
-let extras = null;
-const loadScript = src => new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = no; document.head.append(el); });
-function renderExtra(name) {
+/* ---------------- Build your own (#build) ----------------
+   Its module (build.js, with parser.js and prompt.js) is imported only when it is opened. */
+let buildMod = null;
+function renderBuild() {
   current = null;
-  if (!extras) extras = Promise.all([loadScript("prompt.js"), loadScript("import.js")]);
-  extras.then(() => { if (location.hash === "#" + name) window.KironExtra[name](); }, () => { extras = null; toast("That screen couldn't load. Check your connection."); renderLibrary(); });
+  if (!buildMod) buildMod = import("./build.js");
+  buildMod.then(m => { if (location.hash === "#build") m.render({ go, findQuiz, allQuizzes }); }, () => { buildMod = null; toast("That screen couldn't load. Check your connection."); renderLibrary(); });
 }
 
 /* ---------------- events ---------------- */
@@ -653,9 +655,8 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------------- boot ---------------- */
-window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed,
-  // what import.js needs from here
-  ui: { $, esc, app, topBar, backBtn, toast, go, eachQ, findQuiz, allQuizzes, getImported, saveImported } };
+// A few internals, for bug reports and for poking at the app from the console.
+window.SB = { trouble: TROUBLE, TIME, durOf: durFor, fmt, validateQuiz, formOf, buildRound, nav, streakFeed };
 try { localStorage.removeItem("sb:perf"); } catch (e) {}   // the old performance check's switch, no longer used
 route();
 loadSamples().then(() => { route(); if (hasSW && navigator.serviceWorker.controller) checkFresh(); });
