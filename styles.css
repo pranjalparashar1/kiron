@@ -529,27 +529,25 @@ details.more[open] > p { animation: fullin .32s cubic-bezier(.25,.6,.3,1); }
 .bestrun[data-heat="5"] b { color: #0b0b0b; -webkit-text-stroke: 1px #ff6a2b; }
 .bestrun em { font-style: normal; color: var(--accent); font-size: 14px; font-weight: 600; }
 
-/* ---------- import and make screens (only reachable at #import and #make) ---------- */
-.page-h { padding-top: 18px; display: flex; flex-direction: column; gap: 6px; }
-.page-h h2 { margin: 0; font-size: 24px; line-height: 1.2; }
-.page-h p { margin: 0; color: var(--muted); }
+/* ---------- Kiron 1.7: Build your own (#build), and its card closing the library list ---------- */
+.build { padding-top: 22px; gap: 18px; }
+.build-card .chev { color: var(--accent); }
+.build-card:active { border-color: var(--accent); }
+.build .steps { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 28px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+.steps li::before { content: counter(s); width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.steps li > div { min-width: 0; padding-top: 4px; display: flex; flex-direction: column; gap: 10px; }
+.steps b { display: block; font-size: 18px; font-weight: 600; }
+.steps span { color: var(--muted); font-size: 15px; margin-top: -6px; }
+.steps .btn { width: 100%; }
+.steps .btn.ghost { color: var(--muted); border-color: transparent; min-height: 44px; }
 textarea { width: 100%; min-height: 96px; resize: vertical; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; font-size: 16px; line-height: 1.5; }
 .mono { font-family: var(--code); font-size: 14px; min-height: 180px; }
 .file-btn { position: relative; overflow: hidden; }
 .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-.errors { background: var(--no-soft); border-radius: 10px; padding: 12px 14px; font-size: 15px; display: flex; flex-direction: column; gap: 8px; }
-.errors b { color: var(--no); }
-.errors ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
-.ok-box { background: var(--ok-soft); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
-.steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; }
-.steps li::before { content: counter(s); width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.steps li > div { min-width: 0; padding-top: 4px; }
-.steps b { display: block; }
-.steps span { color: var(--muted); font-size: 15px; }
-details.how { font-size: 15px; color: var(--muted); }
-details.how summary { cursor: pointer; color: var(--ink); font-weight: 700; padding: 4px 0; min-height: 44px; display: flex; align-items: center; }
-pre.prompt-text { margin: 0; max-height: 260px; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font: 13px/1.5 var(--code); white-space: pre-wrap; word-break: break-word; }
+.paste-box, .notice { display: flex; flex-direction: column; gap: 10px; }
+.notice { background: var(--surface2); border-radius: 12px; padding: 14px; }
+.notice p { margin: 0; line-height: 1.5; }
 
 /* ---------- Kiron 1.5.3: the fire answers a touch (tap: a bubble; hold: it swells, pops and burns a wrong option) ---------- */
 .heat { position: relative; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; }
