@@ -7,7 +7,7 @@ This is the only file you need to read to add a quiz. You don't need to read `ap
 1. Write `quiz-<short-name>.json` in the repo root, in the format below.
 2. Add its file name to the top of the list in `quizzes.json`.
 3. Bump `VERSION` in `sw.js` (for example `kiron-v9` to `kiron-v10`) so phones pick it up.
-4. Check it parses: `node -e "JSON.parse(require('fs').readFileSync('quiz-<short-name>.json','utf8'))"`.
+4. Check it: `node --test tests/*.test.js` (every quiz must load and follow the rules below; it also runs on the pull request).
 
 ## Format (tap-only)
 
