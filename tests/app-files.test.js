@@ -18,7 +18,7 @@ test("VERSION looks like kiron-vN", () => {
 });
 
 test("app files parse", () => {
-  for (const f of ["import.js", "prompt.js", "sw.js"]) assert.doesNotThrow(() => new Function(read(f)), f);
+  for (const f of ["sw.js"]) assert.doesNotThrow(() => new Function(read(f)), f);
   for (const f of MODULES) assert.doesNotThrow(() => execFileSync(process.execPath, ["--check", path.join(ROOT, f)], { stdio: "pipe" }), f);
   JSON.parse(read("manifest.webmanifest"));
 });
