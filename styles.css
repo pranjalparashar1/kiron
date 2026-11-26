@@ -533,6 +533,10 @@ details.more[open] > p { animation: fullin .32s cubic-bezier(.25,.6,.3,1); }
 .build { padding-top: 22px; gap: 18px; }
 .build-card .chev { color: var(--accent); }
 .build-card:active { border-color: var(--accent); }
+/* Kiron 1.8.0: "Today" leads the library while something is due. Warm, never loud: the same card on the accent tint. */
+.today-card { background: var(--accent-soft); border-color: rgba(217,119,87,.4); }
+.today-card .chev { color: var(--accent); }
+.today-card:active { border-color: var(--accent); }
 .build .steps { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 28px; counter-reset: s; }
 .steps li { counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
 .steps li::before { content: counter(s); width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: flex; align-items: center; justify-content: center; }
