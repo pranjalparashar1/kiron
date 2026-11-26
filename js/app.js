@@ -9,6 +9,7 @@ import { fmt } from "./maths.js";
 import { flowFrom, flowIn, cancelScroll, reveal, onScroll, settle, onTapXY, bloom, burst, heatLevel, cooled, heatIcon, barWidth, slideFrom,
   placeSky, placeGlint, onResize, EASE, fxLayer, clearFeed, fxAnim, streakFeed, onSpringBack, edgeGlow, unfurl, fold } from "./fx.js";
 import { hooks as orderHooks, TAP_ORDER, dragging, endDrag, placedOf, onOrderClick, onOrderKey, onOrderMenu, onOrderDown } from "./order.js";
+import { gradeOf, review, AGAIN, TODAY_ID, anyDue, todayQuiz, buildTodayRound, sourceOf } from "./fsrs7.js";
 
 // Text formatting (maths, **bold**, *italic*, line breaks) lives in maths.js: fmt().
 /* ---------------- safety net ----------------
@@ -34,7 +35,29 @@ function allQuizzes() {
   return imp.concat(SAMPLES.filter(s => !ids.has(s.quiz.id)).map(s => ({ quiz: s.quiz, mine: false })))
     .sort((a, b) => a.quiz.title.localeCompare(b.quiz.title, undefined, { sensitivity: "base", numeric: true }));
 }
-function findQuiz(id) { return allQuizzes().find(x => x.quiz.id === id); }
+function findQuiz(id) { return id === TODAY_ID ? findToday() : allQuizzes().find(x => x.quiz.id === id); }
+/* ---- Today (Kiron 1.8.0): the questions due again, from every quiz, as one round.
+   The round's questions are kept under sb:today, so the same round comes back after a reload. ---- */
+const K_TODAY = "sb:today";
+let TODAY = { key: "", quiz: null };
+function findToday() {
+  const refs = LS.get(K_TODAY, []), list = allQuizzes(), key = JSON.stringify(refs) + "\n" + list.map(x => x.quiz.id).join(",");
+  if (TODAY.key !== key || TODAY.list !== SAMPLES) TODAY = { key, list: SAMPLES, quiz: todayQuiz(refs, list.map(x => x.quiz)) };
+  return TODAY.quiz.sections[0].questions.length ? { quiz: TODAY.quiz, mine: false } : null;
+}
+const homeOf = quiz => quiz.today ? "" : "quiz-" + quiz.id;   // Today has no home screen: it goes back to the library
+function startToday() {
+  // An unfinished Today round carries on; otherwise a fresh one from what is due now.
+  const was = findToday(), P0 = was && freshen(was.quiz, getProg(TODAY_ID));
+  if (P0 && P0.round && !P0.round.ended && P0.round.i < P0.round.ids.length) return go("play-" + TODAY_ID);
+  const refs = buildTodayRound(allQuizzes().map(x => x.quiz));
+  if (!refs) { toast("Nothing due. Nice."); return renderLibrary(); }
+  LS.set(K_TODAY, refs);
+  const quiz = findToday().quiz, P = blankProg();
+  P.round = { ids: quiz.sections[0].questions.map(q => q.id), i: 0, res: {}, kind: "today", streak: 0, run: 0, ended: false };
+  LS.set(progKey(TODAY_ID), P);
+  go("play-" + TODAY_ID);
+}
 // A quiz file that can't be read is left out of the list, and the reason is written to the console and kept in SB.trouble.
 function badQuiz(file, errors) { TROUBLE.quizzes.push({ file, errors }); try { console.warn("[Kiron] quiz left out: " + file + "\n  " + (errors || []).join("\n  ")); } catch (e) {} }
 // net = ask the network first (the quiet check for new quizzes); otherwise the saved copy answers at once.
@@ -103,6 +126,7 @@ function route() {
   if (h === "import" || h === "make") return go("build", true);   // the old hidden screens are one screen now
   if (h === "build") return renderBuild();
   const m = h.match(/^(quiz|play)-(.+)$/);
+  if (m && m[1] === "quiz" && m[2] === TODAY_ID) return go("", true);
   if (m) {
     if (openQuiz(m[2])) return m[1] === "play" ? renderPlay() : renderHome();
     if (!samplesLoaded) return;
@@ -120,11 +144,13 @@ function renderLibrary() {
   // Kiron 1.6: the playtest quizzes sit on top; every other quiz is folded away in one dropdown (the same fold as "Jump to a part").
   // Kiron 1.7: quizzes you built yourself sit on top too, first; "Build your own" closes the list.
   const top = list.filter(x => x.mine).concat(list.filter(x => x.quiz.test && !x.mine)), rest = list.filter(x => !x.quiz.test && !x.mine);
+  // Kiron 1.8.0: "Today" leads the list, only while something is due. No count: just the way back in.
+  const today = samplesLoaded && anyDue(list.map(x => x.quiz)) ? `<div class="grid"><button class="qcard today-card" data-act="today" type="button"><h3>Today</h3><span class="chev" aria-hidden="true">›</span></button></div>` : "";
   const more = rest.length ? `<div class="jump more"><div class="jump-head"><button class="jump-btn" type="button" data-act="jump" aria-expanded="false">All quizzes<span class="car" aria-hidden="true">▾</span></button></div><div class="unfurl" inert><div class="fold"><div class="fold-in"><div class="grid">${rest.map(card).join("")}</div></div></div></div><i class="cap" aria-hidden="true"></i></div>` : "";
   app().innerHTML = topBar("", `<div class="brand"><img src="icon-192.png" alt="">Kiron</div>`) + `
   <main class="wrap lib">
     <h1 class="pick">Pick your quiz</h1>
-    ${list.length ? `${top.length ? `<div class="grid">${top.map(card).join("")}</div>` : ""}${more}` : `<div class="grid"><p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p></div>`}
+    ${today}${list.length ? `${top.length ? `<div class="grid">${top.map(card).join("")}</div>` : ""}${more}` : `<div class="grid"><p class="empty">${samplesLoaded ? "No quizzes yet." : "Loading…"}</p></div>`}
     ${samplesLoaded ? `<div class="grid"><button class="qcard build-card" data-go="build" type="button"><h3>Build your own</h3><span class="chev" aria-hidden="true">+</span></button></div>` : ""}
     <p class="credit">Made by Pranjal Parashar</p>
   </main>`;
@@ -182,7 +208,7 @@ function armTimer() {
     const r = current.P.round, id = TIMER.id;
     if (r.ended || r.ids[r.i] !== id || (current.P.cur && current.P.cur.done)) return;
     if (dragging) { TIMER.t0 = Date.now() - TIMER.dur + 1500; return armTimer(); }   // never change question under a held row
-    nav(1);
+    nav(1, true);
   }, Math.max(0, TIMER.dur - timerElapsed()));
 }
 document.addEventListener("visibilitychange", () => {
@@ -215,7 +241,7 @@ function renderPlay(keepScroll) {
   let input = "", primary = "", waiting = false;
   const a = P.a[id], gone = burntOf(r, id);   // options the fire burned away stay gone (one still burning stays a moment)
   if (f.kind === "pick") {
-    const ord = current.quiz.fixed || /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
+    const ord = current.quiz.fixed || q.fixedOpts || /\b(all|none|both) of|\babove\b|\bboth [a-d]\b/i.test(f.options.join(" ")) ? f.options.map((_, i) => i) : shuffledOrder(id + ":" + (P.n[id] || 0), f.options.length);
     input = `<div class="opts" role="group" aria-label="Options">` + ord.filter(oi => oi === BURNING || !gone.includes(oi)).map(oi => {
       let cls = "opt" + (oi === BURNING ? " burning" : ""), ic = "";
       // Once answered, the right answer (and your pick, if it was off) stay bright. The others stay in place, faded and
@@ -265,7 +291,7 @@ function renderPlay(keepScroll) {
   const isNum = isNumQ(q);
   // Streak: the bar takes on the streak's colour. On a fresh right answer from 3 in a row, the bar first shows the old level, then the counter flies in and lifts it.
   const stk = r.review ? 0 : r.streak || 0, feeding = fx && fx.kind === "right" && stk >= 3, heatNow = heatLevel(feeding ? stk - 1 : stk);
-  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<button type="button" class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" data-act="fire" aria-label="${feeding ? stk - 1 : stk} in a row"${heatNow ? "" : ' tabindex="-1" aria-hidden="true"'}><span class="fl" aria-hidden="true">${heatIcon(heatNow)}</span><b class="n" aria-hidden="true">${feeding ? stk - 1 : stk}</b></button>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>
+  const html = `<header class="top play"><div class="top-in"><button class="icon-btn" data-go="${esc(homeOf(quiz))}" data-replace="1" aria-label="Leave this round" type="button">✕</button><div class="dots${PAUSED ? " halted" : ""}" data-heat="${heatNow}" role="img" aria-label="Question ${r.i + 1} of ${r.ids.length}${stk >= 3 ? ", " + stk + " in a row" : ""}">${dots}</div>${r.review ? "" : `<button type="button" class="heat${heatNow ? " on" : ""}" data-heat="${heatNow}" data-act="fire" aria-label="${feeding ? stk - 1 : stk} in a row"${heatNow ? "" : ' tabindex="-1" aria-hidden="true"'}><span class="fl" aria-hidden="true">${heatIcon(heatNow)}</span><b class="n" aria-hidden="true">${feeding ? stk - 1 : stk}</b></button>`}${r.review ? "" : `<button class="icon-btn pause${PAUSED ? " on" : ""}${cur.done ? " gone" : ""}" data-act="pause" type="button" aria-pressed="${!!PAUSED}" aria-label="${PAUSED ? "Resume timer" : "Pause timer"}"${cur.done ? ' disabled aria-hidden="true" tabindex="-1"' : ""}>${PAUSED ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg>` : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>`}</button>`}</div></header>
   <main class="wrap play">
     <div class="stage">
       <article class="qcardp${DIR > 0 ? " in-next" : DIR < 0 ? " in-prev" : ""}">
@@ -350,6 +376,9 @@ document.addEventListener("click", onTapXY, true);
 addEventListener("resize", onResize);
 // Right answers truly in a row in this round. A round saved before 1.7.3 has no run yet: its streak stands in for it.
 const runOf = r => r.run !== undefined ? r.run || 0 : r.streak || 0;
+// Spaced recall (js/fsrs7.js): every first answer in a round, and every time the timer runs out, is one look at the
+// question. A Today question is remembered under the quiz it came from.
+function remember(quiz, id, g) { try { const s = sourceOf(quiz, id); review(s.quizId, s.id, g); } catch (e) { wentOff(e); } }
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
   const first = !P.cur.done;
@@ -360,6 +389,7 @@ function finalize(status) {
     // The best run at round end counts right answers truly in a row (Kiron 1.7.3); the streak above can cool and climb on.
     r.run = status === "right" ? runOf(r) + 1 : 0; r.best = Math.max(r.best || 0, r.run);
     FX = { id, kind: status === "right" ? "right" : "wrong" };
+    if (!r.review) remember(quiz, id, gradeOf({ status, hinted: !!P.h[id], burned: burntOf(r, id).length > 0, used: TIMER && TIMER.id === id && TIMER.dur ? timerElapsed() / TIMER.dur : 0.5 }));
   }
   else if (status !== "right") { r.streak = cooled(r.streak || 0); r.run = 0; }
   saveProg();
@@ -488,13 +518,13 @@ function fireDone(id) {
     if (t0 !== undefined && Math.abs(dy) > 1) el.animate([{ transform: `translateY(${dy.toFixed(1)}px)` }, { transform: "none" }], { duration: 420, easing: EASE.drop }); });
 }
 // Story-style moves: forward (answered: next; unanswered: leave it for later) and back.
-function nav(dir) {
+function nav(dir, timedOut) {
   if (!current) return;
   const { quiz, P } = current, r = P.round; if (!r || r.ended || r.i >= r.ids.length) return;
   const id = r.ids[r.i];
   if (dir < 0) { if (r.i === 0) return; r.i--; P.cur = null; DIR = -1; saveProg(); return renderPlay(); }
-  if (!r.review && (!P.cur || !P.cur.done)) { if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; }
-  if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go("quiz-" + quiz.id, true); }
+  if (!r.review && (!P.cur || !P.cur.done)) { if (timedOut && r.res[id] !== "skip") remember(quiz, id, AGAIN); if (!P.st[id]) P.st[id] = "skip"; r.res[id] = "skip"; }
+  if (r.review && r.i + 1 >= r.ids.length) { P.round = null; P.cur = null; saveProg(); return go(homeOf(quiz), true); }
   r.i++; P.cur = null; DIR = 1; if (r.i >= r.ids.length) { r.ended = true; }
   saveProg(); renderPlay(); const h = $("#qprompt") || $("#endh"); if (h) h.focus({ preventScroll: true });
 }
@@ -569,9 +599,9 @@ function renderRoundEnd() {
   const bl = heatLevel(best), bestRun = best >= 2 ? `<div class="bestrun${newRec ? " rec" : ""}" data-heat="${bl}"><span class="fl" aria-hidden="true">${heatIcon(Math.max(1, bl))}</span><span><b>${best}</b> in a row</span>${newRec || (r.bestShown && best === P.bestRun) ? `<em>longest yet</em>` : ""}</div>` : "";
   const keep = c.left || c.skip ? `<button class="btn primary xl" data-act="${r.only !== undefined && counts(quiz, P, r.only).left ? "keeppart" : "start"}" type="button">Keep going</button>` : "";
   const rev = missed ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisitround" type="button">Revisit</button>` : c.revisit ? `<button class="btn${keep ? "" : " primary xl"}" data-act="revisit" type="button">Revisit</button>` : "";
-  app().innerHTML = hxAll(`<header class="top play"><div class="top-in"><button class="icon-btn" data-go="quiz-${esc(quiz.id)}" data-replace="1" aria-label="Back to the quiz" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="quiz-${esc(quiz.id)}" data-replace="1" type="button">Done</button></div></header>
+  app().innerHTML = hxAll(`<header class="top play"><div class="top-in"><button class="icon-btn" data-go="${esc(homeOf(quiz))}" data-replace="1" aria-label="${quiz.today ? "Back to your quizzes" : "Back to the quiz"}" type="button">✕</button><div class="dots" role="img" aria-label="Round finished">${r.ids.map(() => `<i class="past"></i>`).join("")}</div><button class="icon-btn done" data-go="${esc(homeOf(quiz))}" data-replace="1" type="button">Done</button></div></header>
   <main class="wrap play"><div class="endcard">
-    <h2 id="endh" tabindex="-1">${allDone ? "End of quiz." : "Round done"}</h2>
+    <h2 id="endh" tabindex="-1">${allDone ? (quiz.today ? "Done for today." : "End of quiz.") : "Round done"}</h2>
     <div class="ratio" role="img" aria-label="Right and wrong answers so far"><i class="g" id="rg" style="transform:${slid(gNow)}"><b aria-hidden="true" style="margin-left:${100 - gNow}%">✓</b></i><i class="r" id="rr" style="transform:${slid(gNow + rNow)}"><b aria-hidden="true">✕</b></i>${answered ? "" : `<span class="empty-r"></span>`}</div>
     ${bestRun}
     <div class="cta">${keep}${rev}</div>
@@ -605,6 +635,7 @@ document.addEventListener("click", e => {
   if (d.go !== undefined) { flowFrom(t); go(d.go, d.replace !== undefined); return; }
   if (d.del) { if (!twoTap(t, "Tap again to delete")) return; LS.set(K_IMPORTED, getImported().filter(q => q.id !== d.del)); LS.del(progKey(d.del)); toast("Deleted"); go(""); return; }
   if (d.act === "jump") { const j = t.closest(".jump"), o = !j.classList.contains("open"); t.setAttribute("aria-expanded", o); unfurl(j, o, o && j); return; }
+  if (d.act === "today") { flowFrom(t); return startToday(); }
   if (!current) return;
   if (d.pick !== undefined) return playAct("pick", t);
   if (d.toggle !== undefined) return playAct("toggle", t);

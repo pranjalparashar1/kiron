@@ -105,7 +105,7 @@ Rules:
 - Every pressable button carries the invisible haptic switch (see Interaction).
 
 ### Library
-Top bar with the brand only. "Pick your quiz", then cards: quizzes you built yourself first, then any test quizzes listed in `quizzes.json` (none are listed since 1.7.2). Every other quiz is folded under one "All quizzes" dropdown, which since 1.7.2 holds only the finance quizzes. Last comes a "Build your own" card (same card, an orange `+` instead of `›`, an orange border when pressed), then a faint credit line at the foot (12.5px, muted, 55% opacity). Quiz card: surface, 1px line, radius 12, min-height 76, title left and a blue `›` right; pressed = `scale(.98)` + blue border. Quizzes sorted A-Z. No counts, no descriptions.
+Top bar with the brand only. "Pick your quiz", then, only while some question is due again (spaced recall, 1.8.0), a "Today" card at the very top: the same card on the accent tint (`--accent-soft` fill, a soft orange border, an orange `›`, orange border when pressed). It never shows how many are due. Then cards: quizzes you built yourself first, then any test quizzes listed in `quizzes.json` (none are listed since 1.7.2). Every other quiz is folded under one "All quizzes" dropdown, which since 1.7.2 holds only the finance quizzes. Last comes a "Build your own" card (same card, an orange `+` instead of `›`, an orange border when pressed), then a faint credit line at the foot (12.5px, muted, 55% opacity). Quiz card: surface, 1px line, radius 12, min-height 76, title left and a blue `›` right; pressed = `scale(.98)` + blue border. Quizzes sorted A-Z. No counts, no descriptions.
 
 ### Build your own (`#build`)
 Back button, heading "Build your own" (library heading style), and two numbered steps (orange 34px circles):
@@ -174,6 +174,11 @@ The bar stays **one solid colour** at every stage (no gradients on the bar). Ful
 
 ### Round end
 Heading "Round done" (or "End of quiz."). A 30px pill bar: green fill (with ✓) over red striped fill (with ✕), no numbers; it slides from last round's split to this one (1.2s). The best run pill: flame + "**N** in a row", where N is the longest run of right answers truly in a row (since 1.7.3 a slip breaks it, even though the streak in the bar only cools), plus orange "longest yet" when it beats this quiz's record (springs in). Then "Keep going" (XL primary) and/or "Revisit". Top bar keeps ✕ and a "Done" button.
+
+### Today (1.8.0)
+Tapping "Today" plays one round of the questions that are due again, from every quiz on the phone: the most forgotten first, at most 7, numbers questions cushioned as in any round (never first, at most 3). It is the normal player (same timer, fire, streak and feedback). An unfinished Today round carries on where it was left. It has no quiz home: ✕ and Done go back to the library, and when every question in it is answered the round end says "Done for today." Nothing is ever marked overdue, and no count is shown anywhere.
+
+When a question is due is decided by FSRS-7 (see `js/fsrs7.js`), from how each answer went: a wrong pick or a timer that ran out is Again; right after a hint, a burn, or with over 70% of the timer gone is Hard (a partly right multi-select or ordering too); right and clean at 35-70% of the timer is Good; under 35% is Easy. Leaving a question for later by hand is not graded. Nobody is asked to rate themselves. A question is never due again sooner than 10 minutes.
 
 ### Toast
 Bottom centre, ink background with black text (inverted), radius 10, 15px, 2.6s. A tap-to-act toast stays until tapped (used for "Something went off. Tap to reload."). Copy is plain and kind: "Nothing left there. Nice.", "Your progress can't be saved on this phone right now."
