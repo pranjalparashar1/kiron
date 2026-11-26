@@ -5,7 +5,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { load } = require("./load.js");
 
-const fmt = load(["maths.js"]).fmt;
+const fmt = load().fmt;
 
 // The only markup fmt() makes. Anything else in its output came from the quiz, which must never happen.
 const TAGS = new Set(["span", "sup", "sub", "b", "i", "br", "svg", "path", "circle"]);

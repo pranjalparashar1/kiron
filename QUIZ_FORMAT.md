@@ -1,6 +1,6 @@
 # Adding a quiz to Kiron
 
-This is the only file you need to read to add a quiz. You don't need to read `app.js`.
+This is the only file you need to read to add a quiz. You don't need to read the app's code (`js/`).
 
 ## Steps
 
@@ -46,6 +46,7 @@ Optional quiz-level fields, next to `title`:
 - `"fixed": true` keeps options in the order written (no shuffle). Only for test quizzes that need it.
 
 - `single` is the default: exactly 4 options of similar length, wrong ones built from real confusions. No "all of the above".
+- `id` (optional, per question): a short name that never changes, such as `"dur-1"`. Letters, digits, `-`, `_`, `.` or `:`, up to 64 characters, unique in the quiz. With an id, you can reword or move a question and people keep their progress on it. Without one, a question is known by its place, and rewording it starts it again for everyone. Don't add ids to a quiz people are already using unless the questions stay worded as they are (the app carries progress over when the wording matches).
 - `correct` counts from 0. Options are shuffled in the app, so the right one can go first.
 - `answer` is the one-line "why" shown after a tap. (`why` works as the field name too.)
 - Calculations: four formulas or setups as options, not four numbers, with `"tags": ["calc"]`.
