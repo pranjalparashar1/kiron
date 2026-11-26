@@ -173,7 +173,7 @@ The bar stays **one solid colour** at every stage (no gradients on the bar). Ful
 **The fire answers a touch.** Tap: a small bubble explains it ("Hold the fire for a surprise", later "Hold to burn a wrong option"). Hold ~1s: it swells, trembles, pops, and a fireball burns away one wrong option; that costs one from the streak. The next tap anywhere only dismisses a bubble.
 
 ### Round end
-Heading "Round done" (or "End of quiz."). A 30px pill bar: green fill (with ✓) over red striped fill (with ✕), no numbers; it slides from last round's split to this one (1.2s). The best run pill: flame + "**N** in a row", plus orange "longest yet" when it beats this quiz's record (springs in). Then "Keep going" (XL primary) and/or "Revisit". Top bar keeps ✕ and a "Done" button.
+Heading "Round done" (or "End of quiz."). A 30px pill bar: green fill (with ✓) over red striped fill (with ✕), no numbers; it slides from last round's split to this one (1.2s). The best run pill: flame + "**N** in a row", where N is the longest run of right answers truly in a row (since 1.7.3 a slip breaks it, even though the streak in the bar only cools), plus orange "longest yet" when it beats this quiz's record (springs in). Then "Keep going" (XL primary) and/or "Revisit". Top bar keeps ✕ and a "Done" button.
 
 ### Toast
 Bottom centre, ink background with black text (inverted), radius 10, 15px, 2.6s. A tap-to-act toast stays until tapped (used for "Something went off. Tap to reload."). Copy is plain and kind: "Nothing left there. Nice.", "Your progress can't be saved on this phone right now."

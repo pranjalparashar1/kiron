@@ -96,7 +96,7 @@ function route() {
   if (!/^#play-/.test(location.hash)) {
     clearFeed();
     // Leaving the quiz ends the streak.
-    if (current && current.P.round && current.P.round.streak) { current.P.round.streak = 0; saveProg(); }
+    if (current && current.P.round && (current.P.round.streak || current.P.round.run)) { current.P.round.streak = 0; current.P.round.run = 0; saveProg(); }
   }
   document.documentElement.classList.toggle("on-play", /^#play-/.test(location.hash));
   const h = decodeURIComponent((location.hash || "").replace(/^#/, ""));
@@ -160,10 +160,11 @@ function startRound(opt) {
   const { quiz, P } = current;
   // Carrying on in order straight from the end of a round keeps the streak going; anything else starts fresh.
   const carry = P.round && P.round.ended && !P.round.review ? P.round.streak || 0 : 0;
+  const carryRun = P.round && P.round.ended && !P.round.review ? runOf(P.round) : 0;
   const r = buildRound(quiz, P, opt);
   if (!r) { toast("Nothing left there. Nice."); return; }
-  if (!opt || opt.kind !== "revisit") r.streak = carry;
-  r.best = r.streak || 0;
+  if (!opt || opt.kind !== "revisit") { r.streak = carry; r.run = carryRun; }
+  r.best = r.run || 0;
   P.round = r; P.cur = null; saveProg(); go("play-" + quiz.id, true);
 }
 
@@ -347,16 +348,20 @@ function morph(a, b) {
 addEventListener("scroll", onScroll, { passive: true });
 document.addEventListener("click", onTapXY, true);
 addEventListener("resize", onResize);
+// Right answers truly in a row in this round. A round saved before 1.7.3 has no run yet: its streak stands in for it.
+const runOf = r => r.run !== undefined ? r.run || 0 : r.streak || 0;
 function finalize(status) {
   const { quiz, P } = current, r = P.round, id = P.cur.id;
   const first = !P.cur.done;
   P.cur.done = true; P.cur.status = status;
   P.st[id] = status; r.res[id] = status;
   if (first) {
-    r.streak = status === "right" ? (r.streak || 0) + 1 : cooled(r.streak || 0); r.best = Math.max(r.best || 0, r.streak);
+    r.streak = status === "right" ? (r.streak || 0) + 1 : cooled(r.streak || 0);
+    // The best run at round end counts right answers truly in a row (Kiron 1.7.3); the streak above can cool and climb on.
+    r.run = status === "right" ? runOf(r) + 1 : 0; r.best = Math.max(r.best || 0, r.run);
     FX = { id, kind: status === "right" ? "right" : "wrong" };
   }
-  else if (status !== "right") r.streak = cooled(r.streak || 0);
+  else if (status !== "right") { r.streak = cooled(r.streak || 0); r.run = 0; }
   saveProg();
 }
 /* ---- Kiron 1.5.3: the fire answers a touch.
