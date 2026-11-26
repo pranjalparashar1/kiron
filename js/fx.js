@@ -115,9 +115,12 @@ function burst(el) {
    Celestial: 20 nebula (violet, magenta and teal clouds drift behind the bar)
               25 constellation (stars appear around the bar and join up with fine lines)
               30 galaxy (clouds, constellation and a ringed star; the bar shimmers gold-white)
-   A wrong answer, or leaving the quiz, cools it back. */
+   A wrong answer cools it one stage (see cooled); leaving the quiz puts it out. */
 const BLACK_FIRE = 15, STAGES = [3, 5, 8, 11, BLACK_FIRE, 20, 25, 30];
 const heatLevel = n => { let l = 0; STAGES.forEach((t, i) => { if (n >= t) l = i + 1; }); return l; };
+// Kiron 1.7.1: a slip cools the streak by one stage instead of putting it out. It drops to the start of the stage
+// below (17, black fire, becomes 11, white-hot); from the first stage (amber) or below the fire, it goes out.
+const cooled = n => { const l = heatLevel(n); return l >= 2 ? STAGES[l - 2] : 0; };
 // The flame: two shapes, an outer tongue and a hot core, that flicker out of step. From 25 it becomes a star; at 30 a ringed star.
 // Each moving part is its own small SVG stacked in an HTML box, and the flicker, twinkle and orbit move those boxes
 // (transform only), so iPhone Safari runs them on the GPU instead of repainting the inside of an SVG every frame.
@@ -446,5 +449,5 @@ function bottomGap() {
 }
 
 export { flowFrom, flowIn, cancelScroll, smoothScrollTo, revealTarget, reveal, onScroll, settle, onTapXY, bloom, burst,
-  BLACK_FIRE, STAGES, heatLevel, heatIcon, gradDefs, barWidth, slideFrom, slideBar, placeSky, placeGlint, onResize,
+  BLACK_FIRE, STAGES, heatLevel, cooled, heatIcon, gradDefs, barWidth, slideFrom, slideBar, placeSky, placeGlint, onResize,
   EASE, kick, fxLayer, clearFeed, fxAnim, streakFeed, onSpringBack, edgeGlow, unfurl, fold, bottomGap };

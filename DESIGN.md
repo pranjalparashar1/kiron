@@ -153,7 +153,7 @@ No verdict text. After the pick has popped, the one-line why (`.model`, `--surfa
 Fixed to the bottom, surface background, hairline top, safe-area padding. Before answering: ‹ back (if not first), 💡 Hint, Check (multi/order only; faded to 40% until ordering is complete). After answering: ‹ back and a full-width orange **Next** (Finish / Done on the last). Next pulses gently (`scale 1.035`, 1.15s) with an orange ring that grows and fades, forever, as a layer (not a repainted shadow). With reduced motion: a static orange outline instead.
 
 ### Streak (rewards a run of right answers)
-Count appears at 3 in a row, at the end of the story bar: flame (or star) + number in the heat colour. The bar, flame and count all take the stage colour. A wrong answer or leaving resets it. Carrying straight on from a round keeps it.
+Count appears at 3 in a row, at the end of the story bar: flame (or star) + number in the heat colour. The bar, flame and count all take the stage colour. A wrong answer cools it one stage: it drops to the start of the stage below (17 in black fire becomes 11, white-hot), and from amber it goes out. Leaving the round resets it. Carrying straight on from a round keeps it.
 
 | Stage | At | `--heat` | Look |
 |---|---|---|---|

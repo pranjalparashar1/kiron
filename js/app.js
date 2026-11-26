@@ -6,7 +6,7 @@ import { LS, K_IMPORTED, getImported, progKey, blankProg, getProg, eachQ, getQ, 
 import { validateQuiz } from "./validate.js";
 import { shuffledOrder, orderStart, formOf, gradeMulti, gradeOrder, counts, isNumQ, buildRound, buildReview, TIME, durFor } from "./round.js";
 import { fmt } from "./maths.js";
-import { flowFrom, flowIn, cancelScroll, reveal, onScroll, settle, onTapXY, bloom, burst, heatLevel, heatIcon, barWidth, slideFrom,
+import { flowFrom, flowIn, cancelScroll, reveal, onScroll, settle, onTapXY, bloom, burst, heatLevel, cooled, heatIcon, barWidth, slideFrom,
   placeSky, placeGlint, onResize, EASE, fxLayer, clearFeed, fxAnim, streakFeed, onSpringBack, edgeGlow, unfurl, fold } from "./fx.js";
 import { hooks as orderHooks, TAP_ORDER, dragging, endDrag, placedOf, onOrderClick, onOrderKey, onOrderMenu, onOrderDown } from "./order.js";
 
@@ -353,10 +353,10 @@ function finalize(status) {
   P.cur.done = true; P.cur.status = status;
   P.st[id] = status; r.res[id] = status;
   if (first) {
-    r.streak = status === "right" ? (r.streak || 0) + 1 : 0; r.best = Math.max(r.best || 0, r.streak);
+    r.streak = status === "right" ? (r.streak || 0) + 1 : cooled(r.streak || 0); r.best = Math.max(r.best || 0, r.streak);
     FX = { id, kind: status === "right" ? "right" : "wrong" };
   }
-  else if (status !== "right") r.streak = 0;
+  else if (status !== "right") r.streak = cooled(r.streak || 0);
   saveProg();
 }
 /* ---- Kiron 1.5.3: the fire answers a touch.
