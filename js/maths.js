@@ -4,8 +4,6 @@
       that covers what is under it.
    2. Anything between \( and \) (or \[ and \] for a centred line) is read as TeX: \frac, \sqrt, \sum, \prod,
       \int, \oint, \lim, \partial, brackets that grow, and any nesting of them. See QUIZ_FORMAT.md. */
-(function () {
-"use strict";
 const mEsc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const SUPM = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "−", "⁺": "+", "ⁿ": "n", "ᵗ": "t" };
 const SUBM = { "₀": "0", "₁": "1", "₂": "2", "₃": "3", "₄": "4", "₅": "5", "₆": "6", "₇": "7", "₈": "8", "₉": "9", "₋": "−", "₊": "+", "ₙ": "n", "ₜ": "t", "ₘ": "m", "ₓ": "x", "ₐ": "a", "ₑ": "e", "ₒ": "o", "ᵢ": "i", "ⱼ": "j", "ₖ": "k", "ₗ": "l", "ₛ": "s", "ₚ": "p", "ₕ": "h" };
@@ -283,5 +281,4 @@ function fmt(s) {
   let h = mathify(mEsc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
   return held.length ? h.replace(/\u0001(\d+)\u0001/g, (_, k) => held[+k]) : h;
 }
-window.fmt = fmt;
-})();
+export { fmt };

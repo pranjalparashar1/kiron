@@ -1,6 +1,6 @@
 # Kiron design system
 
-How Kiron looks, moves and behaves, taken from the code (`styles.css`, `app.js`) on main at PR #52 (service worker `kiron-v57`). Where this file and the code disagree, the code wins. Update this file in the same PR as any change to the look.
+How Kiron looks, moves and behaves, taken from the code (`styles.css` and the modules in `js/`; it was `app.js` until 1.6.4) on main at PR #52 (service worker `kiron-v57`). Where this file and the code disagree, the code wins. Update this file in the same PR as any change to the look.
 
 Kiron is a phone-first quiz player: one question per screen, rounds of 7, tap to answer. Everything below serves one aim: keep someone reading and tapping on a phone, with as little in the way as possible.
 
