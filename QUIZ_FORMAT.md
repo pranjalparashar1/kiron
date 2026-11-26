@@ -39,6 +39,12 @@ Quizzes are tap-to-answer only. Don't write a typed version of each question (no
 }
 ```
 
+Optional quiz-level fields, next to `title`:
+
+- `"round": 8` sets how many questions a round has (default 7, at most 50).
+- `"test": true` lists the quiz on top of the library, above "All quizzes". Only for playtest quizzes.
+- `"fixed": true` keeps options in the order written (no shuffle). Only for test quizzes that need it.
+
 - `single` is the default: exactly 4 options of similar length, wrong ones built from real confusions. No "all of the above".
 - `correct` counts from 0. Options are shuffled in the app, so the right one can go first.
 - `answer` is the one-line "why" shown after a tap. (`why` works as the field name too.)
@@ -75,4 +81,4 @@ For roots over fractions, sums, integrals, derivatives and anything nested, writ
 | Choose | `\binom{n}{k}` |
 | Small gap | `\,` |
 
-Everything nests: `\sqrt{\frac{\sum_{i=1}^{n}(x_i - \mu)^2}{n - 1}}`. Keep each formula short enough for a phone line; a long one in an option wraps at its `=` and `+` signs, and a `\[ … \]` line scrolls sideways. A command the app doesn't know is shown as written, so a slip is easy to spot. Section 6 of the Test quiz shows each of these in use.
+Everything nests: `\sqrt{\frac{\sum_{i=1}^{n}(x_i - \mu)^2}{n - 1}}`. Keep each formula short enough for a phone line; a long one in an option wraps at its `=` and `+` signs, and a `\[ … \]` line scrolls sideways. A command the app doesn't know is shown as written, so a slip is easy to spot. `quiz-test-maths.json` shows each of these in use.
