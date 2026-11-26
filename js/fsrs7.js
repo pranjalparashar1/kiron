@@ -86,12 +86,14 @@ function interval(st, target = RETAIN, w = FSRS7_W) {
 /* How an answer went, as an FSRS grade. Nobody is asked to rate themselves.
    1 Again: a wrong pick, or the timer ran out.   2 Hard: right, but after a hint or a burn, or with over 70% of the
    timer gone; a partly right multi-select or ordering also counts here.   3 Good: right and clean, at 35-70% of the
-   timer.   4 Easy: right and clean, under 35% of the timer. `used` is the share of the timer used (0-1). */
-function gradeOf({ status, timedOut, hinted, burned, used }) {
-  if (timedOut || status === "miss" || status === "skip") return AGAIN;
+   timer.   4 Easy: right and clean, under 35% of the timer (and the devil's advocate passed, if it came up).
+   Kiron 1.9.0: a wrong pick put right after a probe is still Again; a missed devil's advocate makes it Hard. `used` is the share of the timer used (0-1). */
+function gradeOf({ status, timedOut, hinted, burned, used, corrected, da }) {
+  if (timedOut || corrected || status === "miss" || status === "skip") return AGAIN;   // right only after a probe: still Again
   if (status === "partial") return HARD;
-  if (hinted || burned || !(used <= 0.7)) return HARD;
-  return used < 0.35 ? EASY : GOOD;
+  if (hinted || burned || da === false || !(used <= 0.7)) return HARD;   // da === false: the devil's advocate check was missed
+  if (used < 0.35) return da === null ? GOOD : EASY;   // da === null: it was shown and left unanswered, so not Easy
+  return GOOD;
 }
 
 const fsrsKey = quizId => "sb:fsrs:" + quizId;

@@ -1,6 +1,6 @@
 /* Kiron: how a round is made and marked. Which questions come next, the order of options, grading, and the time
    each question gets. No page here: plain logic, tested in tests/. */
-import { eachQ, getQ } from "./store.js";
+import { eachQ, getQ, secKey } from "./store.js";
 
 const ROUND = 7;
 function shuffledOrder(seedStr, n) {
@@ -43,7 +43,10 @@ function cushion(quiz, list) {
 }
 function buildRound(quiz, P, opt) {
   opt = opt || {};
-  const all = []; eachQ(quiz, (q, id, si) => { if (opt.only === undefined || si === opt.only) all.push({ id, si }); });
+  let all = []; eachQ(quiz, (q, id, si) => { if (opt.only === undefined || si === opt.only) all.push({ id, si }); });
+  // Kiron 1.9.0: in a part you have already shown you know (from the placement round on), the beginner questions wait at the back.
+  const later = x => getQ(quiz, x.id).q.difficulty === 1 && ((P.sk || {})[secKey(quiz.sections[x.si], x.si)] || {}).lv >= 2;
+  if (P.sk) all = all.filter(x => !later(x)).concat(all.filter(later));
   const pick = (test, from) => { let list = all.filter(x => test(P.st[x.id])); if (from !== undefined) { const a = list.filter(x => x.si >= from), b = list.filter(x => x.si < from); list = a.concat(b); } return cushion(quiz, list.map(x => x.id)); };
   let ids = [], kind = "new";
   if (opt.kind === "revisit") { ids = pick(v => v === "miss" || v === "partial", opt.from); kind = "revisit"; }

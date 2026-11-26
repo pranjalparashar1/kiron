@@ -16,6 +16,10 @@ STEP 2. Write the quiz.
 - Use "multi" (pick all that apply) or "order" (put in sequence) only when the idea is naturally like that.
 - Every question gets a "hint": a nudge that makes me think, without giving the answer away.
 - "answer" is one line, under 30 words, shown after I tap: why the right option is right, or what the tempting wrong one really is.
+- Teach like a Socratic tutor. Give every question a "difficulty" from 1 (foundational) to 4 (edge case or transfer), spread across each section, and mark at least one question per section "diagnostic": true so the app can place me.
+- On every "single" question, add "probes" for at least 2 of the wrong options, keyed by that option's number ("1", "2"...). A probe is a narrower 2-option question that shows the flaw in that particular pick without giving the answer away, with a one-line "why" that ends by sending me back to the question.
+- On difficulty 3 and 4 "single" questions, add a "devilsAdvocate": a 2-option "Are you sure? What if X changes?" check for after a right answer, with a one-line "why".
+- Give every question a short, unique "id" (like "dur-1"), and every section one too.
 
 STEP 3. Give me the quiz as ONE downloadable file named after the quiz, ending in .md. If you can't make files, put it in one reply instead. Inside it, put the quiz between these two lines, as one json code block, with nothing else between them:
 <!-- KIRON-QUIZ-START -->
@@ -24,19 +28,22 @@ The quiz must be valid JSON: straight double quotes, no comments, no trailing co
 
 {
   "format": "study-buddy-quiz",
-  "version": 1,
+  "version": 2,
   "id": "short-lowercase-name-with-hyphens",
   "title": "Short quiz title",
   "source": "What the material is",
   "purpose": "One sentence: what I'm reading this for",
   "sections": [
     {
+      "id": "section-topic",
       "title": "Section topic",
       "ref": "pp. 2-10",
       "questions": [
-        { "type": "single", "prompt": "Why does X happen?", "hint": "Think about ...", "options": ["The right explanation", "A neighbouring idea", "The reverse relationship", "A common misconception"], "correct": 0, "answer": "One line on why.", "ref": "p. 4" },
-        { "type": "multi", "prompt": "Which of these ...? Pick all that apply.", "hint": "...", "options": ["A", "B", "C", "D", "E"], "correct": [0, 2, 3], "answer": "..." },
-        { "type": "order", "prompt": "Put these in order, first to last.", "hint": "...", "items": ["First", "Second", "Third", "Last"], "answer": "Why this order." }
+        { "id": "topic-1", "type": "single", "difficulty": 2, "diagnostic": true, "prompt": "Why does X happen?", "hint": "Think about ...", "options": ["The right explanation", "A neighbouring idea", "The reverse relationship", "A common misconception"], "correct": 0, "answer": "One line on why.", "ref": "p. 4",
+          "probes": { "1": { "prompt": "If it were the neighbouring idea, what would happen to Y?", "options": ["Y rises", "Y falls"], "correct": 1, "why": "That contradicts what we see. Try the question again." }, "2": { "prompt": "...?", "options": ["...", "..."], "correct": 0, "why": "... Try again." } },
+          "devilsAdvocate": { "prompt": "Are you sure? What if Z doubles?", "options": ["Still holds", "Reverses"], "correct": 0, "why": "Z cancels out, so it still holds." } },
+        { "id": "topic-2", "type": "multi", "difficulty": 3, "prompt": "Which of these ...? Pick all that apply.", "hint": "...", "options": ["A", "B", "C", "D", "E"], "correct": [0, 2, 3], "answer": "..." },
+        { "id": "topic-3", "type": "order", "difficulty": 1, "prompt": "Put these in order, first to last.", "hint": "...", "items": ["First", "Second", "Third", "Last"], "answer": "Why this order." }
       ]
     }
   ]

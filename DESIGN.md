@@ -180,6 +180,12 @@ Tapping "Today" plays one round of the questions that are due again, from every 
 
 When a question is due is decided by FSRS-7 (see `js/fsrs7.js`), from how each answer went: a wrong pick or a timer that ran out is Again; right after a hint, a burn, or with over 70% of the timer gone is Hard (a partly right multi-select or ordering too); right and clean at 35-70% of the timer is Good; under 35% is Easy. Leaving a question for later by hand is not graded. Nobody is asked to rate themselves. A question is never due again sooner than 10 minutes.
 
+### Socratic loop (1.9.0, quizzes with Socratic parts only)
+- **Probe card** (after a wrong pick that has a probe): the pick turns red with a ✕ and stays out; the other options wait (not tappable) while a card slides up under them: surface2 fill, 1px line, radius 14, padding 14. It has the probe question (16px 600), two option buttons side by side (min-height 50, radius 12, 2px line; the right one turns green, a wrong one red, the other fades to 50%), then the one-line "why" (15px muted, fades in) and a quiet "Just tell me" text button (14px muted). It slides from 14px below and fades in over 340ms after a 260ms pause for the wrong pick to sink, transform and opacity only; nothing above it moves. The timer stops while a probe is open. Answer the probe and the question is open again; right on the retry shows the explanation (no confetti, the streak cools), and a third wrong pick, or "Just tell me", shows it straight away.
+- **Devil's advocate card** (after about 4 in 10 right picks on a question that has one): the same card, without "Just tell me", where the explanation would be; the explanation follows once it is answered. Next stays available.
+- **Placement round**: the first round of a quiz that marks diagnostic questions. No hint button, no probes, no explanation: each tap goes straight on to the next question.
+- **Skill bars** (quiz home, "Jump to a part"): in place of the status dot, 5 short segments (9×6px, radius 3, 3px apart, `--line` when empty). Levels 1-3 fill blue; from level 4 the filled bar is green; at 5 a small twinkling star (14px) sits beside it. No numbers.
+
 ### Toast
 Bottom centre, ink background with black text (inverted), radius 10, 15px, 2.6s. A tap-to-act toast stays until tapped (used for "Something went off. Tap to reload."). Copy is plain and kind: "Nothing left there. Nice.", "Your progress can't be saved on this phone right now."
 
