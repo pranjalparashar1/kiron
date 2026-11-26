@@ -42,7 +42,7 @@ Quizzes are tap-to-answer only. Don't write a typed version of each question (no
 Optional quiz-level fields, next to `title`:
 
 - `"round": 8` sets how many questions a round has (default 7, at most 50).
-- `"test": true` lists the quiz on top of the library, above "All quizzes". Only for playtest quizzes.
+- `"test": true` lists the quiz on top of the library, above "All quizzes". Only for playtest quizzes. The three test quizzes (`quiz-test-*.json`) are kept in the repo but left out of `quizzes.json` for now; add a file back to the list to show it again.
 - `"fixed": true` keeps options in the order written (no shuffle). Only for test quizzes that need it.
 
 - `single` is the default: exactly 4 options of similar length, wrong ones built from real confusions. No "all of the above".

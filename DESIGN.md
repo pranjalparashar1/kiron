@@ -105,7 +105,7 @@ Rules:
 - Every pressable button carries the invisible haptic switch (see Interaction).
 
 ### Library
-Top bar with the brand only. "Pick your quiz", then cards: quizzes you built yourself first, then the test quizzes. Every other quiz is folded under one "All quizzes" dropdown. Last comes a "Build your own" card (same card, an orange `+` instead of `›`, an orange border when pressed), then a faint credit line at the foot (12.5px, muted, 55% opacity). Quiz card: surface, 1px line, radius 12, min-height 76, title left and a blue `›` right; pressed = `scale(.98)` + blue border. Quizzes sorted A-Z. No counts, no descriptions.
+Top bar with the brand only. "Pick your quiz", then cards: quizzes you built yourself first, then any test quizzes listed in `quizzes.json` (none are listed since 1.7.2). Every other quiz is folded under one "All quizzes" dropdown, which since 1.7.2 holds only the finance quizzes. Last comes a "Build your own" card (same card, an orange `+` instead of `›`, an orange border when pressed), then a faint credit line at the foot (12.5px, muted, 55% opacity). Quiz card: surface, 1px line, radius 12, min-height 76, title left and a blue `›` right; pressed = `scale(.98)` + blue border. Quizzes sorted A-Z. No counts, no descriptions.
 
 ### Build your own (`#build`)
 Back button, heading "Build your own" (library heading style), and two numbered steps (orange 34px circles):
